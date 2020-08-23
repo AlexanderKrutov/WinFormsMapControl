@@ -7,6 +7,8 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Cache;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -26,10 +28,13 @@ namespace WindowsFormsApp1
         private Point _Offset = new Point();
 
         /// <summary>
-        /// Map zoom level
+        /// Map zoom level backing field
         /// </summary>
         private int _ZoomLevel = 0;
 
+        /// <summary>
+        /// Map zoom level
+        /// </summary>
         public int ZoomLevel
         {
             get => _ZoomLevel;
@@ -44,7 +49,14 @@ namespace WindowsFormsApp1
             }
         }
 
+        /// <summary>
+        /// Maximal zoom level backing field
+        /// </summary>
         private int _MaxZoomLevel = 18;
+
+        /// <summary>
+        /// Maximal zoom level
+        /// </summary>
         public int MaxZoomLevel
         {
             get => _MaxZoomLevel;
@@ -58,9 +70,15 @@ namespace WindowsFormsApp1
             }
         }
 
-        public int MapSizeInTiles => 1 << ZoomLevel;
+        /// <summary>
+        /// Gets size of map in tiles
+        /// </summary>
+        public int FullMapSizeInTiles => 1 << ZoomLevel;
 
-        public long FullMapSizeInPixels => MapSizeInTiles * TILE_SIZE;
+        /// <summary>
+        /// Gets maps size in pixels
+        /// </summary>
+        public long FullMapSizeInPixels => FullMapSizeInTiles * TILE_SIZE;
 
         private bool _MouseCaptured = false;
 
@@ -68,7 +86,7 @@ namespace WindowsFormsApp1
       
         private ConcurrentBag<CachedImage> _Cache = new ConcurrentBag<CachedImage>();
 
-        protected ITileServer _TileServer;
+        private ITileServer _TileServer;
 
         public ITileServer TileServer
         {
@@ -81,13 +99,22 @@ namespace WindowsFormsApp1
                 }
 
                 _TileServer = value;
+                _LinkLabel.Links.Clear();
+                _LinkLabel.Visible = false;
 
                 if (value != null)
                 {
                     _TileServer.InvalidateRequired += Invalidate;
-                   
-                }
+                    ClearCache();
+                    _TileServer.SetZoomLevel(ZoomLevel);
 
+                    if (_TileServer.CopyrightLink != null)
+                    {
+                        ExtractCopyrightLinks(_TileServer.CopyrightLink);
+                        _LinkLabel.Visible = true;
+                        OnSizeChanged(new EventArgs());
+                    }
+                }
             }
         }
 
@@ -97,7 +124,7 @@ namespace WindowsFormsApp1
         {
             get
             {
-                float x = ArrageTileNumber(-(_Offset.X - Width / 2) / TILE_SIZE);
+                float x = ArrangeTileNumber(-(_Offset.X - Width / 2) / TILE_SIZE);
                 float y = -(_Offset.Y - Height / 2) / TILE_SIZE;
                 return TileToWorldPos(x, y).X;
             }
@@ -110,11 +137,50 @@ namespace WindowsFormsApp1
             }
         }
 
+        private void ExtractCopyrightLinks(string copyright)
+        {
+            StringBuilder copyrightText = new StringBuilder();
+            int lastIndex = 0;
+
+            MatchCollection m1 = Regex.Matches(copyright, @"(<a.*?>.*?</a>)", RegexOptions.Singleline);
+
+            foreach (Match m2 in m1)
+            {
+                LinkLabel.Link link = new LinkLabel.Link();
+
+                copyrightText.Append(copyright.Substring(lastIndex, m2.Index - lastIndex));
+
+                string fullLinkWithTags = m2.Groups[1].Value;
+
+                Match m3 = Regex.Match(fullLinkWithTags, @"href=[\""'](.*?)[\""']", RegexOptions.Singleline);
+                if (m3.Success)
+                {
+                    link.LinkData = m3.Groups[1].Value;
+                    link.Start = copyrightText.Length;
+                }
+
+                string innerText = Regex.Replace(fullLinkWithTags, @"\s*<.*?>\s*", "", RegexOptions.Singleline);
+
+                copyrightText.Append(innerText);
+                link.Length = innerText.Length;
+                lastIndex = m2.Index + m2.Length;
+                _LinkLabel.Links.Add(link);
+            }
+
+            if (lastIndex <= copyright.Length - 1)
+            {
+                copyrightText.Append(copyright.Substring(lastIndex));
+            }
+
+            _LinkLabel.Text = copyrightText.ToString();
+        }
+
+
         public double CenterLat
         {
             get
             {
-                float x = ArrageTileNumber(-(_Offset.X - Width / 2) / TILE_SIZE);
+                float x = ArrangeTileNumber(-(_Offset.X - Width / 2) / TILE_SIZE);
                 float y = -(_Offset.Y - Height / 2) / TILE_SIZE;
                 return TileToWorldPos(x, y).Y;
             }
@@ -131,7 +197,7 @@ namespace WindowsFormsApp1
         {
             get
             {
-                float x = ArrageTileNumber(-(float)(_Offset.X - _LastMouse.X) / TILE_SIZE);
+                float x = ArrangeTileNumber(-(float)(_Offset.X - _LastMouse.X) / TILE_SIZE);
                 float y = -(float)(_Offset.Y - _LastMouse.Y) / TILE_SIZE;
                 return TileToWorldPos(x, y).Y;
             }
@@ -141,7 +207,7 @@ namespace WindowsFormsApp1
         {
             get
             {
-                float x = ArrageTileNumber(-(float)(_Offset.X - _LastMouse.X) / TILE_SIZE);
+                float x = ArrangeTileNumber(-(float)(_Offset.X - _LastMouse.X) / TILE_SIZE);
                 float y = -(float)(_Offset.Y - _LastMouse.Y) / TILE_SIZE;
                 return TileToWorldPos(x, y).X;
             }
@@ -153,10 +219,10 @@ namespace WindowsFormsApp1
             DoubleBuffered = true;
             Cursor = Cursors.Cross;
 
-            _LinkLabel = new LinkLabel() { Text = "© OpenStreetMap contributors", BackColor = Color.FromArgb(100, Color.White) };
+            _LinkLabel = new LinkLabel() { Text = "", BackColor = Color.FromArgb(100, Color.White) };
             _LinkLabel.AutoSize = true;
             _LinkLabel.ForeColor = Color.Black;
-            _LinkLabel.Links.Add(new LinkLabel.Link(2, 13, "https://www.openstreetmap.org/copyright"));
+            
             _LinkLabel.Margin = new Padding(2);
             _LinkLabel.LinkClicked += _LinkLabel_LinkClicked;
 
@@ -175,10 +241,6 @@ namespace WindowsFormsApp1
 
             base.OnSizeChanged(e);
         }
-
-
-
-        
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
@@ -213,55 +275,54 @@ namespace WindowsFormsApp1
             base.OnMouseMove(e);
         }
 
-        private float ArrageTileNumber(float n)
+        private float ArrangeTileNumber(float n)
         {
-            int size = MapSizeInTiles;
+            int size = FullMapSizeInTiles;
             return (n %= size) >= 0 ? n : (n + size);
         }
 
         protected override void OnPaint(PaintEventArgs pe)
         {
-            if (DesignMode) return;
-
-            // find tiles that are visible at the moment
-
-            // indices of first visible tile
-            int fromX = (int)Math.Floor(-(float)_Offset.X / TILE_SIZE);
-            int fromY = (int)Math.Floor(-(float)_Offset.Y / TILE_SIZE);
-
-            // count of visible tiles (vertically and horizontally)
-            int tilesByWidth = (int)Math.Ceiling((float)Width / TILE_SIZE);
-            int tilesByHeight = (int)Math.Ceiling((float)Height / TILE_SIZE);
-
-            int toX = fromX + tilesByWidth;
-            int toY = fromY + tilesByHeight;
-
-            foreach (var c in _Cache)
+            if (!DesignMode)
             {
-                c.Used = false;
-            }
+                // indices of first visible tile
+                int fromX = (int)Math.Floor(-(float)_Offset.X / TILE_SIZE);
+                int fromY = (int)Math.Floor(-(float)_Offset.Y / TILE_SIZE);
 
-            for (int x = fromX; x <= toX; x++)
-            {
-                for (int y = fromY; y <= toY; y++)
+                // count of visible tiles (vertically and horizontally)
+                int tilesByWidth = (int)Math.Ceiling((float)Width / TILE_SIZE);
+                int tilesByHeight = (int)Math.Ceiling((float)Height / TILE_SIZE);
+
+                int toX = fromX + tilesByWidth;
+                int toY = fromY + tilesByHeight;
+
+                foreach (var c in _Cache)
                 {
-                    int x_ = (int)ArrageTileNumber(x);
-                    if (y < 0 || y >= MapSizeInTiles) continue;
+                    c.Used = false;
+                }
 
-                    Image tile = TryGetTile(x_, y, ZoomLevel);
-                    if (tile != null)
+                for (int x = fromX; x <= toX; x++)
+                {
+                    for (int y = fromY; y <= toY; y++)
                     {
-                        DrawTile(pe.Graphics, x, y, tile);
+                        int x_ = (int)ArrangeTileNumber(x);
+                        if (y >= 0 && y < FullMapSizeInTiles)
+                        {
+                            Image tile = TryGetTile(x_, y, ZoomLevel);
+                            if (tile != null)
+                            {
+                                DrawTile(pe.Graphics, x, y, tile);
+                            }
+                        }
                     }
                 }
+
+                // Dispose images that were not used 
+                _Cache.Where(c => !c.Used).ToList().ForEach(c => c.Image.Dispose());
+
+                // Update cache, leave only used images
+                _Cache = new ConcurrentBag<CachedImage>(_Cache.Where(c => c.Used));
             }
-
-
-            // Dispose images that were not used 
-            _Cache.Where(c => !c.Used).ToList().ForEach(c => c.Image.Dispose());
-
-            // Update cache, leave only used images
-            _Cache = new ConcurrentBag<CachedImage>(_Cache.Where(c => c.Used));
 
             base.OnPaint(pe);
         }
@@ -364,6 +425,19 @@ namespace WindowsFormsApp1
             return p;
         }
 
+        public void ClearCache()
+        {
+            _Cache = new ConcurrentBag<CachedImage>();
+            if (TileServer != null)
+            {
+                if (Directory.Exists(TileServer.CacheFolder))
+                {
+                    Directory.Delete(TileServer.CacheFolder, true);
+                }
+            }
+            Invalidate();
+        }
+
         public class CachedImage
         {
             public int X { get; set; }
@@ -373,195 +447,6 @@ namespace WindowsFormsApp1
             public bool Used { get; set; }
         }
 
-        public interface ITileServer : IDisposable
-        {
-            string CacheFolder { get; }
-            void RequestImage(int x, int y, int z);
-            event Action InvalidateRequired;
-            void SetZoomLevel(int z);
-        }
-
-        public abstract class WebTileServer : ITileServer
-        {
-            protected ConcurrentBag<CachedImage> _DowloadPool = new ConcurrentBag<CachedImage>();
-
-            private Thread _Worker = null;
-
-            private bool _IsDisposed = false;
-
-            private EventWaitHandle _WorkerWaitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
-
-            public string CacheFolder { get; protected set; }
-
-            protected abstract Uri GetTileUri(int x, int y, int z);
-
-            protected int _ZoomLevel;
-
-            public event Action InvalidateRequired;
-
-            public WebTileServer()
-            {
-                ServicePointManager.ServerCertificateValidationCallback = new System.Net.Security.RemoteCertificateValidationCallback(AcceptAllCertificates);
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-
-                _Worker = new Thread(new ThreadStart(DownloadImages));
-                _Worker.Start();
-            }
-
-            private bool AcceptAllCertificates(object sender, System.Security.Cryptography.X509Certificates.X509Certificate certification, System.Security.Cryptography.X509Certificates.X509Chain chain, System.Net.Security.SslPolicyErrors sslPolicyErrors)
-            {
-                return true;
-            }
-
-            public void RequestImage(int x, int y, int z)
-            {
-                // check that image is already in download pool
-                if (!_DowloadPool.Any(c => c.X == x && c.Y == y && c.Z == z))
-                {
-                    // add image request to pool
-                    _DowloadPool.Add(new CachedImage() { X = x, Y = y, Z = z });
-
-                    // resume worker thread
-                    _WorkerWaitHandle.Set();
-                }
-            }
-
-            private void DownloadImages()
-            {
-                while (!_IsDisposed)
-                {
-                    try
-                    {
-                        if (_DowloadPool.TryTake(out CachedImage cached))
-                        {
-                            // ignore pooled items with zoom level different than current
-                            if (cached.Z != _ZoomLevel) continue;
-
-                            string localDir = Path.Combine(CacheFolder, $"{cached.Z}", $"{cached.X}", $"{cached.Y}.png");
-
-                            Uri uri = GetTileUri(cached.X, cached.Y, cached.Z);
-
-                            Directory.CreateDirectory(Path.GetDirectoryName(localDir));
-
-                            // First download the image to our memory.
-                            var request = (HttpWebRequest)WebRequest.Create(uri);
-                            request.UserAgent = "MapControl 1.0 contact mapcontrol@mapcontrol.io";
-
-                            MemoryStream buffer = new MemoryStream();
-                            using (var response = request.GetResponse())
-                            {
-                                Stream stream = response.GetResponseStream();
-                                Image image = Image.FromStream(stream);
-
-                                try
-                                {
-                                    image.Save(localDir);
-                                }
-                                catch { }
-                                stream.Close();
-                            }
-
-                            InvalidateRequired?.Invoke();
-                        }
-                        else
-                        {
-                            _WorkerWaitHandle.WaitOne();
-                        }
-                    }
-                    catch (WebException we)
-                    {
-
-                    }
-                    catch (NotSupportedException nse) // Problem creating the bitmap (messed up download?)
-                    {
-
-                    }
-                    finally
-                    {
-                        //Thread.Sleep(1000);
-                    }
-                };
-            }
-
-            public void Dispose()
-            {
-                _IsDisposed = true;
-                _WorkerWaitHandle.Set();
-            }
-
-            public void SetZoomLevel(int z)
-            {
-                _ZoomLevel = z;
-            }
-        }
-
-        public class EmbeddedTileServer : ITileServer
-        {
-            public string CacheFolder => null;
-
-            public event Action InvalidateRequired;
-
-            public void Dispose()
-            {
-                
-            }
-
-            public void RequestImage(int x, int y, int z)
-            {
-                
-            }
-
-            public void SetZoomLevel(int z)
-            {
-                
-            }
-        }
-
-        public class OsmTileServer : WebTileServer
-        {
-            private Random _Random = new Random();
-            private string[] _TileServers = new[] { "a", "b", "c" };
-            
-            public OsmTileServer()
-            {
-                CacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MapControl", "OpenStreetMap");
-            }
-           
-            protected override Uri GetTileUri(int x, int y, int z)
-            {
-                string server = _TileServers[_Random.Next(_TileServers.Length)];
-                return new Uri($"https://{server}.tile.openstreetmap.org/{z}/{x}/{y}.png");
-            }
-        }
-
-        public class OpenTopoMapServer : WebTileServer
-        {
-            private Random _Random = new Random();
-            private string[] _TileServers = new[] { "a", "b", "c" };
-
-            public OpenTopoMapServer()
-            {
-                CacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MapControl", "OpenTopoMap");
-            }
-
-            protected override Uri GetTileUri(int x, int y, int z)
-            {
-                string server = _TileServers[_Random.Next(_TileServers.Length)];
-                return new Uri($"https://{server}.tile.opentopomap.org/{z}/{x}/{y}.png");
-            }
-        }
-
-        public class ArcGisTileServer : WebTileServer
-        {
-            public ArcGisTileServer()
-            {
-                CacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MapControl", "ArcGis");
-            }
-
-            protected override Uri GetTileUri(int x, int y, int z)
-            {
-                return new Uri($"http://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}");
-            }
-        }
+        
     }
 }

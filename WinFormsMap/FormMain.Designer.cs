@@ -28,30 +28,63 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.mapControl1 = new WindowsFormsApp1.MapControl();
+            this.btnClearCache = new System.Windows.Forms.Button();
+            this.cmbTileServers = new System.Windows.Forms.ComboBox();
+            this.mapControl = new WindowsFormsApp1.MapControl();
             this.SuspendLayout();
             // 
-            // mapControl1
+            // btnClearCache
             // 
-            this.mapControl1.BackColor = System.Drawing.Color.White;
-            this.mapControl1.Cursor = System.Windows.Forms.Cursors.Cross;
-            this.mapControl1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.mapControl1.ForeColor = System.Drawing.Color.White;
-            this.mapControl1.Location = new System.Drawing.Point(0, 0);
-            this.mapControl1.Name = "mapControl1";
-            this.mapControl1.Size = new System.Drawing.Size(800, 450);
-            this.mapControl1.TabIndex = 0;
-            this.mapControl1.Text = "mapControl1";
-            this.mapControl1.Paint += new System.Windows.Forms.PaintEventHandler(this.mapControl1_Paint);
-            this.mapControl1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.mapControl1_MouseMove);
+            this.btnClearCache.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnClearCache.Location = new System.Drawing.Point(721, 3);
+            this.btnClearCache.Name = "btnClearCache";
+            this.btnClearCache.Size = new System.Drawing.Size(75, 23);
+            this.btnClearCache.TabIndex = 1;
+            this.btnClearCache.Text = "Clear cache";
+            this.btnClearCache.UseVisualStyleBackColor = true;
+            this.btnClearCache.Click += new System.EventHandler(this.btnClearCache_Click);
             // 
-            // Form1
+            // cmbTileServers
+            // 
+            this.cmbTileServers.AllowDrop = true;
+            this.cmbTileServers.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.cmbTileServers.DisplayMember = "Name";
+            this.cmbTileServers.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbTileServers.FormattingEnabled = true;
+            this.cmbTileServers.Location = new System.Drawing.Point(505, 5);
+            this.cmbTileServers.Name = "cmbTileServers";
+            this.cmbTileServers.Size = new System.Drawing.Size(210, 21);
+            this.cmbTileServers.TabIndex = 2;
+            this.cmbTileServers.SelectedIndexChanged += new System.EventHandler(this.cmbTileServers_SelectedIndexChanged);
+            // 
+            // mapControl
+            // 
+            this.mapControl.BackColor = System.Drawing.Color.White;
+            this.mapControl.CenterLat = 85.051132202148438D;
+            this.mapControl.CenterLon = -180D;
+            this.mapControl.Cursor = System.Windows.Forms.Cursors.Cross;
+            this.mapControl.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.mapControl.ForeColor = System.Drawing.Color.White;
+            this.mapControl.Location = new System.Drawing.Point(0, 0);
+            this.mapControl.MaxZoomLevel = 5;
+            this.mapControl.Name = "mapControl";
+            this.mapControl.Size = new System.Drawing.Size(800, 450);
+            this.mapControl.TabIndex = 0;
+            this.mapControl.Text = "mapControl1";
+            this.mapControl.TileServer = null;
+            this.mapControl.ZoomLevel = 0;
+            this.mapControl.Paint += new System.Windows.Forms.PaintEventHandler(this.mapControl_Paint);
+            this.mapControl.MouseMove += new System.Windows.Forms.MouseEventHandler(this.mapControl_MouseMove);
+            // 
+            // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.mapControl1);
-            this.Name = "Form1";
+            this.Controls.Add(this.cmbTileServers);
+            this.Controls.Add(this.btnClearCache);
+            this.Controls.Add(this.mapControl);
+            this.Name = "FormMain";
             this.Text = "Form1";
             this.ResumeLayout(false);
 
@@ -59,7 +92,9 @@
 
         #endregion
 
-        private MapControl mapControl1;
+        private MapControl mapControl;
+        private System.Windows.Forms.Button btnClearCache;
+        private System.Windows.Forms.ComboBox cmbTileServers;
     }
 }
 
