@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net451</TargetFrameworks>
+    <Version>1.0</Version>
+    <Product>System.Windows.Forms.MapControl</Product>
+    <Description>Map control for WindowsForms</Description>
+    <Copyright>© Alexander Krutov 2020</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="OfflineMaps\**\*.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Windows" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+  
+</Project>
