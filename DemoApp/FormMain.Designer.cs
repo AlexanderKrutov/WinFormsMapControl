@@ -62,8 +62,6 @@ namespace DemoApp
             // mapControl
             // 
             this.mapControl.BackColor = System.Drawing.Color.White;
-            this.mapControl.CenterLat = 85.051132202148438D;
-            this.mapControl.CenterLon = -180D;
             this.mapControl.Cursor = System.Windows.Forms.Cursors.Cross;
             this.mapControl.Dock = System.Windows.Forms.DockStyle.Fill;
             this.mapControl.ForeColor = System.Drawing.Color.White;

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -78,7 +79,7 @@ namespace System.Windows.Forms
             get => _MinZoomLevel;
             set
             {
-                if (value < 0 || value > TileServer?.MinZoomLevel)
+                if (value < 0 || value < TileServer?.MinZoomLevel)
                     throw new ArgumentException($"{value} is an incorrect value for {nameof(MinZoomLevel)} property.");
 
                 _MinZoomLevel = value;
@@ -146,7 +147,7 @@ namespace System.Windows.Forms
                     MinZoomLevel = Math.Max(MinZoomLevel, _TileServer.MinZoomLevel);
 
                     SetTileServerCacheFolder();
-                    ClearCache();
+                    _Cache = new ConcurrentBag<CachedImage>();
 
                     if (_TileServer.AttributionText != null)
                     {
@@ -168,63 +169,43 @@ namespace System.Windows.Forms
 
         private HtmlLinkLabel _LinkLabel;
 
-        public double CenterLon
+        /// <summary>
+        /// Gets or sets geographical coordinates of map center
+        /// </summary>
+        public GeoPoint Center
         {
             get
             {
                 float x = ArrangeTileNumber(-(_Offset.X - Width / 2) / TILE_SIZE);
                 float y = -(_Offset.Y - Height / 2) / TILE_SIZE;
-                return TileToWorldPos(x, y).X;
+                return TileToWorldPos(x, y);
             }
             set
             {
-                var center = WorldToTilePos(value, CenterLat);
+                var center = WorldToTilePos(value);
                 _Offset.X = -(int)(center.X * TILE_SIZE) + Width / 2;
                 _Offset.Y = -(int)(center.Y * TILE_SIZE) + Height / 2;
                 Invalidate();
             }
         }
 
-        public double CenterLat
-        {
-            get
-            {
-                float x = ArrangeTileNumber(-(_Offset.X - Width / 2) / TILE_SIZE);
-                float y = -(_Offset.Y - Height / 2) / TILE_SIZE;
-                return TileToWorldPos(x, y).Y;
-            }
-            set
-            {
-                var center = WorldToTilePos(CenterLon, value);
-                _Offset.X = -(int)(center.X * TILE_SIZE) + Width / 2;
-                _Offset.Y = -(int)(center.Y * TILE_SIZE) + Height / 2;
-                Invalidate();
-            }
-        }
 
-        public double MouseLat
+        /// <summary>
+        /// Gets or sets geographical coordinates of current position of mouse
+        /// </summary>
+        public GeoPoint Mouse
         {
             get
             {
                 float x = ArrangeTileNumber(-(float)(_Offset.X - _LastMouse.X) / TILE_SIZE);
                 float y = -(float)(_Offset.Y - _LastMouse.Y) / TILE_SIZE;
-                return TileToWorldPos(x, y).Y;
+                return TileToWorldPos(x, y);
             }
-        }
+        }        
 
-        public double MouseLon
-        {
-            get
-            {
-                float x = ArrangeTileNumber(-(float)(_Offset.X - _LastMouse.X) / TILE_SIZE);
-                float y = -(float)(_Offset.Y - _LastMouse.Y) / TILE_SIZE;
-                return TileToWorldPos(x, y).X;
-            }
-        }
-
-        public ICollection<PointF> Points { get; } = new List<PointF>();
-
-        public ICollection<ICollection<PointF>> Tracks { get; } = new List<ICollection<PointF>>();
+        public ICollection<GeoPoint> Points { get; } = new List<GeoPoint>();
+        public ICollection<ICollection<GeoPoint>> Tracks { get; } = new List<ICollection<GeoPoint>>();
+        public ICollection<ICollection<GeoPoint>> Polygons { get; } = new List<ICollection<GeoPoint>>();
 
         public MapControl()
         {
@@ -298,9 +279,12 @@ namespace System.Windows.Forms
         {
             if (!DesignMode)
             {
+                pe.Graphics.SmoothingMode = SmoothingMode.None;
                 DrawTiles(pe.Graphics);
+                pe.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
                 DrawPoints(pe.Graphics);
                 DrawTracks(pe.Graphics);
+                DrawPolygons(pe.Graphics);
             }
 
             base.OnPaint(pe);
@@ -347,40 +331,89 @@ namespace System.Windows.Forms
             _Cache = new ConcurrentBag<CachedImage>(_Cache.Where(c => c.Used));
         }
 
-        private void DrawPoints(Graphics g)
+        private void DrawPoints(Graphics gr)
         {
-            foreach (PointF point in Points)
+            foreach (GeoPoint g in Points)
             {
-                var p = GetProjection(point.X, point.Y);
+                var p = GetProjection(g);
                 p.X = p.X % FullMapSizeInPixels;
                 do
                 {
-                    g.FillEllipse(Brushes.Red, p.X - 1, p.Y - 1, 3, 3);
+                    gr.FillEllipse(Brushes.Red, p.X - 1, p.Y - 1, 3, 3);
                     p.X += FullMapSizeInPixels;
                 }
                 while (p.X >= 0 && p.X <= Width);
             }
         }
 
-        private void DrawTracks(Graphics g)
+        private void DrawTracks(Graphics gr)
         {
             foreach (var track in Tracks)
             {
                 for (int i = 0; i < track.Count - 1; i++)
                 {
-                    PointF point0 = track.ElementAt(i);
-                    var p0 = GetProjection(point0.X, point0.Y);
-
-                    PointF point1 = track.ElementAt(i + 1);
-                    var p1 = GetProjection(point1.X, point1.Y);
-
-                    var points = SegmentScreenIntersection(p0, p1);
-
-                    if (points.Length == 2)
+                    PointF[] p = new PointF[2];
+                    for (int j = 0; j < 2; j++)
                     {
-                        g.DrawLine(Pens.Red, points[0], points[1]);
+                        GeoPoint pp = track.ElementAt(i + j);
+                        p[j] = GetProjection(pp);
                     }
+
+                    float dx = p[1].X - p[0].X;
+                    p[0].X = p[0].X % FullMapSizeInPixels;
+                    p[1].X = p[0].X + dx;
+                    do
+                    {
+                        PointF[] pp = SegmentScreenIntersection(p[0], p[1]);
+                        if (pp.Length == 2)
+                        {
+                            gr.DrawLine(Pens.Red, pp[0], pp[1]);
+                        }
+                        p[0].X += FullMapSizeInPixels;
+                        p[1].X += FullMapSizeInPixels;
+                    }
+                    while ((p[0].X >= 0 && p[0].X <= Width) || (p[1].X >= 0 && p[1].X <= Width));
+                    
                 }                
+            }
+        }
+
+        private void DrawPolygons(Graphics gr)
+        {
+            foreach (var polygon in Polygons)
+            {                
+                PointF lastPoint = PointF.Empty;
+                GraphicsPath gp = new GraphicsPath();
+                gp.StartFigure();
+
+                for (int i = 0; i < polygon.Count; i++)
+                {
+                    
+                    GeoPoint geo = polygon.ElementAt(i);
+                    PointF p = GetProjection(geo);
+
+                    if (lastPoint == PointF.Empty)
+                    {
+                        lastPoint = p;
+                    }
+                    else
+                    {
+                        gp.AddLine(lastPoint, p);
+                        lastPoint = p;
+                    }
+
+                }
+
+                SolidBrush br = new SolidBrush(Color.FromArgb(100, Color.Black));
+                //int count = (int)Math.Ceiling((double)Width / FullMapSizeInPixels);
+                //for (int i = -count; i < count; i++)
+                //{
+                //    var state = gr.Save();
+                //    gr.TranslateTransform(i * FullMapSizeInPixels, 0);
+                    gr.FillPath(br, gp);
+                //    gr.Restore(state);
+                //}
+                gp.Dispose();
             }
         }
 
@@ -541,31 +574,31 @@ namespace System.Windows.Forms
         /// <param name="lon">Longitude, in degrees, positive East</param>
         /// <param name="lat">Latitude, in degrees</param>
         /// <returns></returns>
-        public PointF GetProjection(double lon, double lat)
+        public PointF GetProjection(GeoPoint g)
         {
-            var p = WorldToTilePos(lon, lat);
+            var p = WorldToTilePos(g);
             return new PointF(p.X * TILE_SIZE + _Offset.X, p.Y * TILE_SIZE + _Offset.Y);
         }
 
-        public PointF WorldToTilePos(double lon, double lat)
+        public PointF WorldToTilePos(GeoPoint g)
         {
             PointF p = new Point();
-            p.X = (float)((lon + 180.0) / 360.0 * (1 << ZoomLevel));
-            p.Y = (float)((1.0 - Math.Log(Math.Tan(lat * Math.PI / 180.0) +
-                1.0 / Math.Cos(lat * Math.PI / 180.0)) / Math.PI) / 2.0 * (1 << ZoomLevel));
+            p.X = (float)((g.Longitude + 180.0) / 360.0 * (1 << ZoomLevel));
+            p.Y = (float)((1.0 - Math.Log(Math.Tan(g.Latitude * Math.PI / 180.0) +
+                1.0 / Math.Cos(g.Latitude * Math.PI / 180.0)) / Math.PI) / 2.0 * (1 << ZoomLevel));
 
             return p;
         }
 
-        public PointF TileToWorldPos(double tile_x, double tile_y)
+        public GeoPoint TileToWorldPos(double tile_x, double tile_y)
         {
-            PointF p = new Point();
+            GeoPoint g = new GeoPoint();
             double n = Math.PI - ((2.0 * Math.PI * tile_y) / Math.Pow(2.0, ZoomLevel));
 
-            p.X = (float)((tile_x / Math.Pow(2.0, ZoomLevel) * 360.0) - 180.0);
-            p.Y = (float)(180.0 / Math.PI * Math.Atan(Math.Sinh(n)));
+            g.Longitude = (float)((tile_x / Math.Pow(2.0, ZoomLevel) * 360.0) - 180.0);
+            g.Latitude = (float)(180.0 / Math.PI * Math.Atan(Math.Sinh(n)));
 
-            return p;
+            return g;
         }
 
         public void ClearCache(bool allTileServers = false)
