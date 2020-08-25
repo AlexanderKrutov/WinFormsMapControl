@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{4E8D95A5-2836-4C63-98FC-3F8A3B1BEA0C}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>WindowsFormsApp1</RootNamespace>
-    <AssemblyName>WindowsFormsApp1</AssemblyName>
+    <RootNamespace>DemoApp</RootNamespace>
+    <AssemblyName>DemoApp</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -65,6 +65,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -84,6 +85,18 @@
       <Project>{f347f6dd-9c88-4671-b427-be8bd84d1eb3}</Project>
       <Name>System.Windows.Forms.MapControl</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MapObjects\ShadowPath.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MapObjects\CentralLine.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MapObjects\PenumbraLimit.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MapObjects\RiseSetCurves.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

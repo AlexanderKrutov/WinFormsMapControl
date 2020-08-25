@@ -97,28 +97,25 @@ namespace System.Windows.Forms
 
                         string localDir = Path.Combine(CacheFolder, $"{cached.Z}", $"{cached.X}", $"{cached.Y}.png");
 
-                        Uri uri = GetTileUri(cached.X, cached.Y, cached.Z);
-
-                        Directory.CreateDirectory(Path.GetDirectoryName(localDir));
-
-                        // First download the image to our memory.
-                        var request = (HttpWebRequest)WebRequest.Create(uri);
-                        request.UserAgent = "MapControl 1.0 contact mapcontrol@mapcontrol.io";
-
-                        MemoryStream buffer = new MemoryStream();
-                        using (var response = request.GetResponse())
+                        if (!File.Exists(localDir))
                         {
-                            Stream stream = response.GetResponseStream();
-                            Image image = Image.FromStream(stream);
-                            try
-                            {
-                                image.Save(localDir);
-                            }
-                            catch { }
-                            stream.Close();
-                        }
+                            Uri uri = GetTileUri(cached.X, cached.Y, cached.Z);
 
-                        InvalidateRequired?.Invoke();
+                            Directory.CreateDirectory(Path.GetDirectoryName(localDir));
+
+                            // First download the image to our memory.
+                            var request = (HttpWebRequest)WebRequest.Create(uri);
+                            request.UserAgent = "MapControl 1.0 contact mapcontrol@mapcontrol.io";
+
+                            MemoryStream buffer = new MemoryStream();
+                            using (var response = request.GetResponse())
+                            using (Stream stream = response.GetResponseStream())
+                            {
+                                Image.FromStream(stream).Save(localDir);
+                            }
+
+                            InvalidateRequired?.Invoke();
+                        }
                     }
                     else
                     {

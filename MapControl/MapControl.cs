@@ -185,6 +185,8 @@ namespace System.Windows.Forms
                 var center = WorldToTilePos(value);
                 _Offset.X = -(int)(center.X * TILE_SIZE) + Width / 2;
                 _Offset.Y = -(int)(center.Y * TILE_SIZE) + Height / 2;
+                _Offset.X = (int)(_Offset.X % FullMapSizeInPixels);
+
                 Invalidate();
             }
         }
@@ -203,8 +205,8 @@ namespace System.Windows.Forms
             }
         }        
 
-        public ICollection<GeoPoint> Points { get; } = new List<GeoPoint>();
-        public ICollection<ICollection<GeoPoint>> Tracks { get; } = new List<ICollection<GeoPoint>>();
+        public ICollection<Marker> Markers { get; } = new List<Marker>();
+        public ICollection<Track> Tracks { get; } = new List<Track>();
         public ICollection<ICollection<GeoPoint>> Polygons { get; } = new List<ICollection<GeoPoint>>();
 
         public MapControl()
@@ -260,6 +262,8 @@ namespace System.Windows.Forms
                 _Offset.X += (e.X - _LastMouse.X);
                 _Offset.Y += (e.Y - _LastMouse.Y);
 
+                _Offset.X = (int)(_Offset.X % FullMapSizeInPixels);
+
                 Invalidate();
             }
 
@@ -282,7 +286,7 @@ namespace System.Windows.Forms
                 pe.Graphics.SmoothingMode = SmoothingMode.None;
                 DrawTiles(pe.Graphics);
                 pe.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                DrawPoints(pe.Graphics);
+                DrawMarkers(pe.Graphics);
                 DrawTracks(pe.Graphics);
                 DrawPolygons(pe.Graphics);
             }
@@ -331,18 +335,16 @@ namespace System.Windows.Forms
             _Cache = new ConcurrentBag<CachedImage>(_Cache.Where(c => c.Used));
         }
 
-        private void DrawPoints(Graphics gr)
+        private void DrawMarkers(Graphics gr)
         {
-            foreach (GeoPoint g in Points)
+            foreach (Marker m in Markers)
             {
-                var p = GetProjection(g);
-                p.X = p.X % FullMapSizeInPixels;
-                do
+                var p = GetProjection(m.Point);
+                Draw(gr, () => gr.FillEllipse(m.MarkerBrush ?? new SolidBrush(ForeColor), p.X - 1, p.Y - 1, 3, 3));
+                if (m.Label != null)
                 {
-                    gr.FillEllipse(Brushes.Red, p.X - 1, p.Y - 1, 3, 3);
-                    p.X += FullMapSizeInPixels;
+                    Draw(gr, () => gr.DrawString(m.Label, m.Font ?? Font, m.LabelBrush ?? new SolidBrush(ForeColor), new PointF(p.X + m.MarkerWidth, p.Y + m.MarkerWidth)));
                 }
-                while (p.X >= 0 && p.X <= Width);
             }
         }
 
@@ -350,31 +352,20 @@ namespace System.Windows.Forms
         {
             foreach (var track in Tracks)
             {
-                for (int i = 0; i < track.Count - 1; i++)
-                {
-                    PointF[] p = new PointF[2];
-                    for (int j = 0; j < 2; j++)
-                    {
-                        GeoPoint pp = track.ElementAt(i + j);
-                        p[j] = GetProjection(pp);
-                    }
+                PointF[] points = new PointF[track.Count];
 
-                    float dx = p[1].X - p[0].X;
-                    p[0].X = p[0].X % FullMapSizeInPixels;
-                    p[1].X = p[0].X + dx;
-                    do
+                for (int i = 0; i < track.Count; i++)
+                {
+                    GeoPoint g = track.ElementAt(i);
+                    PointF p = GetProjection(g);
+                    if (i > 0)
                     {
-                        PointF[] pp = SegmentScreenIntersection(p[0], p[1]);
-                        if (pp.Length == 2)
-                        {
-                            gr.DrawLine(Pens.Red, pp[0], pp[1]);
-                        }
-                        p[0].X += FullMapSizeInPixels;
-                        p[1].X += FullMapSizeInPixels;
+                        p = NearestPoint(points[i - 1], p, new PointF(p.X - FullMapSizeInPixels, p.Y), new PointF(p.X + FullMapSizeInPixels, p.Y)); 
                     }
-                    while ((p[0].X >= 0 && p[0].X <= Width) || (p[1].X >= 0 && p[1].X <= Width));
-                    
-                }                
+                    points[i] = p;
+                }
+
+                Draw(gr, () => gr.DrawLines(track.Pen, points));
             }
         }
 
@@ -382,131 +373,44 @@ namespace System.Windows.Forms
         {
             foreach (var polygon in Polygons)
             {                
-                PointF lastPoint = PointF.Empty;
-                GraphicsPath gp = new GraphicsPath();
-                gp.StartFigure();
-
-                for (int i = 0; i < polygon.Count; i++)
+                PointF p0 = PointF.Empty;
+                using (GraphicsPath gp = new GraphicsPath())
                 {
-                    
-                    GeoPoint geo = polygon.ElementAt(i);
-                    PointF p = GetProjection(geo);
+                    gp.StartFigure();
 
-                    if (lastPoint == PointF.Empty)
+                    for (int i = 0; i < polygon.Count; i++)
                     {
-                        lastPoint = p;
-                    }
-                    else
-                    {
-                        gp.AddLine(lastPoint, p);
-                        lastPoint = p;
+                        GeoPoint g = polygon.ElementAt(i);
+                        PointF p = GetProjection(g);
+                        if (i > 0)
+                        {
+                            p = NearestPoint(p0, p, new PointF(p.X - FullMapSizeInPixels, p.Y), new PointF(p.X + FullMapSizeInPixels, p.Y));
+                            gp.AddLine(p0, p);                            
+                        }
+                        p0 = p;
                     }
 
+                    SolidBrush br = new SolidBrush(Color.FromArgb(100, Color.Black));
+                    Draw(gr, () => gr.FillPath(br, gp));
                 }
-
-                SolidBrush br = new SolidBrush(Color.FromArgb(100, Color.Black));
-                //int count = (int)Math.Ceiling((double)Width / FullMapSizeInPixels);
-                //for (int i = -count; i < count; i++)
-                //{
-                //    var state = gr.Save();
-                //    gr.TranslateTransform(i * FullMapSizeInPixels, 0);
-                    gr.FillPath(br, gp);
-                //    gr.Restore(state);
-                //}
-                gp.Dispose();
             }
         }
 
-        private PointF[] SegmentScreenIntersection(PointF p1, PointF p2)
+        private void Draw(Graphics gr, Action draw)
         {
-            List<PointF> crosses = new List<PointF>();
-
-            if (IsVisible(p1))
+            int count = (int)Math.Ceiling((double)Width / FullMapSizeInPixels) + 1;
+            for (int i = -count; i < count; i++)
             {
-                crosses.Add(p1);
+                var state = gr.Save();
+                gr.TranslateTransform(i * FullMapSizeInPixels, 0);
+                draw();
+                gr.Restore(state);
             }
-
-            if (IsVisible(p2))
-            {
-                crosses.Add(p2);
-            }
-
-            if (crosses.Count != 2)
-            {
-                crosses.AddRange(EdgeCrosspoints(p1, p2));
-            }
-
-            return crosses.ToArray();
         }
 
-        private PointF[] EdgeCrosspoints(PointF p1, PointF p2)
+        private PointF NearestPoint(PointF point, params PointF[] points)
         {
-            int width = Width;
-            int height = Height;
-
-            PointF p00 = new PointF(0, 0);
-            PointF pW0 = new PointF(width, 0);
-            PointF pWH = new PointF(width, height);
-            PointF p0H = new PointF(0, height);
-
-            List<PointF?> crossPoints = new List<PointF?>();
-
-            // top edge
-            crossPoints.Add(SegmentsIntersection(p1, p2, p00, pW0));
-
-            // right edge
-            crossPoints.Add(SegmentsIntersection(p1, p2, pW0, pWH));
-
-            // bottom edge
-            crossPoints.Add(SegmentsIntersection(p1, p2, pWH, p0H));
-
-            // left edge
-            crossPoints.Add(SegmentsIntersection(p1, p2, p0H, p00));
-
-            return crossPoints.Where(p => p != null).Cast<PointF>().ToArray();
-        }
-
-        private static PointF? SegmentsIntersection(PointF p1, PointF p2, PointF p3, PointF p4)
-        {
-            float v1 = VectorMult(p4.X - p3.X, p4.Y - p3.Y, p1.X - p3.X, p1.Y - p3.Y);
-            float v2 = VectorMult(p4.X - p3.X, p4.Y - p3.Y, p2.X - p3.X, p2.Y - p3.Y);
-            float v3 = VectorMult(p2.X - p1.X, p2.Y - p1.Y, p3.X - p1.X, p3.Y - p1.Y);
-            float v4 = VectorMult(p2.X - p1.X, p2.Y - p1.Y, p4.X - p1.X, p4.Y - p1.Y);
-
-            if ((v1 * v2) < 0 && (v3 * v4) < 0)
-            {
-                float a1 = 0, b1 = 0, c1 = 0;
-                LineEquation(p1, p2, ref a1, ref b1, ref c1);
-
-                float a2 = 0, b2 = 0, c2 = 0;
-                LineEquation(p3, p4, ref a2, ref b2, ref c2);
-
-                double d = a1 * b2 - b1 * a2;
-
-                double dx = -c1 * b2 + b1 * c2;
-                double dy = -a1 * c2 + c1 * a2;
-
-                return new PointF((float)(dx / d), (float)(dy / d));
-            }
-
-            return null;
-        }
-
-        private static float VectorMult(float ax, float ay, float bx, float by)
-        {
-            return ax * by - bx * ay;
-        }
-
-        private static void LineEquation(PointF p1, PointF p2, ref float A, ref float B, ref float C)
-        {
-            A = p2.Y - p1.Y;
-            B = p1.X - p2.X;
-            C = -p1.X * (p2.Y - p1.Y) + p1.Y * (p2.X - p1.X);
-        }
-
-        private bool IsVisible(PointF p)
-        {
-            return p.X >= 0 && p.X <= Width && p.Y >= 0 && p.Y <= Height;
+            return points.OrderBy(p => ((p.X - point.X) * (p.X - point.X) + (p.Y - point.Y) * (p.Y - point.Y))).First();
         }
 
         protected override void OnMouseWheel(MouseEventArgs e)
@@ -526,7 +430,11 @@ namespace System.Windows.Forms
                 double factor = Math.Pow(2, z - ZoomLevel);
                 _Offset.X = (int)((_Offset.X - e.X) * factor) + e.X;
                 _Offset.Y = (int)((_Offset.Y - e.Y) * factor) + e.Y;
+
                 ZoomLevel = z;
+
+                _Offset.X = (int)(_Offset.X % FullMapSizeInPixels);
+
                 Invalidate();
             }
 

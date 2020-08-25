@@ -64,7 +64,7 @@ namespace DemoApp
             this.mapControl.BackColor = System.Drawing.Color.White;
             this.mapControl.Cursor = System.Windows.Forms.Cursors.Cross;
             this.mapControl.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.mapControl.ForeColor = System.Drawing.Color.White;
+            this.mapControl.ForeColor = System.Drawing.Color.Black;
             this.mapControl.Location = new System.Drawing.Point(0, 0);
             this.mapControl.MaxZoomLevel = 19;
             this.mapControl.Name = "mapControl";
