@@ -16,16 +16,19 @@ namespace System.Windows.Forms
 
     public class DrawMarkerEventArgs : HandledEventArgs
     {
-        public Marker Marker { get; private set; }
-        public Graphics Graphics { get; private set; }
-        public PointF Point { get; private set; }
+        public Marker Marker { get; internal set; }
+        public Graphics Graphics { get; internal set; }
+        public PointF Point { get; internal set; }
+        internal DrawMarkerEventArgs() { }
+    }
 
-        public DrawMarkerEventArgs(Marker marker, Graphics graphics, PointF point)
-        {
-            Marker = marker;
-            Graphics = graphics;
-            Point = point;
-        }
+    public class DrawTrackSegmentArgs : HandledEventArgs
+    {
+        public Track Track { get; internal set; }
+        public Graphics Graphics { get; internal set; }
+        public PointF Point1 { get; internal set; }
+        public PointF Point2 { get; internal set; }
+        internal DrawTrackSegmentArgs() { }
     }
 
     /// <summary>
@@ -292,6 +295,11 @@ namespace System.Windows.Forms
         public event EventHandler<DrawMarkerEventArgs> DrawMarker;
 
         /// <summary>
+        /// Raised when track segment is drawn on the map
+        /// </summary>
+        public event EventHandler<DrawTrackSegmentArgs> DrawTrackSegment;
+
+        /// <summary>
         /// Creates new <see cref="MapControl"/> control.
         /// </summary>
         public MapControl()
@@ -371,6 +379,13 @@ namespace System.Windows.Forms
                 _Offset.Y += (e.Y - _LastMouse.Y);
 
                 _Offset.X = (int)(_Offset.X % FullMapSizeInPixels);
+
+                
+                if (_Offset.Y < -(int)FullMapSizeInPixels)
+                    _Offset.Y = -(int)FullMapSizeInPixels;
+
+                if (_Offset.Y > Height)
+                    _Offset.Y = Height;
 
                 Invalidate();
             }
@@ -465,7 +480,12 @@ namespace System.Windows.Forms
                 {
                     if (gr.IsVisible(p))
                     {
-                        var eventArgs = new DrawMarkerEventArgs(m, gr, p);
+                        var eventArgs = new DrawMarkerEventArgs()
+                        {
+                            Graphics = gr,
+                            Marker = m,
+                            Point = p
+                        };
                         DrawMarker?.Invoke(this, eventArgs);
                         if (!eventArgs.Handled)
                         {

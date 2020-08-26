@@ -49,7 +49,7 @@ namespace DemoApp
 
         private void Sample2()
         {
-            var magellanTraveling = new Track(new TrackStyle(Pens.Blue));
+            var magellanTraveling = new Track(new TrackStyle(new Pen(Color.Blue, 2) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash }));
             magellanTraveling.AddRange(ReadPointsFromResource("MagellanExpedition.csv", reversed: true));
             mapControl.Tracks.Add(magellanTraveling);
         }
@@ -69,7 +69,7 @@ namespace DemoApp
 
             cmbExample.Items.AddRange(new Sample[]
             {
-                new Sample("Solar Eclipse Map 11 Aug 1999", Sample1),
+                new Sample("Map of Solar Eclipse 11 Aug 1999", Sample1),
                 new Sample("Magellan's Circumnavigation Map ", Sample2),
                 new Sample("World Greatest Cities", Sample3)
             });
@@ -102,11 +102,12 @@ namespace DemoApp
                 List<Marker> markers = new List<Marker>();
                 foreach (var sp in stringCities)
                 {
-                    string name = sp[0];
-                    long population = long.Parse(sp[3]);                  
+                    string name = sp[0];                        
                     float lon = float.Parse(sp[1], CultureInfo.InvariantCulture);
                     float lat = float.Parse(sp[2], CultureInfo.InvariantCulture);
-                    markers.Add(new Marker(new GeoPoint(lon, lat), mapControl.DefaultMarkerStyle, name) { Data = population });                    
+                    long population = long.Parse(sp[3]);
+                    MarkerStyle markerStyle = new MarkerStyle(new SolidBrush(Color.FromArgb(100, Color.Red)), (float)population / 10e6f * 30.0f, Brushes.Black, SystemFonts.DefaultFont);
+                    markers.Add(new Marker(new GeoPoint(lon, lat), markerStyle, name) { Data = population });                    
                 }
 
                 return markers;
@@ -136,11 +137,6 @@ namespace DemoApp
             this.Text = $"Longitude = {g.Longitude} / Latitude = {g.Latitude} / Zoom = {mapControl.ZoomLevel}";
         }
 
-        private void mapControl_Paint(object sender, PaintEventArgs e)
-        {
-           
-        }
-
         private void btnClearCache_Click(object sender, EventArgs e)
         {
             mapControl.ClearCache(true);
@@ -153,18 +149,9 @@ namespace DemoApp
             ActiveControl = mapControl;
         }
 
-        private void mapControl1_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
-
-        private void mapControl1_MouseMove(object sender, MouseEventArgs e)
-        {
-
-        }
-
         private void cmbExample_SelectedIndexChanged(object sender, EventArgs e)
         {
+            ActiveControl = mapControl;
             mapControl.ClearOverlays();
             var sample = cmbExample.SelectedItem as Sample;
             sample.InitAction();
@@ -172,10 +159,14 @@ namespace DemoApp
 
         private void mapControl_DrawMarker(object sender, DrawMarkerEventArgs e)
         {
-            
-            e.Graphics.FillEllipse(Brushes.Red, e.Point.X - 20, e.Point.Y - 20, 40, 40);
-            e.Handled = true;
-            e.Graphics.DrawString(e.Marker.Label, e.Marker.Style.LabelFont, e.Marker.Style.LabelBrush, e.Point.X + 20 * 0.35f, e.Point.Y + 20 * 0.35f);
+            //e.Graphics.FillEllipse(Brushes.Red, e.Point.X - 20, e.Point.Y - 20, 40, 40);
+            //e.Handled = true;
+            //e.Graphics.DrawString(e.Marker.Label, e.Marker.Style.LabelFont, e.Marker.Style.LabelBrush, e.Point.X + 20 * 0.35f, e.Point.Y + 20 * 0.35f);
+        }
+
+        private void FormMain_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }
