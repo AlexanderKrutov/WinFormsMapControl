@@ -20,6 +20,8 @@ namespace System.Windows.Forms
 
         public override int MaxZoomLevel => 17;
 
+        public override string UserAgent => null;
+
         public override Uri GetTileUri(int x, int y, int z)
         {
             string server = _TileServers[_Random.Next(_TileServers.Length)];

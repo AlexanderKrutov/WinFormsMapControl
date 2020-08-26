@@ -11,9 +11,26 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-
 namespace System.Windows.Forms
 {
+
+    public class DrawMarkerEventArgs : HandledEventArgs
+    {
+        public Marker Marker { get; private set; }
+        public Graphics Graphics { get; private set; }
+        public PointF Point { get; private set; }
+
+        public DrawMarkerEventArgs(Marker marker, Graphics graphics, PointF point)
+        {
+            Marker = marker;
+            Graphics = graphics;
+            Point = point;
+        }
+    }
+
+    /// <summary>
+    /// Map control for displaying online and offline maps.
+    /// </summary>
     [DesignerCategory("code")]
     public partial class MapControl : Control
     {
@@ -28,37 +45,74 @@ namespace System.Windows.Forms
         private Point _Offset = new Point();
 
         /// <summary>
-        /// Map zoom level backing field
+        /// Flag indicating thar mouse is captures
+        /// </summary>
+        private bool _MouseCaptured = false;
+
+        /// <summary>
+        /// Last known mouse position
+        /// </summary>
+        private Point _LastMouse = new Point();
+
+        /// <summary>
+        /// Cache used to store tile images
+        /// </summary>
+        private ConcurrentBag<CachedImage> _Cache = new ConcurrentBag<CachedImage>();
+
+        /// <summary>
+        /// Link label displaying in the bottom right corner of the map with attribution text
+        /// </summary>
+        private HtmlLinkLabel _LinkLabel;
+
+        /// <summary>
+        /// Gets size of map in tiles
+        /// </summary>
+        private int FullMapSizeInTiles => 1 << ZoomLevel;
+
+        /// <summary>
+        /// Gets maps size in pixels
+        /// </summary>
+        private long FullMapSizeInPixels => FullMapSizeInTiles * TILE_SIZE;
+
+        /// <summary>
+        /// Backing field for <see cref="ZoomLevel"/> property
         /// </summary>
         private int _ZoomLevel = 0;
 
         /// <summary>
         /// Map zoom level
         /// </summary>
+        [Description("Map zoom level"), Category("Behavior")]
         public int ZoomLevel
         {
             get => _ZoomLevel;
             set
             {
-                if (value < 0 || value > TileServer?.MaxZoomLevel)
-                    throw new ArgumentException($"{value} is an incorrect value for {nameof(ZoomLevel)} property.");
+                if (value < 0 || value > 19)
+                    throw new ArgumentException($"{value} is an incorrect value for {nameof(ZoomLevel)} property. Value should be in range from 0 to 19.");
 
-                _ZoomLevel = value;
-                Invalidate();
+                SetZoomLevel(value, new Point(Width / 2, Height / 2));
             }
         }
 
-
+        /// <summary>
+        /// Backing field for <see cref="CacheFolder"/> property
+        /// </summary>
         private string _CacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MapControl");
+        
+        /// <summary>
+        /// Path to tile cache folder
+        /// </summary>
+        [Browsable(false)]
         public string CacheFolder
         {
             get => _CacheFolder;
-            set 
+            set
             {
                 if (string.IsNullOrEmpty(value))
                     throw new ArgumentException($"{nameof(CacheFolder)} property value should not be empty.");
 
-                if (value.IndexOfAny(Path.GetInvalidPathChars()) == -1)
+                if (value.IndexOfAny(Path.GetInvalidPathChars()) != -1)
                     throw new ArgumentException($"{value} is an incorrect value for {nameof(CacheFolder)} property.");
 
                 _CacheFolder = value;
@@ -74,13 +128,14 @@ namespace System.Windows.Forms
         /// <summary>
         /// Minimal zoom level
         /// </summary>
+        [Description("Minimal zoom level"), Category("Behavior")]
         public int MinZoomLevel
         {
             get => _MinZoomLevel;
             set
             {
-                if (value < 0 || value < TileServer?.MinZoomLevel)
-                    throw new ArgumentException($"{value} is an incorrect value for {nameof(MinZoomLevel)} property.");
+                if (value < 0 || value > 19)
+                    throw new ArgumentException($"{value} is an incorrect value for {nameof(MinZoomLevel)} property. Value should be in range from 0 to 19.");
 
                 _MinZoomLevel = value;
                 Invalidate();
@@ -95,37 +150,29 @@ namespace System.Windows.Forms
         /// <summary>
         /// Maximal zoom level
         /// </summary>
+        [Description("Maximal zoom level"), Category("Behavior")]
         public int MaxZoomLevel
         {
             get => _MaxZoomLevel;
             set
             {
-                if (value < 0 || value > TileServer?.MaxZoomLevel)
-                    throw new ArgumentException($"{value} is an incorrect value for {nameof(MaxZoomLevel)} property.");
+                if (value < 0 || value > 19)
+                    throw new ArgumentException($"{value} is an incorrect value for {nameof(MaxZoomLevel)} property. Value should be in range from 0 to 19.");
 
                 _MaxZoomLevel = value;
                 Invalidate();
             }
         }
-
+       
         /// <summary>
-        /// Gets size of map in tiles
+        /// Backing field for <see cref="TileServer"/> property
         /// </summary>
-        public int FullMapSizeInTiles => 1 << ZoomLevel;
-
-        /// <summary>
-        /// Gets maps size in pixels
-        /// </summary>
-        public long FullMapSizeInPixels => FullMapSizeInTiles * TILE_SIZE;
-
-        private bool _MouseCaptured = false;
-
-        private Point _LastMouse = new Point();
-      
-        private ConcurrentBag<CachedImage> _Cache = new ConcurrentBag<CachedImage>();
-
         private ITileServer _TileServer;
 
+        /// <summary>
+        /// Map tile server
+        /// </summary>
+        [Browsable(false)]
         public ITileServer TileServer
         {
             get => _TileServer;
@@ -143,8 +190,6 @@ namespace System.Windows.Forms
                 if (value != null)
                 {
                     _TileServer.InvalidateRequired += Invalidate;
-                    MaxZoomLevel = Math.Min(MaxZoomLevel, _TileServer.MaxZoomLevel);
-                    MinZoomLevel = Math.Max(MinZoomLevel, _TileServer.MinZoomLevel);
 
                     SetTileServerCacheFolder();
                     _Cache = new ConcurrentBag<CachedImage>();
@@ -155,23 +200,22 @@ namespace System.Windows.Forms
                         _LinkLabel.Visible = true;
                         OnSizeChanged(new EventArgs());
                     }
+
+                    if (ZoomLevel > TileServer.MaxZoomLevel)
+                        ZoomLevel = TileServer.MaxZoomLevel;
+
+                    if (ZoomLevel < TileServer.MinZoomLevel)
+                        ZoomLevel = TileServer.MinZoomLevel;
                 }
+
+                Invalidate();
             }
         }
-
-        private void SetTileServerCacheFolder()
-        {
-            if (_TileServer is WebTileServer webTileServer)
-            {
-                webTileServer.CacheFolder = Path.Combine(_CacheFolder, _TileServer.GetType().Name);
-            }
-        }
-
-        private HtmlLinkLabel _LinkLabel;
 
         /// <summary>
         /// Gets or sets geographical coordinates of map center
         /// </summary>
+        [Browsable(false)]
         public GeoPoint Center
         {
             get
@@ -195,6 +239,7 @@ namespace System.Windows.Forms
         /// <summary>
         /// Gets or sets geographical coordinates of current position of mouse
         /// </summary>
+        [Browsable(false)]
         public GeoPoint Mouse
         {
             get
@@ -203,12 +248,52 @@ namespace System.Windows.Forms
                 float y = -(float)(_Offset.Y - _LastMouse.Y) / TILE_SIZE;
                 return TileToWorldPos(x, y);
             }
-        }        
+        }
 
+        /// <summary>
+        /// Gets collection of markers to be displayed on the map
+        /// </summary>
+        [Browsable(false)]
         public ICollection<Marker> Markers { get; } = new List<Marker>();
-        public ICollection<Track> Tracks { get; } = new List<Track>();
-        public ICollection<ICollection<GeoPoint>> Polygons { get; } = new List<ICollection<GeoPoint>>();
 
+        /// <summary>
+        /// Gets collection of tracks to be displayed on the map
+        /// </summary>
+        [Browsable(false)]
+        public ICollection<Track> Tracks { get; } = new List<Track>();
+
+        /// <summary>
+        /// Gets collection of polygons to be displayed on the map
+        /// </summary>
+        [Browsable(false)]
+        public ICollection<Polygon> Polygons { get; } = new List<Polygon>();
+
+        /// <summary>
+        /// Default style for map markers
+        /// </summary>
+        [Browsable(false)]
+        public MarkerStyle DefaultMarkerStyle { get; set; } = new MarkerStyle(Brushes.Red, 3, Brushes.Black, SystemFonts.DefaultFont);
+
+        /// <summary>
+        /// Default style for tracks
+        /// </summary>
+        [Browsable(false)]
+        public TrackStyle DefaultTrackStyle { get; set; } = new TrackStyle(Pens.Red);
+
+        /// <summary>
+        /// Default style for polygons
+        /// </summary>
+        [Browsable(false)]
+        public PolygonStyle DefaultPolygonStyle { get; set; } = new PolygonStyle(new SolidBrush(Color.FromArgb(100, Color.Black)), new Pen(Brushes.Blue, 3) { DashStyle = DashStyle.Dot });
+
+        /// <summary>
+        /// Raised when marker is drawn on the map
+        /// </summary>
+        public event EventHandler<DrawMarkerEventArgs> DrawMarker;
+
+        /// <summary>
+        /// Creates new <see cref="MapControl"/> control.
+        /// </summary>
         public MapControl()
         {
             InitializeComponent();
@@ -218,16 +303,39 @@ namespace System.Windows.Forms
             _LinkLabel = new HtmlLinkLabel() { Text = "", BackColor = Color.FromArgb(100, BackColor) };
             _LinkLabel.AutoSize = true;
             _LinkLabel.ForeColor = ForeColor;
-            
+
             _LinkLabel.Margin = new Padding(2);
             _LinkLabel.LinkClicked += _LinkLabel_LinkClicked;
 
             Controls.Add(_LinkLabel);
+
+            
+        }
+
+        protected override void OnCreateControl()
+        {
+            base.OnCreateControl();
+            Center = new GeoPoint(0, 0);
         }
 
         private void _LinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             Process.Start(e.Link.LinkData.ToString());
+        }
+
+        protected override void OnPaint(PaintEventArgs pe)
+        {
+            if (!DesignMode)
+            {
+                pe.Graphics.SmoothingMode = SmoothingMode.None;
+                DrawTiles(pe.Graphics);
+                pe.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                DrawPolygons(pe.Graphics);
+                DrawTracks(pe.Graphics);
+                DrawMarkers(pe.Graphics);
+            }
+
+            base.OnPaint(pe);
         }
 
         protected override void OnSizeChanged(EventArgs e)
@@ -273,25 +381,32 @@ namespace System.Windows.Forms
             base.OnMouseMove(e);
         }
 
+        protected override void OnMouseWheel(MouseEventArgs e)
+        {
+            int z = ZoomLevel;
+
+            if (e.Delta > 0)
+                z = ZoomLevel + 1;
+            else if (e.Delta < 0)
+                z = ZoomLevel - 1;
+
+            SetZoomLevel(z, new Point(e.X, e.Y));
+
+            base.OnMouseWheel(e);
+        }
+
+        private void SetTileServerCacheFolder()
+        {
+            if (_TileServer is WebTileServer webTileServer)
+            {
+                webTileServer.CacheFolder = Path.Combine(_CacheFolder, _TileServer.GetType().Name);
+            }
+        }
+
         private float ArrangeTileNumber(float n)
         {
             int size = FullMapSizeInTiles;
             return (n %= size) >= 0 ? n : (n + size);
-        }
-
-        protected override void OnPaint(PaintEventArgs pe)
-        {
-            if (!DesignMode)
-            {
-                pe.Graphics.SmoothingMode = SmoothingMode.None;
-                DrawTiles(pe.Graphics);
-                pe.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                DrawMarkers(pe.Graphics);
-                DrawTracks(pe.Graphics);
-                DrawPolygons(pe.Graphics);
-            }
-
-            base.OnPaint(pe);
         }
 
         private void DrawTiles(Graphics g)
@@ -339,12 +454,33 @@ namespace System.Windows.Forms
         {
             foreach (Marker m in Markers)
             {
-                var p = GetProjection(m.Point);
-                Draw(gr, () => gr.FillEllipse(m.MarkerBrush ?? new SolidBrush(ForeColor), p.X - 1, p.Y - 1, 3, 3));
-                if (m.Label != null)
+                var p = Project(m.Point);
+
+                var labelFont = m.Style != null ? m.Style.LabelFont : DefaultMarkerStyle.LabelFont;
+                var labelBrush = m.Style != null ? m.Style.LabelBrush : DefaultMarkerStyle.LabelBrush;
+                var markerWidth = m.Style != null ? m.Style.MarkerWidth : DefaultMarkerStyle.MarkerWidth;
+                var markerBrush = m.Style != null ? m.Style.MarkerBrush : DefaultMarkerStyle.MarkerBrush;
+
+                Draw(gr, () =>
                 {
-                    Draw(gr, () => gr.DrawString(m.Label, m.Font ?? Font, m.LabelBrush ?? new SolidBrush(ForeColor), new PointF(p.X + m.MarkerWidth, p.Y + m.MarkerWidth)));
-                }
+                    if (gr.IsVisible(p))
+                    {
+                        var eventArgs = new DrawMarkerEventArgs(m, gr, p);
+                        DrawMarker?.Invoke(this, eventArgs);
+                        if (!eventArgs.Handled)
+                        {
+                            if (markerBrush != null)
+                            {
+                                gr.FillEllipse(markerBrush, p.X - markerWidth / 2, p.Y - markerWidth / 2, markerWidth, markerWidth);
+                            }
+
+                            if (labelFont != null && labelBrush != null)
+                            {
+                                gr.DrawString(m.Label, labelFont, labelBrush, new PointF(p.X + markerWidth * 0.35f, p.Y + markerWidth * 0.35f));
+                            }
+                        }                            
+                    }
+                });
             }
         }
 
@@ -357,22 +493,23 @@ namespace System.Windows.Forms
                 for (int i = 0; i < track.Count; i++)
                 {
                     GeoPoint g = track.ElementAt(i);
-                    PointF p = GetProjection(g);
+                    PointF p = Project(g);
                     if (i > 0)
                     {
-                        p = NearestPoint(points[i - 1], p, new PointF(p.X - FullMapSizeInPixels, p.Y), new PointF(p.X + FullMapSizeInPixels, p.Y)); 
+                        p = points[i - 1].Nearest(p, new PointF(p.X - FullMapSizeInPixels, p.Y), new PointF(p.X + FullMapSizeInPixels, p.Y));
                     }
                     points[i] = p;
                 }
 
-                Draw(gr, () => gr.DrawLines(track.Pen, points));
+                Pen pen = track.Style != null ? track.Style.Pen : DefaultTrackStyle.Pen;
+                Draw(gr, () => gr.DrawPolyline(pen, points));
             }
         }
 
         private void DrawPolygons(Graphics gr)
         {
             foreach (var polygon in Polygons)
-            {                
+            {
                 PointF p0 = PointF.Empty;
                 using (GraphicsPath gp = new GraphicsPath())
                 {
@@ -381,17 +518,21 @@ namespace System.Windows.Forms
                     for (int i = 0; i < polygon.Count; i++)
                     {
                         GeoPoint g = polygon.ElementAt(i);
-                        PointF p = GetProjection(g);
+                        PointF p = Project(g);
                         if (i > 0)
                         {
-                            p = NearestPoint(p0, p, new PointF(p.X - FullMapSizeInPixels, p.Y), new PointF(p.X + FullMapSizeInPixels, p.Y));
-                            gp.AddLine(p0, p);                            
+                            p = p0.Nearest(p, new PointF(p.X - FullMapSizeInPixels, p.Y), new PointF(p.X + FullMapSizeInPixels, p.Y));
+                            gp.AddLine(p0, p);
                         }
                         p0 = p;
                     }
 
+                    Brush brush = polygon.Style != null ? polygon.Style.Brush : DefaultPolygonStyle.Brush;
+                    Pen pen = polygon.Style != null ? polygon.Style.Pen : DefaultPolygonStyle.Pen;
+
                     SolidBrush br = new SolidBrush(Color.FromArgb(100, Color.Black));
-                    Draw(gr, () => gr.FillPath(br, gp));
+
+                    Draw(gr, () => gr.DrawGraphicsPath(gp, brush, pen));
                 }
             }
         }
@@ -408,22 +549,13 @@ namespace System.Windows.Forms
             }
         }
 
-        private PointF NearestPoint(PointF point, params PointF[] points)
+        private void SetZoomLevel(int z, Point e)
         {
-            return points.OrderBy(p => ((p.X - point.X) * (p.X - point.X) + (p.Y - point.Y) * (p.Y - point.Y))).First();
-        }
+            int max = TileServer != null ? Math.Min(MaxZoomLevel, TileServer.MaxZoomLevel) : MaxZoomLevel;
+            int min = TileServer != null ? Math.Max(MinZoomLevel, TileServer.MinZoomLevel) : MinZoomLevel;
 
-        protected override void OnMouseWheel(MouseEventArgs e)
-        {
-            int z = ZoomLevel;
-
-            if (e.Delta > 0)
-                z = ZoomLevel + 1;
-            else if (e.Delta < 0)
-                z = ZoomLevel - 1;
-
-            if (z < MinZoomLevel) z = MinZoomLevel;
-            if (z > MaxZoomLevel) z = MaxZoomLevel;
+            if (z < min) z = min;
+            if (z > max) z = max;
 
             if (z != ZoomLevel)
             {
@@ -431,14 +563,12 @@ namespace System.Windows.Forms
                 _Offset.X = (int)((_Offset.X - e.X) * factor) + e.X;
                 _Offset.Y = (int)((_Offset.Y - e.Y) * factor) + e.Y;
 
-                ZoomLevel = z;
+                _ZoomLevel = z;
 
                 _Offset.X = (int)(_Offset.X % FullMapSizeInPixels);
 
                 Invalidate();
             }
-
-            base.OnMouseWheel(e);
         }
 
         private void DrawTile(Graphics g, int x, int y, Image image)
@@ -479,15 +609,15 @@ namespace System.Windows.Forms
         /// <summary>
         /// Gets projection of geographical coordinates onto the map
         /// </summary>
-        /// <param name="lon">Longitude, in degrees, positive East</param>
-        /// <param name="lat">Latitude, in degrees</param>
-        /// <returns></returns>
-        public PointF GetProjection(GeoPoint g)
+        /// <param name="g">Point with geographical coordinates</param>
+        /// <returns><see cref="PointF"/> object representing projection of the specified geographical coordinates on the map.</returns>
+        public PointF Project(GeoPoint g)
         {
             var p = WorldToTilePos(g);
             return new PointF(p.X * TILE_SIZE + _Offset.X, p.Y * TILE_SIZE + _Offset.Y);
         }
 
+        
         public PointF WorldToTilePos(GeoPoint g)
         {
             PointF p = new Point();
@@ -528,6 +658,12 @@ namespace System.Windows.Forms
             Invalidate();
         }
 
-      
+        public void ClearOverlays()
+        {
+            Markers.Clear();
+            Tracks.Clear();
+            Polygons.Clear();
+            Invalidate();
+        }
     }
 }

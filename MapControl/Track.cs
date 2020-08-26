@@ -9,11 +9,11 @@ namespace System.Windows.Forms
 {
     public class Track : List<GeoPoint>
     {
-        public Pen Pen { get; set; }
-    
-        public Track(Pen pen)
+        public TrackStyle Style { get; set; }
+        
+        public Track(TrackStyle style)
         {
-            Pen = pen;
+            Style = style;
         }
     }
 }

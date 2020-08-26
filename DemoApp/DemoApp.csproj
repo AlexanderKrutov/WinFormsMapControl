@@ -67,6 +67,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="MapObjects\MagellanExpedition.csv" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -97,6 +98,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="MapObjects\RiseSetCurves.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="MapObjects\Cities.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

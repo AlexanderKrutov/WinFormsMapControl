@@ -13,20 +13,6 @@ namespace System.Windows.Forms
     public interface ITileServer : IDisposable
     {
         /// <summary>
-        /// Gets tile image by X and Y coordinates of the tile and zoom level Z.
-        /// </summary>
-        /// <param name="x">X-coordinate of the tile.</param>
-        /// <param name="y">Y-coordinate of the tile.</param>
-        /// <param name="z">Zoom level</param>
-        /// <returns></returns>
-        Image GetTile(int x, int y, int z);
-
-        /// <summary>
-        /// Should be raised when map invalidate is required
-        /// </summary>
-        event Action InvalidateRequired;
-
-        /// <summary>
         /// Displayable name of the tile server, i.e. human-readable map name, for example, "Open Street Map".
         /// </summary>
         string Name { get; }
@@ -47,5 +33,19 @@ namespace System.Windows.Forms
         /// Gets maximal zoom level allowed for the tile server
         /// </summary>
         int MaxZoomLevel { get; }
+
+        /// <summary>
+        /// Gets tile image by X and Y coordinates of the tile and zoom level Z.
+        /// </summary>
+        /// <param name="x">X-coordinate of the tile.</param>
+        /// <param name="y">Y-coordinate of the tile.</param>
+        /// <param name="z">Zoom level</param>
+        /// <returns></returns>
+        Image GetTile(int x, int y, int z);
+
+        /// <summary>
+        /// Should be raised when map invalidate is required
+        /// </summary>
+        event Action InvalidateRequired;
     }
 }
