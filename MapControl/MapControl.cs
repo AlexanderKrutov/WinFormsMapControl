@@ -9,7 +9,6 @@ using System.Linq;
 
 namespace System.Windows.Forms
 {
-
     public class DrawMarkerEventArgs : HandledEventArgs
     {
         public Marker Marker { get; internal set; }
@@ -315,10 +314,16 @@ namespace System.Windows.Forms
         public string ThumbnailText { get; set; } = "Downloading...";
 
         /// <summary>
-        /// Gets or sets text to be displayed instead of tile when it is being downloaded.
+        /// Gets or sets color of the text to be displayed instead of tile when it is being downloaded.
         /// </summary>
         [Description("Color of the tile thumbnail text."), Category("Appearance")]
-        public Color ThumbnailForeColor { get; set; } = Color.LightGray;
+        public Color ThumbnailForeColor { get; set; } = Color.FromArgb(0xB0, 0xB0, 0xB0);
+
+        /// <summary>
+        /// Gets or sets backgound of the thumbnail to be displayed when a tile is being downloaded.
+        /// </summary>
+        [Description("Color of the tile thumbnail background."), Category("Appearance")]
+        public Color ThumbnailBackColor { get; set; } = Color.FromArgb(0xE0, 0xE0, 0xE0);
 
         /// <summary>
         /// Gets or sets flag indicating show thumbnails while downloading tile images or not.
@@ -391,10 +396,10 @@ namespace System.Windows.Forms
 
             if (!DesignMode)
             {
-                if (CacheFolder == null)
+                if (CacheFolder == null && (TileServer is WebTileServer))
                 {
                     drawContent = false;
-                    DrawErrorString(pe.Graphics, $"{nameof(CacheFolder)} property value is not set.\nPlease specify valid path to cache map images before using the control.");
+                    DrawErrorString(pe.Graphics, $"{nameof(CacheFolder)} property value is not set.\nIt should be specified if you are using web-based tile server.");
                 }
                 else if (TileServer == null)
                 {
@@ -428,6 +433,7 @@ namespace System.Windows.Forms
             _LinkLabel.Left = Width - _LinkLabel.Width;
             _LinkLabel.Top = Height - _LinkLabel.Height;
             base.OnSizeChanged(e);
+            Invalidate();
         }
 
         protected override void OnMouseDown(MouseEventArgs e)
@@ -531,7 +537,15 @@ namespace System.Windows.Forms
                         }
                         else
                         {
-                            DrawThumbnail(g, x, y, ThumbnailText, false);
+                            tile = GetTile(x_ / 2, y / 2, ZoomLevel - 1, fromCacheOnly: true);
+                            if (tile != null && tile.Image != null)
+                            {
+                                DrawTilePart(g, x, y, x_ % 2, y % 2, tile.Image);
+                            }
+                            else
+                            {
+                                DrawThumbnail(g, x, y, ThumbnailText, false);
+                            }
                         }
                     }
                 }
@@ -636,6 +650,7 @@ namespace System.Windows.Forms
             }
         }
 
+
         private void Draw(Graphics gr, Action draw)
         {
             int count = (int)Math.Ceiling((double)Width / FullMapSizeInPixels) + 1;
@@ -648,7 +663,12 @@ namespace System.Windows.Forms
             }
         }
 
-        private void SetZoomLevel(int z, Point e)
+        /// <summary>
+        /// Sets zoom level with specifying central point to zoom in/out
+        /// </summary>
+        /// <param name="z">Zoom level to be set</param>
+        /// <param name="p">Central point to zoom in/out</param>
+        private void SetZoomLevel(int z, Point p)
         {
             int max = TileServer != null ? Math.Min(MaxZoomLevel, TileServer.MaxZoomLevel) : MaxZoomLevel;
             int min = TileServer != null ? Math.Max(MinZoomLevel, TileServer.MinZoomLevel) : MinZoomLevel;
@@ -659,8 +679,8 @@ namespace System.Windows.Forms
             if (z != ZoomLevel)
             {
                 double factor = Math.Pow(2, z - ZoomLevel);
-                _Offset.X = (int)((_Offset.X - e.X) * factor) + e.X;
-                _Offset.Y = (int)((_Offset.Y - e.Y) * factor) + e.Y;
+                _Offset.X = (int)((_Offset.X - p.X) * factor) + p.X;
+                _Offset.Y = (int)((_Offset.Y - p.Y) * factor) + p.Y;
 
                 _ZoomLevel = z;
 
@@ -668,6 +688,16 @@ namespace System.Windows.Forms
 
                 Invalidate();
             }
+        }
+
+        private void DrawTilePart(Graphics g, int x, int y, int xP, int yP, Image image)
+        {
+            Point p = new Point();
+            p.X = _Offset.X + x * TILE_SIZE;
+            p.Y = _Offset.Y + y * TILE_SIZE;
+            Rectangle srcRect = new Rectangle(xP == 0 ? 0 : TILE_SIZE / 2, yP == 0 ? 0 : TILE_SIZE / 2, TILE_SIZE / 2, TILE_SIZE / 2);
+            Rectangle destRect = new Rectangle(p.X, p.Y, TILE_SIZE, TILE_SIZE);
+            g.DrawImage(image, destRect, srcRect, GraphicsUnit.Pixel);
         }
 
         private void DrawTile(Graphics g, int x, int y, Image image)
@@ -686,12 +716,20 @@ namespace System.Windows.Forms
                 p.X = _Offset.X + x * TILE_SIZE;
                 p.Y = _Offset.Y + y * TILE_SIZE;
                 Rectangle rectangle = new Rectangle(p.X, p.Y, TILE_SIZE, TILE_SIZE);
-                g.DrawRectangle(new Pen(ThumbnailForeColor), rectangle);
+                g.FillRectangle(new SolidBrush(ThumbnailBackColor), rectangle);
+                g.DrawRectangle(new Pen(ThumbnailForeColor) { DashStyle = DashStyle.Dot }, rectangle);
                 g.DrawString(message, Font, new SolidBrush(isError ? ErrorColor : ThumbnailForeColor), rectangle, _AlignCenterStringFormat);
             }
         }
 
-        private TileImage GetTile(int x, int y, int z)
+        /// <summary>
+        /// Gets tile image by X and Y indices and zoom level
+        /// </summary>
+        /// <param name="x">X-index of the tile</param>
+        /// <param name="y">Y-index of the tile</param>
+        /// <param name="z">Zoom level</param>
+        /// <returns>TileImage instance</returns>
+        private TileImage GetTile(int x, int y, int z, bool fromCacheOnly = false)
         {
             try
             {
@@ -701,7 +739,7 @@ namespace System.Windows.Forms
                     tile.Used = true;
                     return tile;
                 }
-                else
+                else if (!fromCacheOnly)
                 {
                     Image image = _TileServer.GetTile(x, y, z);
                     if (image != null)
@@ -711,6 +749,10 @@ namespace System.Windows.Forms
                     }
                     return tile;
                 }
+                else
+                {
+                    return null;
+                }
             }
             catch
             {
@@ -718,6 +760,10 @@ namespace System.Windows.Forms
             }
         }
 
+        /// <summary>
+        /// Called when tile is ready to be displayed
+        /// </summary>
+        /// <param name="tile">Tile to be added to the cache</param>
         void IMapControl.OnTileReady(TileImage tile)
         {
             _Cache.Add(tile);
@@ -734,7 +780,6 @@ namespace System.Windows.Forms
             var p = WorldToTilePos(g);
             return new PointF(p.X * TILE_SIZE + _Offset.X, p.Y * TILE_SIZE + _Offset.Y);
         }
-
 
         public PointF WorldToTilePos(GeoPoint g)
         {
@@ -757,6 +802,11 @@ namespace System.Windows.Forms
             return g;
         }
 
+        /// <summary>
+        /// Clears map cache. If <paramref name="allTileServers"/> flag is set to true, cache for all tile servers will be cleared.
+        /// If no, only current tile server cache will be cleared.
+        /// </summary>
+        /// <param name="allTileServers">If flag is set to true, cache for all tile servers will be cleared.</param>
         public void ClearCache(bool allTileServers = false)
         {
             _Cache = new ConcurrentBag<TileImage>();
@@ -776,6 +826,9 @@ namespace System.Windows.Forms
             Invalidate();
         }
 
+        /// <summary>
+        /// Removes all markers, tracks and polygons from the map.
+        /// </summary>
         public void ClearOverlays()
         {
             Markers.Clear();

@@ -107,7 +107,6 @@ namespace DemoApp
             this.mapControl.ShowThumbnails = true;
             this.mapControl.Size = new System.Drawing.Size(684, 328);
             this.mapControl.TabIndex = 0;
-            this.mapControl.ThumbnailForeColor = System.Drawing.Color.LightGray;
             this.mapControl.ThumbnailText = "Downloading...";
             this.mapControl.ZoomLevel = 0;
             this.mapControl.DrawMarker += new System.EventHandler<System.Windows.Forms.DrawMarkerEventArgs>(this.mapControl_DrawMarker);

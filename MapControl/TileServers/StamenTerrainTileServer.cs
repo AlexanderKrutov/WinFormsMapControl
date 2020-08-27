@@ -16,7 +16,7 @@ namespace System.Windows.Forms
 
         public override string AttributionText => "<a href='http://maps.stamen.com/'>Map tiles</a> by <a href='http://stamen.com'>Stamen Design</a>, under <a href='http://creativecommons.org/licenses/by/3.0'>CC BY 3.0</a>. Data © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap contributors</a>.";
 
-        public override int MaxZoomLevel => 17;
+        public override int MaxZoomLevel => 13;
 
         public override string UserAgent => null;
 
