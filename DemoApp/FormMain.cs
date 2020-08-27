@@ -66,6 +66,8 @@ namespace DemoApp
         public FormMain()
         {
             InitializeComponent();
+           
+            mapControl.CacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MapControl");
 
             cmbExample.Items.AddRange(new Sample[]
             {
@@ -85,12 +87,7 @@ namespace DemoApp
             cmbTileServers.Items.AddRange(tileServers);
             cmbTileServers.SelectedIndex = 0;
 
-
             cmbExample.SelectedIndex = 0;
-
-            //mapControl.ZoomLevel = 0;
-            //mapControl.Center = new GeoPoint(44.0f, 56.33333f);           
-            //mapControl.Markers.Add(new Marker(new GeoPoint(44.0f, 56.33333f), "Test"));
         }
 
         private ICollection<Marker> ReadCities()
@@ -134,7 +131,7 @@ namespace DemoApp
         private void mapControl_MouseMove(object sender, MouseEventArgs e)
         {
             GeoPoint g = mapControl.Mouse;
-            this.Text = $"Longitude = {g.Longitude} / Latitude = {g.Latitude} / Zoom = {mapControl.ZoomLevel}";
+            this.Text = $"Longitude = {DegreeToString(g.Longitude, "W", "E")} / Latitude = {DegreeToString(g.Latitude, "S", "N")} / Zoom = {mapControl.ZoomLevel}";
         }
 
         private void btnClearCache_Click(object sender, EventArgs e)
@@ -164,9 +161,30 @@ namespace DemoApp
             //e.Graphics.DrawString(e.Marker.Label, e.Marker.Style.LabelFont, e.Marker.Style.LabelBrush, e.Point.X + 20 * 0.35f, e.Point.Y + 20 * 0.35f);
         }
 
-        private void FormMain_Load(object sender, EventArgs e)
+        private void mapControl_DoubleClick(object sender, EventArgs e)
         {
+            var coord = mapControl.Mouse;
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine($"Latitude: {DegreeToString(coord.Latitude, "S", "N")}");
+            sb.AppendLine($"Longitude: {DegreeToString(coord.Longitude, "W", "E")}");
+            MessageBox.Show("Info", sb.ToString());
+        }
 
+        private string DegreeToString(double coordinate, string negativeSym, string positiveSym)
+        {
+            string sym = coordinate < 0d ? negativeSym : positiveSym;
+            coordinate = Math.Abs(coordinate);
+            double d = Math.Floor(coordinate);
+            coordinate -= d;
+            coordinate *= 60;
+            double m = Math.Floor(coordinate);
+            coordinate -= m;
+            coordinate *= 60;
+            double s = coordinate;
+            string dd = d.ToString();
+            string mm = m.ToString().PadLeft(2, '0');
+            string ss = s.ToString("00.00", CultureInfo.InvariantCulture);
+            return $"{dd}° {mm}' {ss}\" {sym}";
         }
     }
 }

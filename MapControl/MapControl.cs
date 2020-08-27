@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -8,8 +6,6 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 
 namespace System.Windows.Forms
 {
@@ -35,7 +31,7 @@ namespace System.Windows.Forms
     /// Map control for displaying online and offline maps.
     /// </summary>
     [DesignerCategory("code")]
-    public partial class MapControl : Control
+    public partial class MapControl : Control, IMapControl
     {
         /// <summary>
         /// Tile size, in pixels
@@ -60,7 +56,12 @@ namespace System.Windows.Forms
         /// <summary>
         /// Cache used to store tile images
         /// </summary>
-        private ConcurrentBag<CachedImage> _Cache = new ConcurrentBag<CachedImage>();
+        private ConcurrentBag<TileImage> _Cache = new ConcurrentBag<TileImage>();
+
+        /// <summary>
+        /// String format to draw text aligned to center
+        /// </summary>
+        private readonly StringFormat _AlignCenterStringFormat = new StringFormat() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
 
         /// <summary>
         /// Link label displaying in the bottom right corner of the map with attribution text
@@ -101,12 +102,13 @@ namespace System.Windows.Forms
         /// <summary>
         /// Backing field for <see cref="CacheFolder"/> property
         /// </summary>
-        private string _CacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MapControl");
-        
+        private string _CacheFolder = null;
+
         /// <summary>
         /// Path to tile cache folder
         /// </summary>
         [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string CacheFolder
         {
             get => _CacheFolder;
@@ -119,7 +121,6 @@ namespace System.Windows.Forms
                     throw new ArgumentException($"{value} is an incorrect value for {nameof(CacheFolder)} property.");
 
                 _CacheFolder = value;
-                SetTileServerCacheFolder();
             }
         }
 
@@ -132,6 +133,7 @@ namespace System.Windows.Forms
         /// Minimal zoom level
         /// </summary>
         [Description("Minimal zoom level"), Category("Behavior")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int MinZoomLevel
         {
             get => _MinZoomLevel;
@@ -154,6 +156,7 @@ namespace System.Windows.Forms
         /// Maximal zoom level
         /// </summary>
         [Description("Maximal zoom level"), Category("Behavior")]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int MaxZoomLevel
         {
             get => _MaxZoomLevel;
@@ -166,7 +169,7 @@ namespace System.Windows.Forms
                 Invalidate();
             }
         }
-       
+
         /// <summary>
         /// Backing field for <see cref="TileServer"/> property
         /// </summary>
@@ -176,14 +179,15 @@ namespace System.Windows.Forms
         /// Map tile server
         /// </summary>
         [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ITileServer TileServer
         {
             get => _TileServer;
             set
             {
-                if (_TileServer != null)
+                if (_TileServer is WebTileServer oldValue)
                 {
-                    _TileServer.InvalidateRequired -= Invalidate;
+                    oldValue.Map = null;
                 }
 
                 _TileServer = value;
@@ -192,10 +196,12 @@ namespace System.Windows.Forms
 
                 if (value != null)
                 {
-                    _TileServer.InvalidateRequired += Invalidate;
+                    if (value is WebTileServer newValue)
+                    {
+                        newValue.Map = this;
+                    }
 
-                    SetTileServerCacheFolder();
-                    _Cache = new ConcurrentBag<CachedImage>();
+                    _Cache = new ConcurrentBag<TileImage>();
 
                     if (_TileServer.AttributionText != null)
                     {
@@ -219,6 +225,7 @@ namespace System.Windows.Forms
         /// Gets or sets geographical coordinates of map center
         /// </summary>
         [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public GeoPoint Center
         {
             get
@@ -233,7 +240,6 @@ namespace System.Windows.Forms
                 _Offset.X = -(int)(center.X * TILE_SIZE) + Width / 2;
                 _Offset.Y = -(int)(center.Y * TILE_SIZE) + Height / 2;
                 _Offset.X = (int)(_Offset.X % FullMapSizeInPixels);
-
                 Invalidate();
             }
         }
@@ -243,6 +249,7 @@ namespace System.Windows.Forms
         /// Gets or sets geographical coordinates of current position of mouse
         /// </summary>
         [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public GeoPoint Mouse
         {
             get
@@ -257,37 +264,81 @@ namespace System.Windows.Forms
         /// Gets collection of markers to be displayed on the map
         /// </summary>
         [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ICollection<Marker> Markers { get; } = new List<Marker>();
 
         /// <summary>
         /// Gets collection of tracks to be displayed on the map
         /// </summary>
         [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ICollection<Track> Tracks { get; } = new List<Track>();
 
         /// <summary>
         /// Gets collection of polygons to be displayed on the map
         /// </summary>
         [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ICollection<Polygon> Polygons { get; } = new List<Polygon>();
 
         /// <summary>
         /// Default style for map markers
         /// </summary>
         [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public MarkerStyle DefaultMarkerStyle { get; set; } = new MarkerStyle(Brushes.Red, 3, Brushes.Black, SystemFonts.DefaultFont);
 
         /// <summary>
         /// Default style for tracks
         /// </summary>
         [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public TrackStyle DefaultTrackStyle { get; set; } = new TrackStyle(Pens.Red);
 
         /// <summary>
         /// Default style for polygons
         /// </summary>
         [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public PolygonStyle DefaultPolygonStyle { get; set; } = new PolygonStyle(new SolidBrush(Color.FromArgb(100, Color.Black)), new Pen(Brushes.Blue, 3) { DashStyle = DashStyle.Dot });
+
+        /// <summary>
+        /// Gets or sets color used to draw error messages
+        /// </summary>
+        [Description("Color used to draw error messages."), Category("Appearance")]
+        public Color ErrorColor { get; set; } = Color.Red;
+
+        /// <summary>
+        /// Gets or sets text to be displayed instead of tile when it is being downloaded.
+        /// </summary>
+        [Description("Text to be displayed instead of tile when it is being downloaded."), Category("Appearance")]
+        public string ThumbnailText { get; set; } = "Downloading...";
+
+        /// <summary>
+        /// Gets or sets text to be displayed instead of tile when it is being downloaded.
+        /// </summary>
+        [Description("Color of the tile thumbnail text."), Category("Appearance")]
+        public Color ThumbnailForeColor { get; set; } = Color.LightGray;
+
+        /// <summary>
+        /// Gets or sets flag indicating show thumbnails while downloading tile images or not.
+        /// </summary>
+        [Description("Show thumbnails while downloading tile images."), Category("Behavior")]
+        public bool ShowThumbnails { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets the foreground color of the map.
+        /// </summary>
+        [Description("Gets or sets the foreground color of the map."), Category("Appearance")]
+        public override Color ForeColor
+        {
+            get => base.ForeColor;
+            set
+            {
+                base.ForeColor = value;
+                _LinkLabel.ForeColor = value;
+            }
+        }
 
         /// <summary>
         /// Raised when marker is drawn on the map
@@ -316,8 +367,6 @@ namespace System.Windows.Forms
             _LinkLabel.LinkClicked += _LinkLabel_LinkClicked;
 
             Controls.Add(_LinkLabel);
-
-            
         }
 
         protected override void OnCreateControl()
@@ -331,9 +380,37 @@ namespace System.Windows.Forms
             Process.Start(e.Link.LinkData.ToString());
         }
 
+        private void DrawErrorString(Graphics gr, string text)
+        {
+            gr.DrawString(text, Font, new SolidBrush(ErrorColor), new Point(Width / 2, Height / 2), _AlignCenterStringFormat);
+        }
+
         protected override void OnPaint(PaintEventArgs pe)
         {
+            bool drawContent = true;
+
             if (!DesignMode)
+            {
+                if (CacheFolder == null)
+                {
+                    drawContent = false;
+                    DrawErrorString(pe.Graphics, $"{nameof(CacheFolder)} property value is not set.\nPlease specify valid path to cache map images before using the control.");
+                }
+                else if (TileServer == null)
+                {
+                    drawContent = false;
+                    DrawErrorString(pe.Graphics, $"{nameof(TileServer)} property value is not set.\nPlease specify tile server instance to obtain map images before using the control.");
+                }
+            }
+            else
+            {
+                if (TileServer == null)
+                {
+                    TileServer = new OfflineTileServer();
+                }
+            }
+
+            if (drawContent)
             {
                 pe.Graphics.SmoothingMode = SmoothingMode.None;
                 DrawTiles(pe.Graphics);
@@ -350,7 +427,6 @@ namespace System.Windows.Forms
         {
             _LinkLabel.Left = Width - _LinkLabel.Width;
             _LinkLabel.Top = Height - _LinkLabel.Height;
-
             base.OnSizeChanged(e);
         }
 
@@ -380,7 +456,7 @@ namespace System.Windows.Forms
 
                 _Offset.X = (int)(_Offset.X % FullMapSizeInPixels);
 
-                
+
                 if (_Offset.Y < -(int)FullMapSizeInPixels)
                     _Offset.Y = -(int)FullMapSizeInPixels;
 
@@ -408,14 +484,6 @@ namespace System.Windows.Forms
             SetZoomLevel(z, new Point(e.X, e.Y));
 
             base.OnMouseWheel(e);
-        }
-
-        private void SetTileServerCacheFolder()
-        {
-            if (_TileServer is WebTileServer webTileServer)
-            {
-                webTileServer.CacheFolder = Path.Combine(_CacheFolder, _TileServer.GetType().Name);
-            }
         }
 
         private float ArrangeTileNumber(float n)
@@ -449,20 +517,31 @@ namespace System.Windows.Forms
                     int x_ = (int)ArrangeTileNumber(x);
                     if (y >= 0 && y < FullMapSizeInTiles)
                     {
-                        Image tile = GetTile(x_, y, ZoomLevel);
+                        TileImage tile = GetTile(x_, y, ZoomLevel);
                         if (tile != null)
                         {
-                            DrawTile(g, x, y, tile);
+                            if (tile.Image != null)
+                            {
+                                DrawTile(g, x, y, tile.Image);
+                            }
+                            else if (tile.Message != null)
+                            {
+                                DrawThumbnail(g, x, y, tile.Message, true);
+                            }
+                        }
+                        else
+                        {
+                            DrawThumbnail(g, x, y, ThumbnailText, false);
                         }
                     }
                 }
             }
 
             // Dispose images that were not used 
-            _Cache.Where(c => !c.Used).ToList().ForEach(c => c.Image.Dispose());
+            _Cache.Where(c => !c.Used).ToList().ForEach(c => c.Image?.Dispose());
 
             // Update cache, leave only used images
-            _Cache = new ConcurrentBag<CachedImage>(_Cache.Where(c => c.Used));
+            _Cache = new ConcurrentBag<TileImage>(_Cache.Where(c => c.Used));
         }
 
         private void DrawMarkers(Graphics gr)
@@ -498,7 +577,7 @@ namespace System.Windows.Forms
                             {
                                 gr.DrawString(m.Label, labelFont, labelBrush, new PointF(p.X + markerWidth * 0.35f, p.Y + markerWidth * 0.35f));
                             }
-                        }                            
+                        }
                     }
                 });
             }
@@ -599,31 +678,50 @@ namespace System.Windows.Forms
             g.DrawImageUnscaled(image, p);
         }
 
-        private Image GetTile(int x, int y, int z)
+        private void DrawThumbnail(Graphics g, int x, int y, string message, bool isError)
+        {
+            if (ShowThumbnails || isError)
+            {
+                Point p = new Point();
+                p.X = _Offset.X + x * TILE_SIZE;
+                p.Y = _Offset.Y + y * TILE_SIZE;
+                Rectangle rectangle = new Rectangle(p.X, p.Y, TILE_SIZE, TILE_SIZE);
+                g.DrawRectangle(new Pen(ThumbnailForeColor), rectangle);
+                g.DrawString(message, Font, new SolidBrush(isError ? ErrorColor : ThumbnailForeColor), rectangle, _AlignCenterStringFormat);
+            }
+        }
+
+        private TileImage GetTile(int x, int y, int z)
         {
             try
             {
-                CachedImage cached = _Cache.FirstOrDefault(c => c.X == x && c.Y == y && c.Z == z);
-                if (cached != null)
+                TileImage tile = _Cache.FirstOrDefault(c => c.X == x && c.Y == y && c.Z == z);
+                if (tile != null)
                 {
-                    cached.Used = true;
-                    return cached.Image;
+                    tile.Used = true;
+                    return tile;
                 }
                 else
                 {
                     Image image = _TileServer.GetTile(x, y, z);
                     if (image != null)
                     {
-                        cached = new CachedImage() { X = x, Y = y, Z = z, Image = image, Used = true };
-                        _Cache.Add(cached);
+                        tile = new TileImage() { X = x, Y = y, Z = z, Image = image, Used = true };
+                        _Cache.Add(tile);
                     }
-                    return image;
+                    return tile;
                 }
             }
             catch
             {
                 return null;
             }
+        }
+
+        void IMapControl.OnTileReady(TileImage tile)
+        {
+            _Cache.Add(tile);
+            Invalidate();
         }
 
         /// <summary>
@@ -637,7 +735,7 @@ namespace System.Windows.Forms
             return new PointF(p.X * TILE_SIZE + _Offset.X, p.Y * TILE_SIZE + _Offset.Y);
         }
 
-        
+
         public PointF WorldToTilePos(GeoPoint g)
         {
             PointF p = new Point();
@@ -661,7 +759,7 @@ namespace System.Windows.Forms
 
         public void ClearCache(bool allTileServers = false)
         {
-            _Cache = new ConcurrentBag<CachedImage>();
+            _Cache = new ConcurrentBag<TileImage>();
             if (TileServer != null)
             {
                 string cacheFolder = allTileServers ? CacheFolder : Path.Combine(CacheFolder, TileServer.GetType().Name);

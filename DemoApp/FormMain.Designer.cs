@@ -30,13 +30,12 @@ namespace DemoApp
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.TrackStyle trackStyle1 = new System.Windows.Forms.TrackStyle();
             this.btnClearCache = new System.Windows.Forms.Button();
             this.cmbTileServers = new System.Windows.Forms.ComboBox();
             this.cmbExample = new System.Windows.Forms.ComboBox();
-            this.mapControl = new System.Windows.Forms.MapControl();
             this.lblExample = new System.Windows.Forms.Label();
             this.lblTileServer = new System.Windows.Forms.Label();
+            this.mapControl = new System.Windows.Forms.MapControl();
             this.SuspendLayout();
             // 
             // btnClearCache
@@ -75,29 +74,6 @@ namespace DemoApp
             this.cmbExample.TabIndex = 3;
             this.cmbExample.SelectedIndexChanged += new System.EventHandler(this.cmbExample_SelectedIndexChanged);
             // 
-            // mapControl
-            // 
-            this.mapControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.mapControl.BackColor = System.Drawing.Color.White;
-            this.mapControl.CacheFolder = "C:\\Users\\Acrux\\AppData\\Roaming\\MapControl";
-            this.mapControl.Cursor = System.Windows.Forms.Cursors.Cross;
-            trackStyle1.Pen = null;
-            this.mapControl.DefaultTrackStyle = trackStyle1;
-            this.mapControl.ForeColor = System.Drawing.Color.Black;
-            this.mapControl.Location = new System.Drawing.Point(0, 34);
-            this.mapControl.MaxZoomLevel = 19;
-            this.mapControl.MinZoomLevel = 0;
-            this.mapControl.Name = "mapControl";
-            this.mapControl.Size = new System.Drawing.Size(684, 328);
-            this.mapControl.TabIndex = 0;
-            this.mapControl.Text = "mapControl1";
-            this.mapControl.TileServer = null;
-            this.mapControl.ZoomLevel = 0;
-            this.mapControl.DrawMarker += new System.EventHandler<System.Windows.Forms.DrawMarkerEventArgs>(this.mapControl_DrawMarker);
-            this.mapControl.MouseMove += new System.Windows.Forms.MouseEventHandler(this.mapControl_MouseMove);
-            // 
             // lblExample
             // 
             this.lblExample.AutoSize = true;
@@ -117,6 +93,27 @@ namespace DemoApp
             this.lblTileServer.TabIndex = 5;
             this.lblTileServer.Text = "Tile server:";
             // 
+            // mapControl
+            // 
+            this.mapControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.mapControl.BackColor = System.Drawing.Color.White;
+            this.mapControl.Cursor = System.Windows.Forms.Cursors.Cross;
+            this.mapControl.ErrorColor = System.Drawing.Color.Red;
+            this.mapControl.ForeColor = System.Drawing.Color.Black;
+            this.mapControl.Location = new System.Drawing.Point(0, 34);
+            this.mapControl.Name = "mapControl";
+            this.mapControl.ShowThumbnails = true;
+            this.mapControl.Size = new System.Drawing.Size(684, 328);
+            this.mapControl.TabIndex = 0;
+            this.mapControl.ThumbnailForeColor = System.Drawing.Color.LightGray;
+            this.mapControl.ThumbnailText = "Downloading...";
+            this.mapControl.ZoomLevel = 0;
+            this.mapControl.DrawMarker += new System.EventHandler<System.Windows.Forms.DrawMarkerEventArgs>(this.mapControl_DrawMarker);
+            this.mapControl.DoubleClick += new System.EventHandler(this.mapControl_DoubleClick);
+            this.mapControl.MouseMove += new System.Windows.Forms.MouseEventHandler(this.mapControl_MouseMove);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -131,7 +128,6 @@ namespace DemoApp
             this.MinimumSize = new System.Drawing.Size(700, 400);
             this.Name = "FormMain";
             this.Text = "Form1";
-            this.Load += new System.EventHandler(this.FormMain_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 

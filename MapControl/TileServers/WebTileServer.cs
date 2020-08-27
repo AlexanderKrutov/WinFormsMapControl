@@ -21,7 +21,7 @@ namespace System.Windows.Forms
         /// <summary>
         /// Pool of images to be downloaded
         /// </summary>
-        private ConcurrentBag<CachedImage> _DowloadPool = new ConcurrentBag<CachedImage>();
+        private ConcurrentBag<TileImage> _DowloadPool = new ConcurrentBag<TileImage>();
 
         /// <summary>
         /// Event handle to stop/resume downloading
@@ -39,9 +39,9 @@ namespace System.Windows.Forms
         private int _ZoomLevel;
 
         /// <summary>
-        /// Cache folder to store downloaded images
+        /// Reference to parent map control
         /// </summary>
-        internal string CacheFolder { get; set; }
+        internal IMapControl Map { get; set; }
 
         /// <summary>
         /// Gets tile URI by X and Y coordinates of the tile and zoom level Z.
@@ -93,11 +93,6 @@ namespace System.Windows.Forms
         public virtual int MaxZoomLevel => 19;
 
         /// <summary>
-        /// Should be raised when map invalidate is required
-        /// </summary>
-        public event Action InvalidateRequired;
-
-        /// <summary>
         /// Creates new instance of WebTileServer
         /// </summary>
         public WebTileServer()
@@ -117,7 +112,7 @@ namespace System.Windows.Forms
         {
             _ZoomLevel = z;
 
-            string localPath = Path.Combine(CacheFolder, $"{z}", $"{x}", $"{y}.png");
+            string localPath = Path.Combine(Map?.CacheFolder, GetType().Name, $"{z}", $"{x}", $"{y}.png");
 
             if (File.Exists(localPath))
             {
@@ -156,7 +151,7 @@ namespace System.Windows.Forms
             if (!_DowloadPool.Any(c => c.X == x && c.Y == y && c.Z == z))
             {
                 // add image request to pool
-                _DowloadPool.Add(new CachedImage() { X = x, Y = y, Z = z });
+                _DowloadPool.Add(new TileImage() { X = x, Y = y, Z = z });
 
                 // resume worker thread
                 _WorkerWaitHandle.Set();
@@ -172,24 +167,24 @@ namespace System.Windows.Forms
         {
             while (!_IsDisposed)
             {
-                try
+                if (_DowloadPool.TryTake(out TileImage tile))
                 {
-                    if (_DowloadPool.TryTake(out CachedImage cached))
+                    try
                     {
                         // ignore pooled items with zoom level different than current
-                        if (cached.Z != _ZoomLevel) continue;
+                        if (tile.Z != _ZoomLevel) continue;
 
                         // local path to the cached tile image
-                        string localPath = Path.Combine(CacheFolder, $"{cached.Z}", $"{cached.X}", $"{cached.Y}.png");
+                        string localPath = Path.Combine(Map?.CacheFolder, GetType().Name, $"{tile.Z}", $"{tile.X}", $"{tile.Y}.png");
 
                         // if no such file or if it's expired, download it
                         if (!File.Exists(localPath) || new FileInfo(localPath).LastWriteTime + TileExpirationPeriod < DateTime.Now)
                         {
-                            Uri uri = GetTileUri(cached.X, cached.Y, cached.Z);
+                            Uri uri = GetTileUri(tile.X, tile.Y, tile.Z);
 
+                            // Create directories and subdirectories if needed
                             Directory.CreateDirectory(Path.GetDirectoryName(localPath));
 
-                            // First download the image to our memory.
                             var request = (HttpWebRequest)WebRequest.Create(uri);
                             request.UserAgent = UserAgent;
 
@@ -197,23 +192,37 @@ namespace System.Windows.Forms
                             using (var response = request.GetResponse())
                             using (Stream stream = response.GetResponseStream())
                             {
-                                Image.FromStream(stream).Save(localPath);
-
+                                tile.Image = Image.FromStream(stream);
+                                tile.Image.Save(localPath);
                                 Debug.WriteLine($"Downloaded tile {localPath}");
                             }
 
-                            InvalidateRequired?.Invoke();
+                            Map?.OnTileReady(tile);
                         }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        _WorkerWaitHandle.WaitOne();
+                        tile.Message = ex.Message;
+                        Map?.OnTileReady(tile);
+
+                        //Debug.Fail($"Unable to download tile image. Reason: {ex.Message}");
+
+                        if (ex is WebException wex)
+                        {
+                            // If no response from the server, wait for a while 
+                            // in order to prevent freezes
+                            if (wex.Response == null)
+                            {
+                                Thread.Sleep(1000);
+                            }
+                        }
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    Trace.TraceError($"Unable to download tile image. Reason: {ex.Message}");
+                    _WorkerWaitHandle.WaitOne();
                 }
+                
             };
         }
 

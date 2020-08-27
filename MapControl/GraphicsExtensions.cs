@@ -167,11 +167,27 @@ namespace System.Windows.Forms
             return null;
         }
 
+        /// <summary>
+        /// Multiplies two vectors defined by coordinates
+        /// </summary>
+        /// <param name="ax"></param>
+        /// <param name="ay"></param>
+        /// <param name="bx"></param>
+        /// <param name="by"></param>
+        /// <returns></returns>
         private static float VectorMult(float ax, float ay, float bx, float by)
         {
             return ax * by - bx * ay;
         }
 
+        /// <summary>
+        /// Calculates constants of a line equation by two points lie on that line.
+        /// </summary>
+        /// <param name="p1">First point lies on the line</param>
+        /// <param name="p2">Second point lies on the line</param>
+        /// <param name="A">A-constant</param>
+        /// <param name="B">B-constant</param>
+        /// <param name="C">C-constant</param>
         private static void LineEquation(PointF p1, PointF p2, ref float A, ref float B, ref float C)
         {
             A = p2.Y - p1.Y;

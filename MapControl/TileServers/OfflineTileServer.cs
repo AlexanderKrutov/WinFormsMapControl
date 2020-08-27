@@ -7,19 +7,12 @@ using System.Threading.Tasks;
 
 namespace System.Windows.Forms
 {
-#pragma warning disable CS0067
-
     /// <summary>
     /// Tile server for offline maps.
     /// Uses tiles from <see href="https://www.maptiler.com/copyright/">MapTiler</see> embedded.
     /// </summary>
     public class OfflineTileServer : ITileServer
     {
-        /// <summary>
-        /// Not used.
-        /// </summary>
-        public event Action InvalidateRequired;
-
         /// <summary>
         /// Displayable name of the tile server
         /// </summary>

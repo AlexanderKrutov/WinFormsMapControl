@@ -42,10 +42,5 @@ namespace System.Windows.Forms
         /// <param name="z">Zoom level</param>
         /// <returns></returns>
         Image GetTile(int x, int y, int z);
-
-        /// <summary>
-        /// Should be raised when map invalidate is required
-        /// </summary>
-        event Action InvalidateRequired;
     }
 }
