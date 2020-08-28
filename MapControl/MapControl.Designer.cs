@@ -18,8 +18,6 @@
                 components.Dispose();
             }
 
-            TileServer?.Dispose();
-
             base.Dispose(disposing);
         }
 

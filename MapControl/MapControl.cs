@@ -6,6 +6,8 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Threading;
 
 namespace System.Windows.Forms
 {
@@ -58,9 +60,19 @@ namespace System.Windows.Forms
         private ConcurrentBag<Tile> _Cache = new ConcurrentBag<Tile>();
 
         /// <summary>
-        /// Flag indicating the map control is painting now
+        /// Pool of tiles to be requested from the server
         /// </summary>
-        private bool _IsPainting = false;
+        private ConcurrentBag<Tile> _RequestPool = new ConcurrentBag<Tile>();
+
+        /// <summary>
+        /// Worker thread for downloading images from the server
+        /// </summary>
+        private Thread _Worker = null;
+
+        /// <summary>
+        /// Event handle to stop/resume downloading
+        /// </summary>
+        private EventWaitHandle _WorkerWaitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
 
         /// <summary>
         /// Flag indicating the map control needs to be repainted
@@ -392,8 +404,6 @@ namespace System.Windows.Forms
 
         protected override void OnPaint(PaintEventArgs pe)
         {
-            _IsPainting = true;
-
             bool drawContent = true;
 
             if (!DesignMode)
@@ -427,15 +437,7 @@ namespace System.Windows.Forms
                 DrawPolygons(pe.Graphics);
                 DrawTracks(pe.Graphics);
                 DrawMarkers(pe.Graphics);
-
-                if (_RepaintNeeded)
-                {
-                    _RepaintNeeded = false;
-                    Invalidate();
-                }
             }
-
-            _IsPainting = false;
 
             base.OnPaint(pe);
         }
@@ -473,7 +475,6 @@ namespace System.Windows.Forms
                 _Offset.Y += (e.Y - _LastMouse.Y);
 
                 _Offset.X = (int)(_Offset.X % FullMapSizeInPixels);
-
 
                 if (_Offset.Y < -(int)FullMapSizeInPixels)
                     _Offset.Y = -(int)FullMapSizeInPixels;
@@ -536,7 +537,7 @@ namespace System.Windows.Forms
                     if (y >= 0 && y < FullMapSizeInTiles)
                     {
                         Tile tile = GetTile(x_, y, ZoomLevel);
-                        
+
                         // tile for current zoom and position found
                         if (tile != null)
                         {
@@ -555,7 +556,7 @@ namespace System.Windows.Forms
                         else
                         {
                             // draw thumbnail first
-                            DrawThumbnail(g, x, y, ThumbnailText, false);
+                            DrawThumbnail(g, x, y, ThumbnailText + $"\nX={x_};Y={y};Z={ZoomLevel}", false);
 
                             // try to find out tile with less zoom level, and draw scaled part of that tile
 
@@ -775,25 +776,28 @@ namespace System.Windows.Forms
                 {
                     return tile;
                 }
-                
+
                 // try to get tile from file system
-                string localPath = Path.Combine(CacheFolder, TileServer.GetType().Name, $"{z}", $"{x}", $"{y}.tile");
-                if (File.Exists(localPath))
+                if (TileServer is ICacheableTileServer fsCacheTileServer)
                 {
-                    var fileInfo = new FileInfo(localPath);
-                    if (fileInfo.Length > 0 && fileInfo.LastWriteTime + TileServer.TileExpirationPeriod >= DateTime.Now)
+                    string localPath = Path.Combine(CacheFolder, TileServer.GetType().Name, $"{z}", $"{x}", $"{y}.tile");
+                    if (File.Exists(localPath))
                     {
-                        Image image = Image.FromFile(localPath);
-                        tile = new Tile(image, x, y, z);
-                        _Cache.Add(tile);
-                        return tile;
+                        var fileInfo = new FileInfo(localPath);
+                        if (fileInfo.Length > 0 && fileInfo.LastWriteTime + fsCacheTileServer.TileExpirationPeriod >= DateTime.Now)
+                        {
+                            Image image = Image.FromFile(localPath);
+                            tile = new Tile(image, x, y, z, TileServer.GetType().Name);
+                            _Cache.Add(tile);
+                            return tile;
+                        }
                     }
                 }
                 
                 // get tile from the server 
                 if (!fromCacheOnly)
                 {
-                    TileServer?.RequestTile(x, y, z, OnTileReady);
+                    RequestTile(x, y, z);
                 }
 
                 return null;
@@ -804,40 +808,90 @@ namespace System.Windows.Forms
             }
         }
 
-        /// <summary>
-        /// Called when tile is ready to be displayed
-        /// </summary>
-        /// <param name="tile">Tile to be added to the cache</param>
-        private void OnTileReady(Tile tile, ITileServer server)
+        private void RequestTile(int x, int y, int z)
         {
-            if (tile.ErrorMessage != null)
+            // Intialize worker
+            if (_Worker == null)
             {
-                _Cache.Add(tile);
-            }
-            else
-            {
-                // local path to the cached tile image
-                string localPath = Path.Combine(CacheFolder, server.GetType().Name, $"{tile.Z}", $"{tile.X}", $"{tile.Y}.tile");
-                try
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(localPath));
-                    tile.Image.Save(localPath);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Unable to save tile image {localPath}. Reason: {ex.Message}");
-                }
+                ServicePointManager.ServerCertificateValidationCallback = new Net.Security.RemoteCertificateValidationCallback(AcceptAllCertificates);
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+                _Worker = new Thread(new ThreadStart(ProcessRequests));
+                _Worker.IsBackground = true;
+                _Worker.Start();
             }
 
-            if (_IsPainting)
+            if (!_RequestPool.Any(t => t.X == x && t.Y == y && t.Z == z))
             {
-                _RepaintNeeded = true;
-            }
-            else
-            {
-                Invalidate();
+                _RequestPool.Add(new Tile(x, y, z, TileServer.GetType().Name));
+                _WorkerWaitHandle.Set();
             }
         }
+
+        /// <summary>
+        /// Function to handle accepting HTTPs certificates 
+        /// </summary>
+        private bool AcceptAllCertificates(object sender, Security.Cryptography.X509Certificates.X509Certificate certification, Security.Cryptography.X509Certificates.X509Chain chain, System.Net.Security.SslPolicyErrors sslPolicyErrors)
+        {
+            return true;
+        }
+
+        /// <summary>
+        /// Background worker function. 
+        /// Processes images requests if pool is not empty, than stops the execution until pool gets new image request.
+        /// Breaks execution on disposing.
+        /// </summary>
+        private void ProcessRequests()
+        {
+            while (!IsDisposed)
+            {
+                if (_RequestPool.TryPeek(out Tile tile))
+                {
+                    try
+                    {
+                        // ignore pooled items with zoom level different than current
+                        if (tile.TileServer == TileServer.GetType().Name && tile.Z == ZoomLevel)
+                        {
+                            tile.Image = TileServer.GetTile(tile.X, tile.Y, tile.Z);
+                            tile.Used = true;
+                            Debug.WriteLine($"Requested X={tile.X};Y={tile.Y};Z={tile.Z}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        tile.ErrorMessage = ex.Message;
+                    }
+                    finally
+                    {
+                        if (TileServer is ICacheableTileServer fsCacheTileServer && tile.Image != null)
+                        {
+                            // local path to the cached tile image
+                            string localPath = Path.Combine(CacheFolder, TileServer.GetType().Name, $"{tile.Z}", $"{tile.X}", $"{tile.Y}.tile");
+                            try
+                            {
+                                Directory.CreateDirectory(Path.GetDirectoryName(localPath));
+                                tile.Image.Save(localPath);
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine($"Unable to save tile image {localPath}. Reason: {ex.Message}");
+                            }
+                        }
+
+                        _Cache.Add(tile);
+                        _RequestPool.TryTake(out tile);
+                        
+                        Invalidate();
+                    }
+                }
+                else
+                {
+                    _WorkerWaitHandle.WaitOne();
+                }
+            };
+        }
+
+        
 
         /// <summary>
         /// Gets projection of geographical coordinates onto the map
@@ -879,6 +933,8 @@ namespace System.Windows.Forms
         public void ClearCache(bool allTileServers = false)
         {
             _Cache = new ConcurrentBag<Tile>();
+            _RequestPool = new ConcurrentBag<Tile>();
+
             if (TileServer != null)
             {
                 string cacheFolder = allTileServers ? CacheFolder : Path.Combine(CacheFolder, TileServer.GetType().Name);
@@ -889,7 +945,10 @@ namespace System.Windows.Forms
                     {
                         Directory.Delete(cacheFolder, true);
                     }
-                    catch { }
+                    catch (Exception ex) 
+                    { 
+                        // TODO: avoid exception
+                    }
                 }
             }
             Invalidate();

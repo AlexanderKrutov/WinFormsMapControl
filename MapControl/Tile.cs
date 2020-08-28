@@ -10,7 +10,7 @@ namespace System.Windows.Forms
     /// <summary>
     /// Used to store tile image in memory 
     /// </summary>
-    public class Tile
+    internal class Tile
     {
         /// <summary>
         /// X-index of the tile image
@@ -28,41 +28,40 @@ namespace System.Windows.Forms
         public int Z { get; }
 
         /// <summary>
+        /// Tile server name
+        /// </summary>
+        public string TileServer { get; }
+
+        /// <summary>
         /// Tile image
         /// </summary>
-        public Image Image { get; }
+        public Image Image { get; set; }
 
         /// <summary>
         /// Error message that should be displayed if tile does not exist by some reason (incorrect X/Y indices, zoom level, server unavailable etc.).
         /// </summary>
-        public string ErrorMessage { get; }
+        public string ErrorMessage { get; set;  }
 
         /// <summary>
         /// Flag indicating image recently used (requested to be drawn on the map).
         /// </summary>
-        internal bool Used { get; set; }
+        public bool Used { get; set; }
 
-        internal Tile(int x, int y, int z)
+        public Tile(int x, int y, int z, string tileServer)
         {
             X = x;
             Y = y;
             Z = z;
+            TileServer = tileServer;
         }
 
-        public Tile(Image image, int x, int y, int z)
+        public Tile(Image image, int x, int y, int z, string tileServer)
         {
             Image = image;
             X = x;
             Y = y;
             Z = z;
-        }
-
-        public Tile(string errorMessage, int x, int y, int z)
-        {
-            ErrorMessage = errorMessage;
-            X = x;
-            Y = y;
-            Z = z;
+            TileServer = tileServer;
         }
     }
 }

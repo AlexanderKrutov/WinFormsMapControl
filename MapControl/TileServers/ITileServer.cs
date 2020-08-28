@@ -10,7 +10,7 @@ namespace System.Windows.Forms
     /// <summary>
     /// Provides the functionality of a Tile Server implementations
     /// </summary>
-    public interface ITileServer : IDisposable
+    public interface ITileServer
     {
         /// <summary>
         /// Displayable name of the tile server, i.e. human-readable map name, for example, "Open Street Map".
@@ -35,22 +35,18 @@ namespace System.Windows.Forms
         int MaxZoomLevel { get; }
 
         /// <summary>
-        /// Gets tile validity period. 
-        /// Tile will be requested again from the tile server 
-        /// if tile's image file from the file system cache older than that value. 
-        /// </summary>
-        TimeSpan TileExpirationPeriod { get; }
-
-        /// <summary>
         /// Requests tile image by X and Y indices of the tile and zoom level Z.
         /// </summary>
         /// <param name="x">X-index of the tile.</param>
         /// <param name="y">Y-index coordinate of the tile.</param>
         /// <param name="z">Zoom level</param>
         /// <param name="callback">Callback method to be invoked when the tile is ready.</param>
+        /// <returns>
+        /// Tile image
+        /// </returns>
         /// <remarks>
         /// See about tile indexing here: <see href="https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames" />
         /// </remarks>
-        void RequestTile(int x, int y, int z, Action<Tile, ITileServer> callback);
+        Image GetTile(int x, int y, int z);
     }
 }

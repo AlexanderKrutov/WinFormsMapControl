@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace System.Windows.Forms
@@ -35,39 +37,23 @@ namespace System.Windows.Forms
         public int MaxZoomLevel => 5;
 
         /// <summary>
-        /// Gets tile validity period. Cached in the file system tiles are always valid, so set 10 years value.
-        /// </summary>
-        public TimeSpan TileExpirationPeriod => TimeSpan.FromDays(365 * 100);
-
-        /// <summary>
         /// Gets tile image by X and Y coordinates of the tile and zoom level Z.
         /// </summary>
         /// <param name="x">X-coordinate of the tile.</param>
         /// <param name="y">Y-coordinate of the tile.</param>
         /// <param name="z">Zoom level</param>
         /// <returns></returns>
-        public void RequestTile(int x, int y, int z, Action<Tile, ITileServer> callback)
+        public Image GetTile(int x, int y, int z)
         {
-            Stream stream = Reflection.Assembly.GetCallingAssembly().GetManifestResourceStream($"MapControl.OfflineMaps._{z}._{x}.{(1 << z) - y - 1}.jpg");
-            Tile tile;
+            Stream stream = Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream($"MapControl.OfflineMaps._{z}._{x}.{(1 << z) - y - 1}.jpg");
             if (stream != null)
             {
-                tile = new Tile(new Bitmap(stream), x, y, z);
+                return new Bitmap(stream);
             }
             else
             {
-                tile = new Tile("Tile image does not exist.", x, y, z);
+                throw new Exception("Tile image does not exist.");
             }
-
-            callback.Invoke(tile, this);
-        }
-
-        /// <summary>
-        /// Disposes the object
-        /// </summary>
-        public void Dispose()
-        {
-
         }
     }
 }
