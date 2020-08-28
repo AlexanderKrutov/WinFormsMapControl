@@ -524,6 +524,8 @@ namespace System.Windows.Forms
                     if (y >= 0 && y < FullMapSizeInTiles)
                     {
                         TileImage tile = GetTile(x_, y, ZoomLevel);
+                        
+                        // tile for current zoom and position found
                         if (tile != null)
                         {
                             if (tile.Image != null)
@@ -535,16 +537,32 @@ namespace System.Windows.Forms
                                 DrawThumbnail(g, x, y, tile.Message, true);
                             }
                         }
+                        // tile not found, do some magic
                         else
                         {
-                            tile = GetTile(x_ / 2, y / 2, ZoomLevel - 1, fromCacheOnly: true);
-                            if (tile != null && tile.Image != null)
+                            // draw thumbnail first
+                            DrawThumbnail(g, x, y, ThumbnailText, false);
+
+                            // try to find out tile with less zoom level, and draw scaled part of that tile
+
+                            int z = 1;
+                            while (ZoomLevel - z >= 0)
                             {
-                                DrawTilePart(g, x, y, x_ % 2, y % 2, tile.Image);
-                            }
-                            else
-                            {
-                                DrawThumbnail(g, x, y, ThumbnailText, false);
+                                // fraction of a tile to be drawn (1/2, 1/4 and etc.)
+                                int f = 1 << z;
+
+                                //  try to get tile with less zoom level from cache
+                                tile = GetTile(x_ / f, y / f, ZoomLevel - z, fromCacheOnly: true);
+
+                                // if tile found, draw part of it
+                                if (tile != null && tile.Image != null)
+                                {
+                                    DrawTilePart(g, x, y, x_ % f, y % f, f, tile.Image);
+                                    break;
+                                }
+
+                                // move up to less zoom level
+                                z++;
                             }
                         }
                     }
@@ -690,12 +708,13 @@ namespace System.Windows.Forms
             }
         }
 
-        private void DrawTilePart(Graphics g, int x, int y, int xP, int yP, Image image)
+        private void DrawTilePart(Graphics g, int x, int y, int xRemainder, int yRemainder, int frac, Image image)
         {
             Point p = new Point();
             p.X = _Offset.X + x * TILE_SIZE;
             p.Y = _Offset.Y + y * TILE_SIZE;
-            Rectangle srcRect = new Rectangle(xP == 0 ? 0 : TILE_SIZE / 2, yP == 0 ? 0 : TILE_SIZE / 2, TILE_SIZE / 2, TILE_SIZE / 2);
+
+            Rectangle srcRect = new Rectangle(TILE_SIZE / frac * xRemainder, TILE_SIZE / frac * yRemainder, TILE_SIZE / frac, TILE_SIZE / frac);
             Rectangle destRect = new Rectangle(p.X, p.Y, TILE_SIZE, TILE_SIZE);
             g.DrawImage(image, destRect, srcRect, GraphicsUnit.Pixel);
         }
@@ -733,15 +752,37 @@ namespace System.Windows.Forms
         {
             try
             {
-                TileImage tile = _Cache.FirstOrDefault(c => c.X == x && c.Y == y && c.Z == z);
+                TileImage tile;
+
+                // try to get tile from memory cache
+                tile = _Cache.FirstOrDefault(c => c.X == x && c.Y == y && c.Z == z);
                 if (tile != null)
                 {
                     tile.Used = true;
                     return tile;
                 }
-                else if (!fromCacheOnly)
+                
+                // for web-based tile servers, try to get tile from disk cache
+                if (TileServer is WebTileServer webTileServer)
                 {
-                    Image image = _TileServer.GetTile(x, y, z);
+                    string localPath = Path.Combine(CacheFolder, TileServer.GetType().Name, $"{z}", $"{x}", $"{y}.png");
+                    if (File.Exists(localPath))
+                    {
+                        var fileInfo = new FileInfo(localPath);
+                        if (fileInfo.Length > 0 && fileInfo.LastWriteTime + webTileServer.TileExpirationPeriod >= DateTime.Now)
+                        {
+                            Image image = Image.FromFile(localPath);
+                            tile = new TileImage() { X = x, Y = y, Z = z, Image = image, Used = true };
+                            _Cache.Add(tile);
+                            return tile;
+                        }
+                    }
+                }
+
+                // get tile from the server 
+                if (!fromCacheOnly)
+                {
+                    Image image = TileServer?.GetTile(x, y, z);
                     if (image != null)
                     {
                         tile = new TileImage() { X = x, Y = y, Z = z, Image = image, Used = true };
@@ -749,10 +790,8 @@ namespace System.Windows.Forms
                     }
                     return tile;
                 }
-                else
-                {
-                    return null;
-                }
+
+                return null;
             }
             catch
             {

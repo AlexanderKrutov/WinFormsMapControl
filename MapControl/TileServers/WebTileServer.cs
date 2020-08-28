@@ -112,33 +112,6 @@ namespace System.Windows.Forms
         {
             _ZoomLevel = z;
 
-            string localPath = Path.Combine(Map?.CacheFolder, GetType().Name, $"{z}", $"{x}", $"{y}.png");
-
-            if (File.Exists(localPath))
-            {
-                var fileInfo = new FileInfo(localPath);
-
-                if (fileInfo.Length > 0 && fileInfo.LastWriteTime + TileExpirationPeriod >= DateTime.Now)
-                {
-                    return Image.FromFile(localPath);
-                }                
-            }
-
-            // request to download image
-            DownloadImage(x, y, z);
-
-            // return empty image because it's not downloaded yet
-            return null;
-        }
-
-        /// <summary>
-        /// Downloads tile image locally
-        /// </summary>
-        /// <param name="x">X-coordinate of the tile.</param>
-        /// <param name="y">Y-coordinate of the tile.</param>
-        /// <param name="z">Zoom level</param>
-        private void DownloadImage(int x, int y, int z)
-        {
             // Intialize worker
             if (_Worker == null)
             {
@@ -156,8 +129,11 @@ namespace System.Windows.Forms
                 // resume worker thread
                 _WorkerWaitHandle.Set();
             }
-        }
 
+            // return empty image because it's not downloaded yet
+            return null;
+        }
+       
         /// <summary>
         /// Background worker function. 
         /// Downloads images if pool is not empty, than stops the exucution until pool gets new image request.

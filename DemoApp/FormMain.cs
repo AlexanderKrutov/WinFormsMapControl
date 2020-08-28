@@ -167,7 +167,7 @@ namespace DemoApp
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"Latitude: {DegreeToString(coord.Latitude, "S", "N")}");
             sb.AppendLine($"Longitude: {DegreeToString(coord.Longitude, "W", "E")}");
-            MessageBox.Show("Info", sb.ToString());
+            MessageBox.Show(sb.ToString(), "Info");
         }
 
         private string DegreeToString(double coordinate, string negativeSym, string positiveSym)
