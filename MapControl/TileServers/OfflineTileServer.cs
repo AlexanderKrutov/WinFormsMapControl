@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -33,6 +34,8 @@ namespace System.Windows.Forms
         /// </summary>
         public int MaxZoomLevel => 5;
 
+        public TimeSpan TileExpirationPeriod => TimeSpan.FromDays(365 * 100);
+
         /// <summary>
         /// Gets tile image by X and Y coordinates of the tile and zoom level Z.
         /// </summary>
@@ -40,9 +43,20 @@ namespace System.Windows.Forms
         /// <param name="y">Y-coordinate of the tile.</param>
         /// <param name="z">Zoom level</param>
         /// <returns></returns>
-        public Image GetTile(int x, int y, int z)
+        public void RequestTile(int x, int y, int z, Action<Tile, ITileServer> callback)
         {
-            return new Bitmap(Reflection.Assembly.GetCallingAssembly().GetManifestResourceStream($"MapControl.OfflineMaps._{z}._{x}.{(1 << z) - y - 1}.jpg"));
+            Stream stream = Reflection.Assembly.GetCallingAssembly().GetManifestResourceStream($"MapControl.OfflineMaps._{z}._{x}.{(1 << z) - y - 1}.jpg");
+            Tile tile = null;
+            if (stream != null)
+            {
+                tile = new Tile(new Bitmap(stream), x, y, z);
+            }
+            else
+            {
+                tile = new Tile("Tile image does not exist.", x, y, z);
+            }
+
+            callback.Invoke(tile, this);
         }
 
         /// <summary>

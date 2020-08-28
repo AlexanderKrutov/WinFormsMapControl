@@ -34,13 +34,14 @@ namespace System.Windows.Forms
         /// </summary>
         int MaxZoomLevel { get; }
 
+        TimeSpan TileExpirationPeriod { get; }
+
         /// <summary>
         /// Gets tile image by X and Y coordinates of the tile and zoom level Z.
         /// </summary>
         /// <param name="x">X-coordinate of the tile.</param>
         /// <param name="y">Y-coordinate of the tile.</param>
         /// <param name="z">Zoom level</param>
-        /// <returns></returns>
-        Image GetTile(int x, int y, int z);
+        void RequestTile(int x, int y, int z, Action<Tile, ITileServer> callback);
     }
 }

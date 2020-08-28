@@ -30,7 +30,7 @@ namespace System.Windows.Forms
     /// Map control for displaying online and offline maps.
     /// </summary>
     [DesignerCategory("code")]
-    public partial class MapControl : Control, IMapControl
+    public partial class MapControl : Control
     {
         /// <summary>
         /// Tile size, in pixels
@@ -55,7 +55,10 @@ namespace System.Windows.Forms
         /// <summary>
         /// Cache used to store tile images
         /// </summary>
-        private ConcurrentBag<TileImage> _Cache = new ConcurrentBag<TileImage>();
+        private ConcurrentBag<Tile> _Cache = new ConcurrentBag<Tile>();
+
+        private bool _IsPainting = false;
+        private bool _RepaintNeeded = false;
 
         /// <summary>
         /// String format to draw text aligned to center
@@ -184,23 +187,13 @@ namespace System.Windows.Forms
             get => _TileServer;
             set
             {
-                if (_TileServer is WebTileServer oldValue)
-                {
-                    oldValue.Map = null;
-                }
-
                 _TileServer = value;
                 _LinkLabel.Links.Clear();
                 _LinkLabel.Visible = false;
 
                 if (value != null)
                 {
-                    if (value is WebTileServer newValue)
-                    {
-                        newValue.Map = this;
-                    }
-
-                    _Cache = new ConcurrentBag<TileImage>();
+                    _Cache = new ConcurrentBag<Tile>();
 
                     if (_TileServer.AttributionText != null)
                     {
@@ -392,19 +385,21 @@ namespace System.Windows.Forms
 
         protected override void OnPaint(PaintEventArgs pe)
         {
+            _IsPainting = true;
+
             bool drawContent = true;
 
             if (!DesignMode)
             {
-                if (CacheFolder == null && (TileServer is WebTileServer))
+                if (CacheFolder == null)
                 {
                     drawContent = false;
-                    DrawErrorString(pe.Graphics, $"{nameof(CacheFolder)} property value is not set.\nIt should be specified if you are using web-based tile server.");
+                    DrawErrorString(pe.Graphics, $"{nameof(CacheFolder)} property value is not set.\nIt should be specified before using the map control.");
                 }
                 else if (TileServer == null)
                 {
                     drawContent = false;
-                    DrawErrorString(pe.Graphics, $"{nameof(TileServer)} property value is not set.\nPlease specify tile server instance to obtain map images before using the control.");
+                    DrawErrorString(pe.Graphics, $"{nameof(TileServer)} property value is not set.\nPlease specify tile server instance to obtain map images before using the map control.");
                 }
             }
             else
@@ -423,7 +418,15 @@ namespace System.Windows.Forms
                 DrawPolygons(pe.Graphics);
                 DrawTracks(pe.Graphics);
                 DrawMarkers(pe.Graphics);
+
+                if (_RepaintNeeded)
+                {
+                    _RepaintNeeded = false;
+                    Invalidate();
+                }
             }
+
+            _IsPainting = false;
 
             base.OnPaint(pe);
         }
@@ -523,18 +526,20 @@ namespace System.Windows.Forms
                     int x_ = (int)ArrangeTileNumber(x);
                     if (y >= 0 && y < FullMapSizeInTiles)
                     {
-                        TileImage tile = GetTile(x_, y, ZoomLevel);
+                        Tile tile = GetTile(x_, y, ZoomLevel);
                         
                         // tile for current zoom and position found
                         if (tile != null)
                         {
                             if (tile.Image != null)
                             {
+                                tile.Used = true;
                                 DrawTile(g, x, y, tile.Image);
                             }
-                            else if (tile.Message != null)
+                            else
                             {
-                                DrawThumbnail(g, x, y, tile.Message, true);
+                                tile.Used = true;
+                                DrawThumbnail(g, x, y, tile.ErrorMessage, true);
                             }
                         }
                         // tile not found, do some magic
@@ -557,6 +562,7 @@ namespace System.Windows.Forms
                                 // if tile found, draw part of it
                                 if (tile != null && tile.Image != null)
                                 {
+                                    tile.Used = true;
                                     DrawTilePart(g, x, y, x_ % f, y % f, f, tile.Image);
                                     break;
                                 }
@@ -573,7 +579,7 @@ namespace System.Windows.Forms
             _Cache.Where(c => !c.Used).ToList().ForEach(c => c.Image?.Dispose());
 
             // Update cache, leave only used images
-            _Cache = new ConcurrentBag<TileImage>(_Cache.Where(c => c.Used));
+            _Cache = new ConcurrentBag<Tile>(_Cache.Where(c => c.Used));
         }
 
         private void DrawMarkers(Graphics gr)
@@ -748,47 +754,37 @@ namespace System.Windows.Forms
         /// <param name="y">Y-index of the tile</param>
         /// <param name="z">Zoom level</param>
         /// <returns>TileImage instance</returns>
-        private TileImage GetTile(int x, int y, int z, bool fromCacheOnly = false)
+        private Tile GetTile(int x, int y, int z, bool fromCacheOnly = false)
         {
             try
             {
-                TileImage tile;
+                Tile tile;
 
                 // try to get tile from memory cache
                 tile = _Cache.FirstOrDefault(c => c.X == x && c.Y == y && c.Z == z);
                 if (tile != null)
                 {
-                    tile.Used = true;
                     return tile;
                 }
                 
-                // for web-based tile servers, try to get tile from disk cache
-                if (TileServer is WebTileServer webTileServer)
+                // try to get tile from file system
+                string localPath = Path.Combine(CacheFolder, TileServer.GetType().Name, $"{z}", $"{x}", $"{y}.png");
+                if (File.Exists(localPath))
                 {
-                    string localPath = Path.Combine(CacheFolder, TileServer.GetType().Name, $"{z}", $"{x}", $"{y}.png");
-                    if (File.Exists(localPath))
+                    var fileInfo = new FileInfo(localPath);
+                    if (fileInfo.Length > 0 && fileInfo.LastWriteTime + TileServer.TileExpirationPeriod >= DateTime.Now)
                     {
-                        var fileInfo = new FileInfo(localPath);
-                        if (fileInfo.Length > 0 && fileInfo.LastWriteTime + webTileServer.TileExpirationPeriod >= DateTime.Now)
-                        {
-                            Image image = Image.FromFile(localPath);
-                            tile = new TileImage() { X = x, Y = y, Z = z, Image = image, Used = true };
-                            _Cache.Add(tile);
-                            return tile;
-                        }
+                        Image image = Image.FromFile(localPath);
+                        tile = new Tile(image, x, y, z);
+                        _Cache.Add(tile);
+                        return tile;
                     }
                 }
-
+                
                 // get tile from the server 
                 if (!fromCacheOnly)
                 {
-                    Image image = TileServer?.GetTile(x, y, z);
-                    if (image != null)
-                    {
-                        tile = new TileImage() { X = x, Y = y, Z = z, Image = image, Used = true };
-                        _Cache.Add(tile);
-                    }
-                    return tile;
+                    TileServer?.RequestTile(x, y, z, OnTileReady);
                 }
 
                 return null;
@@ -803,10 +799,35 @@ namespace System.Windows.Forms
         /// Called when tile is ready to be displayed
         /// </summary>
         /// <param name="tile">Tile to be added to the cache</param>
-        void IMapControl.OnTileReady(TileImage tile)
+        private void OnTileReady(Tile tile, ITileServer server)
         {
-            _Cache.Add(tile);
-            Invalidate();
+            if (tile.ErrorMessage != null)
+            {
+                _Cache.Add(tile);
+            }
+            else
+            {
+                // local path to the cached tile image
+                string localPath = Path.Combine(CacheFolder, server.GetType().Name, $"{tile.Z}", $"{tile.X}", $"{tile.Y}.png");
+                try
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(localPath));
+                    tile.Image.Save(localPath);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Unable to save tile image {localPath}. Reason: {ex.Message}");
+                }
+            }
+
+            if (_IsPainting)
+            {
+                _RepaintNeeded = true;
+            }
+            else
+            {
+                Invalidate();
+            }
         }
 
         /// <summary>
@@ -848,7 +869,7 @@ namespace System.Windows.Forms
         /// <param name="allTileServers">If flag is set to true, cache for all tile servers will be cleared.</param>
         public void ClearCache(bool allTileServers = false)
         {
-            _Cache = new ConcurrentBag<TileImage>();
+            _Cache = new ConcurrentBag<Tile>();
             if (TileServer != null)
             {
                 string cacheFolder = allTileServers ? CacheFolder : Path.Combine(CacheFolder, TileServer.GetType().Name);

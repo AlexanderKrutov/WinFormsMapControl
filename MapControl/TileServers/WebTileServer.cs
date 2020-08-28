@@ -21,7 +21,7 @@ namespace System.Windows.Forms
         /// <summary>
         /// Pool of images to be downloaded
         /// </summary>
-        private ConcurrentBag<TileImage> _DowloadPool = new ConcurrentBag<TileImage>();
+        private ConcurrentBag<Tile> _DowloadPool = new ConcurrentBag<Tile>();
 
         /// <summary>
         /// Event handle to stop/resume downloading
@@ -38,10 +38,7 @@ namespace System.Windows.Forms
         /// </summary>
         private int _ZoomLevel;
 
-        /// <summary>
-        /// Reference to parent map control
-        /// </summary>
-        internal IMapControl Map { get; set; }
+        private Action<Tile, ITileServer> _RequestTileCallback;
 
         /// <summary>
         /// Gets tile URI by X and Y coordinates of the tile and zoom level Z.
@@ -108,9 +105,10 @@ namespace System.Windows.Forms
         /// <param name="y">Y-coordinate of the tile.</param>
         /// <param name="z">Zoom level</param>
         /// <returns></returns>
-        public Image GetTile(int x, int y, int z)
+        public void RequestTile(int x, int y, int z, Action<Tile, ITileServer> callback)
         {
             _ZoomLevel = z;
+            _RequestTileCallback = callback;
 
             // Intialize worker
             if (_Worker == null)
@@ -124,14 +122,11 @@ namespace System.Windows.Forms
             if (!_DowloadPool.Any(c => c.X == x && c.Y == y && c.Z == z))
             {
                 // add image request to pool
-                _DowloadPool.Add(new TileImage() { X = x, Y = y, Z = z });
+                _DowloadPool.Add(new Tile(x, y, z));
 
                 // resume worker thread
                 _WorkerWaitHandle.Set();
             }
-
-            // return empty image because it's not downloaded yet
-            return null;
         }
        
         /// <summary>
@@ -143,23 +138,14 @@ namespace System.Windows.Forms
         {
             while (!_IsDisposed)
             {
-                if (_DowloadPool.TryTake(out TileImage tile))
+                if (_DowloadPool.TryPeek(out Tile tile))
                 {
                     try
                     {
                         // ignore pooled items with zoom level different than current
-                        if (tile.Z != _ZoomLevel) continue;
-
-                        // local path to the cached tile image
-                        string localPath = Path.Combine(Map?.CacheFolder, GetType().Name, $"{tile.Z}", $"{tile.X}", $"{tile.Y}.png");
-
-                        // if no such file or if it's expired, download it
-                        if (!File.Exists(localPath) || new FileInfo(localPath).LastWriteTime + TileExpirationPeriod < DateTime.Now)
+                        if (tile.Z == _ZoomLevel)
                         {
                             Uri uri = GetTileUri(tile.X, tile.Y, tile.Z);
-
-                            // Create directories and subdirectories if needed
-                            Directory.CreateDirectory(Path.GetDirectoryName(localPath));
 
                             var request = (HttpWebRequest)WebRequest.Create(uri);
                             request.UserAgent = UserAgent;
@@ -168,21 +154,17 @@ namespace System.Windows.Forms
                             using (var response = request.GetResponse())
                             using (Stream stream = response.GetResponseStream())
                             {
-                                tile.Image = Image.FromStream(stream);
-                                tile.Image.Save(localPath);
-                                Debug.WriteLine($"Downloaded tile {localPath}");
+                                tile = new Tile(Image.FromStream(stream), tile.X, tile.Y, tile.Z);
                             }
 
-                            Map?.OnTileReady(tile);
+                            _RequestTileCallback.Invoke(tile, this);
                         }
                     }
                     catch (Exception ex)
                     {
-                        tile.Message = ex.Message;
-                        Map?.OnTileReady(tile);
-
-                        //Debug.Fail($"Unable to download tile image. Reason: {ex.Message}");
-
+                        tile = new Tile($"Unable to download tile.\n{ex.Message}", tile.X, tile.Y, tile.Z);
+                        _RequestTileCallback.Invoke(tile, this);
+                       
                         if (ex is WebException wex)
                         {
                             // If no response from the server, wait for a while 
@@ -192,6 +174,10 @@ namespace System.Windows.Forms
                                 Thread.Sleep(1000);
                             }
                         }
+                    }
+                    finally
+                    {
+                        _DowloadPool.TryTake(out tile);
                     }
                 }
                 else
