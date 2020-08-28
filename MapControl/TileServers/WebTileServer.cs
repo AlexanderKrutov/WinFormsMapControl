@@ -38,6 +38,9 @@ namespace System.Windows.Forms
         /// </summary>
         private int _ZoomLevel;
 
+        /// <summary>
+        /// Reference to keep the callback method
+        /// </summary>
         private Action<Tile, ITileServer> _RequestTileCallback;
 
         /// <summary>
@@ -184,7 +187,6 @@ namespace System.Windows.Forms
                 {
                     _WorkerWaitHandle.WaitOne();
                 }
-                
             };
         }
 

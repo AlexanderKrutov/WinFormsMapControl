@@ -34,6 +34,9 @@ namespace System.Windows.Forms
         /// </summary>
         public int MaxZoomLevel => 5;
 
+        /// <summary>
+        /// Gets tile validity period. Cached in the file system tiles are always valid, so set 10 years value.
+        /// </summary>
         public TimeSpan TileExpirationPeriod => TimeSpan.FromDays(365 * 100);
 
         /// <summary>
@@ -46,7 +49,7 @@ namespace System.Windows.Forms
         public void RequestTile(int x, int y, int z, Action<Tile, ITileServer> callback)
         {
             Stream stream = Reflection.Assembly.GetCallingAssembly().GetManifestResourceStream($"MapControl.OfflineMaps._{z}._{x}.{(1 << z) - y - 1}.jpg");
-            Tile tile = null;
+            Tile tile;
             if (stream != null)
             {
                 tile = new Tile(new Bitmap(stream), x, y, z);

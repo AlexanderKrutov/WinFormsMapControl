@@ -57,7 +57,14 @@ namespace System.Windows.Forms
         /// </summary>
         private ConcurrentBag<Tile> _Cache = new ConcurrentBag<Tile>();
 
+        /// <summary>
+        /// Flag indicating the map control is painting now
+        /// </summary>
         private bool _IsPainting = false;
+
+        /// <summary>
+        /// Flag indicating the map control needs to be repainted
+        /// </summary>
         private bool _RepaintNeeded = false;
 
         /// <summary>
@@ -402,10 +409,12 @@ namespace System.Windows.Forms
                     DrawErrorString(pe.Graphics, $"{nameof(TileServer)} property value is not set.\nPlease specify tile server instance to obtain map images before using the map control.");
                 }
             }
+            // use offline maps in design mode
             else
             {
                 if (TileServer == null)
                 {
+                    CacheFolder = Path.Combine(Path.GetTempPath(), "MapControl");
                     TileServer = new OfflineTileServer();
                 }
             }
@@ -485,14 +494,14 @@ namespace System.Windows.Forms
         {
             int z = ZoomLevel;
 
-            if (e.Delta > 0)
+            if (e.Delta >= 120)
                 z = ZoomLevel + 1;
-            else if (e.Delta < 0)
+            else if (e.Delta <= -120)
                 z = ZoomLevel - 1;
 
             SetZoomLevel(z, new Point(e.X, e.Y));
 
-            base.OnMouseWheel(e);
+            base.OnMouseWheel(e);            
         }
 
         private float ArrangeTileNumber(float n)
@@ -768,7 +777,7 @@ namespace System.Windows.Forms
                 }
                 
                 // try to get tile from file system
-                string localPath = Path.Combine(CacheFolder, TileServer.GetType().Name, $"{z}", $"{x}", $"{y}.png");
+                string localPath = Path.Combine(CacheFolder, TileServer.GetType().Name, $"{z}", $"{x}", $"{y}.tile");
                 if (File.Exists(localPath))
                 {
                     var fileInfo = new FileInfo(localPath);
@@ -808,7 +817,7 @@ namespace System.Windows.Forms
             else
             {
                 // local path to the cached tile image
-                string localPath = Path.Combine(CacheFolder, server.GetType().Name, $"{tile.Z}", $"{tile.X}", $"{tile.Y}.png");
+                string localPath = Path.Combine(CacheFolder, server.GetType().Name, $"{tile.Z}", $"{tile.X}", $"{tile.Y}.tile");
                 try
                 {
                     Directory.CreateDirectory(Path.GetDirectoryName(localPath));

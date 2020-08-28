@@ -107,11 +107,14 @@ namespace DemoApp
             this.mapControl.ShowThumbnails = true;
             this.mapControl.Size = new System.Drawing.Size(684, 328);
             this.mapControl.TabIndex = 0;
+            this.mapControl.ThumbnailBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            this.mapControl.ThumbnailForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(176)))), ((int)(((byte)(176)))), ((int)(((byte)(176)))));
             this.mapControl.ThumbnailText = "Downloading...";
             this.mapControl.ZoomLevel = 0;
             this.mapControl.DrawMarker += new System.EventHandler<System.Windows.Forms.DrawMarkerEventArgs>(this.mapControl_DrawMarker);
             this.mapControl.DoubleClick += new System.EventHandler(this.mapControl_DoubleClick);
             this.mapControl.MouseMove += new System.Windows.Forms.MouseEventHandler(this.mapControl_MouseMove);
+            this.mapControl.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.mapControl_MouseWheel);
             // 
             // FormMain
             // 

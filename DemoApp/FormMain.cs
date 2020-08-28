@@ -128,10 +128,20 @@ namespace DemoApp
             }
         }
 
-        private void mapControl_MouseMove(object sender, MouseEventArgs e)
+        private void UpdateWindowTitle()
         {
             GeoPoint g = mapControl.Mouse;
             this.Text = $"Longitude = {DegreeToString(g.Longitude, "W", "E")} / Latitude = {DegreeToString(g.Latitude, "S", "N")} / Zoom = {mapControl.ZoomLevel}";
+        }
+
+        private void mapControl_MouseMove(object sender, MouseEventArgs e)
+        {
+            UpdateWindowTitle();
+        }
+
+        private void mapControl_MouseWheel(object sender, MouseEventArgs e)
+        {
+            UpdateWindowTitle();
         }
 
         private void btnClearCache_Click(object sender, EventArgs e)
