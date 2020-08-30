@@ -20,5 +20,7 @@ namespace System.Windows.Forms
         {
             Pen = pen;
         }
+
+        public static TrackStyle Default = new TrackStyle(new Pen(Color.Blue) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash });
     }
 }

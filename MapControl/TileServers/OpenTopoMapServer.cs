@@ -20,7 +20,7 @@ namespace System.Windows.Forms
 
         public override int MaxZoomLevel => 17;
 
-        public override string UserAgent => null;
+        public override string UserAgent { get; set; }
 
         public override Uri GetTileUri(int x, int y, int z)
         {

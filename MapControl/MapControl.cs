@@ -11,23 +11,6 @@ using System.Threading;
 
 namespace System.Windows.Forms
 {
-    public class DrawMarkerEventArgs : HandledEventArgs
-    {
-        public Marker Marker { get; internal set; }
-        public Graphics Graphics { get; internal set; }
-        public PointF Point { get; internal set; }
-        internal DrawMarkerEventArgs() { }
-    }
-
-    public class DrawTrackSegmentArgs : HandledEventArgs
-    {
-        public Track Track { get; internal set; }
-        public Graphics Graphics { get; internal set; }
-        public PointF Point1 { get; internal set; }
-        public PointF Point2 { get; internal set; }
-        internal DrawTrackSegmentArgs() { }
-    }
-
     /// <summary>
     /// Map control for displaying online and offline maps.
     /// </summary>
@@ -75,11 +58,6 @@ namespace System.Windows.Forms
         private EventWaitHandle _WorkerWaitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
 
         /// <summary>
-        /// Flag indicating the map control needs to be repainted
-        /// </summary>
-        private bool _RepaintNeeded = false;
-
-        /// <summary>
         /// String format to draw text aligned to center
         /// </summary>
         private readonly StringFormat _AlignCenterStringFormat = new StringFormat() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
@@ -97,7 +75,7 @@ namespace System.Windows.Forms
         /// <summary>
         /// Gets maps size in pixels
         /// </summary>
-        private long FullMapSizeInPixels => FullMapSizeInTiles * TILE_SIZE;
+        private int FullMapSizeInPixels => FullMapSizeInTiles * TILE_SIZE;
 
         /// <summary>
         /// Backing field for <see cref="ZoomLevel"/> property
@@ -197,7 +175,7 @@ namespace System.Windows.Forms
         private ITileServer _TileServer;
 
         /// <summary>
-        /// Map tile server
+        /// Gets or sets tile server used to obtain map tiles
         /// </summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -257,7 +235,7 @@ namespace System.Windows.Forms
 
 
         /// <summary>
-        /// Gets or sets geographical coordinates of current position of mouse
+        /// Gets geographical coordinates of current position of mouse
         /// </summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -293,25 +271,23 @@ namespace System.Windows.Forms
         public ICollection<Polygon> Polygons { get; } = new List<Polygon>();
 
         /// <summary>
-        /// Default style for map markers
+        /// Backing field for <see cref="FitToBounds"/> property.
         /// </summary>
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public MarkerStyle DefaultMarkerStyle { get; set; } = new MarkerStyle(Brushes.Red, 3, Brushes.Black, SystemFonts.DefaultFont);
+        private bool _FitToBounds = true;
 
         /// <summary>
-        /// Default style for tracks
+        /// Gets or sets value indicating should the map fit to vertical bounds of the control or not.
         /// </summary>
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public TrackStyle DefaultTrackStyle { get; set; } = new TrackStyle(Pens.Red);
-
-        /// <summary>
-        /// Default style for polygons
-        /// </summary>
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public PolygonStyle DefaultPolygonStyle { get; set; } = new PolygonStyle(new SolidBrush(Color.FromArgb(100, Color.Black)), new Pen(Brushes.Blue, 3) { DashStyle = DashStyle.Dot });
+        [Description("Value indicating should the map fit to vertical bounds of the control or not."), Category("Behavior")]
+        public bool FitToBounds
+        {
+            get => _FitToBounds;
+            set
+            {
+                _FitToBounds = value;
+                Invalidate();
+            }
+        }
 
         /// <summary>
         /// Gets or sets color used to draw error messages
@@ -363,9 +339,14 @@ namespace System.Windows.Forms
         public event EventHandler<DrawMarkerEventArgs> DrawMarker;
 
         /// <summary>
-        /// Raised when track segment is drawn on the map
+        /// Raised when track is drawn on the map
         /// </summary>
-        public event EventHandler<DrawTrackSegmentArgs> DrawTrackSegment;
+        public event EventHandler<DrawTrackEventArgs> DrawTrack;
+
+        /// <summary>
+        /// Raised when polygon is drawn on the map
+        /// </summary>
+        public event EventHandler<DrawPolygonEventArgs> DrawPolygon;
 
         /// <summary>
         /// Creates new <see cref="MapControl"/> control.
@@ -408,10 +389,10 @@ namespace System.Windows.Forms
 
             if (!DesignMode)
             {
-                if (CacheFolder == null)
+                if (CacheFolder == null && TileServer is IFileCacheTileServer)
                 {
                     drawContent = false;
-                    DrawErrorString(pe.Graphics, $"{nameof(CacheFolder)} property value is not set.\nIt should be specified before using the map control.");
+                    DrawErrorString(pe.Graphics, $"{nameof(CacheFolder)} property value is not set.\nIt should be specified if you are using tile server which supports file system cache.");
                 }
                 else if (TileServer == null)
                 {
@@ -434,6 +415,7 @@ namespace System.Windows.Forms
                 pe.Graphics.SmoothingMode = SmoothingMode.None;
                 DrawTiles(pe.Graphics);
                 pe.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
                 DrawPolygons(pe.Graphics);
                 DrawTracks(pe.Graphics);
                 DrawMarkers(pe.Graphics);
@@ -446,8 +428,28 @@ namespace System.Windows.Forms
         {
             _LinkLabel.Left = Width - _LinkLabel.Width;
             _LinkLabel.Top = Height - _LinkLabel.Height;
+
+            AdjustMapBounds();
+
             base.OnSizeChanged(e);
             Invalidate();
+        }
+
+        private void AdjustMapBounds()
+        {
+            if (FitToBounds)
+            {
+                if (FullMapSizeInPixels > Height)
+                {
+                    if (_Offset.Y > 0) _Offset.Y = 0;
+                    if (_Offset.Y + FullMapSizeInPixels < Height) _Offset.Y = Height - FullMapSizeInPixels;
+                }
+                else
+                {
+                    if (_Offset.Y > Height - FullMapSizeInPixels) _Offset.Y = Height - FullMapSizeInPixels;
+                    if (_Offset.Y < 0) _Offset.Y = 0;
+                }
+            }
         }
 
         protected override void OnMouseDown(MouseEventArgs e)
@@ -482,6 +484,8 @@ namespace System.Windows.Forms
                 if (_Offset.Y > Height)
                     _Offset.Y = Height;
 
+                AdjustMapBounds();
+
                 Invalidate();
             }
 
@@ -501,6 +505,8 @@ namespace System.Windows.Forms
                 z = ZoomLevel - 1;
 
             SetZoomLevel(z, new Point(e.X, e.Y));
+
+            AdjustMapBounds();
 
             base.OnMouseWheel(e);            
         }
@@ -556,7 +562,7 @@ namespace System.Windows.Forms
                         else
                         {
                             // draw thumbnail first
-                            DrawThumbnail(g, x, y, ThumbnailText + $"\nX={x_};Y={y};Z={ZoomLevel}", false);
+                            DrawThumbnail(g, x, y, ThumbnailText, false);
 
                             // try to find out tile with less zoom level, and draw scaled part of that tile
 
@@ -597,12 +603,6 @@ namespace System.Windows.Forms
             foreach (Marker m in Markers)
             {
                 var p = Project(m.Point);
-
-                var labelFont = m.Style != null ? m.Style.LabelFont : DefaultMarkerStyle.LabelFont;
-                var labelBrush = m.Style != null ? m.Style.LabelBrush : DefaultMarkerStyle.LabelBrush;
-                var markerWidth = m.Style != null ? m.Style.MarkerWidth : DefaultMarkerStyle.MarkerWidth;
-                var markerBrush = m.Style != null ? m.Style.MarkerBrush : DefaultMarkerStyle.MarkerBrush;
-
                 Draw(gr, () =>
                 {
                     if (gr.IsVisible(p))
@@ -613,17 +613,21 @@ namespace System.Windows.Forms
                             Marker = m,
                             Point = p
                         };
+
                         DrawMarker?.Invoke(this, eventArgs);
                         if (!eventArgs.Handled)
                         {
-                            if (markerBrush != null)
+                            if (m.Style.MarkerBrush != null)
                             {
-                                gr.FillEllipse(markerBrush, p.X - markerWidth / 2, p.Y - markerWidth / 2, markerWidth, markerWidth);
+                                gr.FillEllipse(m.Style.MarkerBrush, p.X - m.Style.MarkerWidth / 2, p.Y - m.Style.MarkerWidth / 2, m.Style.MarkerWidth, m.Style.MarkerWidth);
                             }
-
-                            if (labelFont != null && labelBrush != null)
+                            if (m.Style.MarkerPen != null)
                             {
-                                gr.DrawString(m.Label, labelFont, labelBrush, new PointF(p.X + markerWidth * 0.35f, p.Y + markerWidth * 0.35f));
+                                gr.DrawEllipse(m.Style.MarkerPen, p.X - m.Style.MarkerWidth / 2, p.Y - m.Style.MarkerWidth / 2, m.Style.MarkerWidth, m.Style.MarkerWidth);
+                            }
+                            if (m.Style.LabelFont != null && m.Style.LabelBrush != null && m.Style.LabelFormat != null)
+                            {
+                                gr.DrawString(m.Label, m.Style.LabelFont, m.Style.LabelBrush, new PointF(p.X + m.Style.MarkerWidth * 0.35f, p.Y + m.Style.MarkerWidth * 0.35f), m.Style.LabelFormat);
                             }
                         }
                     }
@@ -648,8 +652,28 @@ namespace System.Windows.Forms
                     points[i] = p;
                 }
 
-                Pen pen = track.Style != null ? track.Style.Pen : DefaultTrackStyle.Pen;
-                Draw(gr, () => gr.DrawPolyline(pen, points));
+                var eventArgs = new DrawTrackEventArgs()
+                {
+                    Graphics = gr,
+                    Track = track,
+                    Points = points
+                };
+
+                DrawTrack?.Invoke(this, eventArgs);
+                if (!eventArgs.Handled)
+                {
+                    if (ZoomLevel < 3)
+                    {
+                        if (track.Style.Pen != null)
+                        {
+                            Draw(gr, () => gr.DrawLines(track.Style.Pen, points));
+                        }
+                    }
+                    else
+                    {
+                        Draw(gr, () => gr.DrawPolyline(track.Style.Pen, points));
+                    }
+                }
             }
         }
 
@@ -674,16 +698,38 @@ namespace System.Windows.Forms
                         p0 = p;
                     }
 
-                    Brush brush = polygon.Style != null ? polygon.Style.Brush : DefaultPolygonStyle.Brush;
-                    Pen pen = polygon.Style != null ? polygon.Style.Pen : DefaultPolygonStyle.Pen;
+                    var eventArgs = new DrawPolygonEventArgs()
+                    {
+                        Graphics = gr,
+                        Polygon = polygon,
+                        Path = gp
+                    };
 
-                    SolidBrush br = new SolidBrush(Color.FromArgb(100, Color.Black));
-
-                    Draw(gr, () => gr.DrawGraphicsPath(gp, brush, pen));
+                    DrawPolygon?.Invoke(this, eventArgs);
+                    if (!eventArgs.Handled)
+                    {
+                        if (ZoomLevel < 3)
+                        {
+                            Draw(gr, () =>
+                            {
+                                if (polygon.Style.Brush != null)
+                                {
+                                    gr.FillPath(polygon.Style.Brush, gp);
+                                }
+                                if (polygon.Style.Pen != null)
+                                {
+                                    gr.DrawPath(polygon.Style.Pen, gp);
+                                }
+                            });
+                        }
+                        else
+                        {
+                            Draw(gr, () => gr.DrawGraphicsPath(gp, polygon.Style.Brush, polygon.Style.Pen));
+                        }
+                    }                    
                 }
             }
         }
-
 
         private void Draw(Graphics gr, Action draw)
         {
@@ -763,7 +809,8 @@ namespace System.Windows.Forms
         /// <param name="x">X-index of the tile</param>
         /// <param name="y">Y-index of the tile</param>
         /// <param name="z">Zoom level</param>
-        /// <returns>TileImage instance</returns>
+        /// <param name="fromCacheOnly">Flag indicating the tile can be fetched from cache only (server request is not allowed)</param>
+        /// <returns><see cref="Tile"/> instance</returns>
         private Tile GetTile(int x, int y, int z, bool fromCacheOnly = false)
         {
             try
@@ -771,20 +818,20 @@ namespace System.Windows.Forms
                 Tile tile;
 
                 // try to get tile from memory cache
-                tile = _Cache.FirstOrDefault(c => c.X == x && c.Y == y && c.Z == z);
+                tile = _Cache.FirstOrDefault(t => t.X == x && t.Y == y && t.Z == z && t.TileServer == TileServer.GetType().Name);
                 if (tile != null)
                 {
                     return tile;
                 }
 
                 // try to get tile from file system
-                if (TileServer is ICacheableTileServer fsCacheTileServer)
+                if (TileServer is IFileCacheTileServer fcTileServer)
                 {
                     string localPath = Path.Combine(CacheFolder, TileServer.GetType().Name, $"{z}", $"{x}", $"{y}.tile");
                     if (File.Exists(localPath))
                     {
                         var fileInfo = new FileInfo(localPath);
-                        if (fileInfo.Length > 0 && fileInfo.LastWriteTime + fsCacheTileServer.TileExpirationPeriod >= DateTime.Now)
+                        if (fileInfo.Length > 0 && fileInfo.LastWriteTime + fcTileServer.TileExpirationPeriod >= DateTime.Now)
                         {
                             Image image = Image.FromFile(localPath);
                             tile = new Tile(image, x, y, z, TileServer.GetType().Name);
@@ -808,19 +855,23 @@ namespace System.Windows.Forms
             }
         }
 
+        /// <summary>
+        /// Does a tile request to the tile server
+        /// </summary>
+        /// <param name="x">X-index of the tile to be requested</param>
+        /// <param name="y">Y-index of the tile to be requested</param>
+        /// <param name="z">Zoom level</param>
         private void RequestTile(int x, int y, int z)
         {
-            // Intialize worker
+            // Intialize worker, if not yet initialized
             if (_Worker == null)
             {
-                ServicePointManager.ServerCertificateValidationCallback = new Net.Security.RemoteCertificateValidationCallback(AcceptAllCertificates);
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-
                 _Worker = new Thread(new ThreadStart(ProcessRequests));
                 _Worker.IsBackground = true;
                 _Worker.Start();
             }
 
+            // Check the tile is already requested
             if (!_RequestPool.Any(t => t.X == x && t.Y == y && t.Z == z))
             {
                 _RequestPool.Add(new Tile(x, y, z, TileServer.GetType().Name));
@@ -829,16 +880,9 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
-        /// Function to handle accepting HTTPs certificates 
-        /// </summary>
-        private bool AcceptAllCertificates(object sender, Security.Cryptography.X509Certificates.X509Certificate certification, Security.Cryptography.X509Certificates.X509Chain chain, System.Net.Security.SslPolicyErrors sslPolicyErrors)
-        {
-            return true;
-        }
-
-        /// <summary>
         /// Background worker function. 
-        /// Processes images requests if pool is not empty, than stops the execution until pool gets new image request.
+        /// Processes images requests if requests pool is not empty, 
+        /// than stops the execution until the pool gets new image request.
         /// Breaks execution on disposing.
         /// </summary>
         private void ProcessRequests()
@@ -849,24 +893,24 @@ namespace System.Windows.Forms
                 {
                     try
                     {
-                        // ignore pooled items with zoom level different than current
+                        // ignore pooled items with different zoom level and another tile server
                         if (tile.TileServer == TileServer.GetType().Name && tile.Z == ZoomLevel)
                         {
                             tile.Image = TileServer.GetTile(tile.X, tile.Y, tile.Z);
                             tile.Used = true;
-                            Debug.WriteLine($"Requested X={tile.X};Y={tile.Y};Z={tile.Z}");
                         }
                     }
                     catch (Exception ex)
                     {
+                        // keep error text to be displayed instead of the tile
                         tile.ErrorMessage = ex.Message;
                     }
                     finally
                     {
-                        if (TileServer is ICacheableTileServer fsCacheTileServer && tile.Image != null)
+                        // if we have obtained image from the server, save it in file system (if server supports file system cache)
+                        if (TileServer is IFileCacheTileServer && tile.Image != null)
                         {
-                            // local path to the cached tile image
-                            string localPath = Path.Combine(CacheFolder, TileServer.GetType().Name, $"{tile.Z}", $"{tile.X}", $"{tile.Y}.tile");
+                            string localPath = Path.Combine(CacheFolder, tile.TileServer, $"{tile.Z}", $"{tile.X}", $"{tile.Y}.tile");
                             try
                             {
                                 Directory.CreateDirectory(Path.GetDirectoryName(localPath));
@@ -878,9 +922,16 @@ namespace System.Windows.Forms
                             }
                         }
 
-                        _Cache.Add(tile);
+                        // add tile to the memory cache
+                        if (tile.Image != null || tile.ErrorMessage != null)
+                        {
+                            _Cache.Add(tile);
+                        }
+
+                        // remove the tile from requests pool
                         _RequestPool.TryTake(out tile);
                         
+                        // redraw the map
                         Invalidate();
                     }
                 }
@@ -890,8 +941,6 @@ namespace System.Windows.Forms
                 }
             };
         }
-
-        
 
         /// <summary>
         /// Gets projection of geographical coordinates onto the map
@@ -938,16 +987,27 @@ namespace System.Windows.Forms
             if (TileServer != null)
             {
                 string cacheFolder = allTileServers ? CacheFolder : Path.Combine(CacheFolder, TileServer.GetType().Name);
-
                 if (Directory.Exists(cacheFolder))
                 {
-                    try
+                    if (allTileServers)
                     {
-                        Directory.Delete(cacheFolder, true);
+                        var subdirs = Directory.EnumerateDirectories(cacheFolder);
+                        foreach (string dir in subdirs)
+                        {
+                            try
+                            {
+                                Directory.Delete(dir, true);
+                            }
+                            catch { }
+                        }
                     }
-                    catch (Exception ex) 
-                    { 
-                        // TODO: avoid exception
+                    else
+                    {
+                        try
+                        {
+                            Directory.Delete(cacheFolder, true);
+                        }
+                        catch { }
                     }
                 }
             }

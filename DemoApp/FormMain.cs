@@ -41,6 +41,7 @@ namespace DemoApp
             var shadowPath = new Polygon(new PolygonStyle(new SolidBrush(Color.FromArgb(100, Color.Black)), Pens.Black));
             shadowPath.AddRange(ReadPointsFromResource("ShadowPath.txt"));
 
+            mapControl.BackColor = Color.Black;
             mapControl.Tracks.Add(centralLine);
             mapControl.Tracks.Add(riseSetCurves);
             mapControl.Tracks.Add(penumbraLimit);
@@ -49,7 +50,7 @@ namespace DemoApp
 
         private void Sample2()
         {
-            var magellanTraveling = new Track(new TrackStyle(new Pen(Color.Blue, 2) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash }));
+            var magellanTraveling = new Track(TrackStyle.Default);
             magellanTraveling.AddRange(ReadPointsFromResource("MagellanExpedition.csv", reversed: true));
             mapControl.Tracks.Add(magellanTraveling);
         }
@@ -68,6 +69,7 @@ namespace DemoApp
             InitializeComponent();
            
             mapControl.CacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MapControl");
+            
 
             cmbExample.Items.AddRange(new Sample[]
             {
@@ -78,7 +80,7 @@ namespace DemoApp
 
             ITileServer[] tileServers = new ITileServer[]
             {               
-                new OpenStreetMapTileServer("DemoApp for WinFormsMapControl 1.0 contact example@example.com"),
+                new OpenStreetMapTileServer(userAgent: "DemoApp for WinFormsMapControl 1.0 contact example@example.com"),
                 new StamenTerrainTileServer(),
                 new OpenTopoMapServer(),
                 new OfflineTileServer(),
@@ -103,7 +105,7 @@ namespace DemoApp
                     float lon = float.Parse(sp[1], CultureInfo.InvariantCulture);
                     float lat = float.Parse(sp[2], CultureInfo.InvariantCulture);
                     long population = long.Parse(sp[3]);
-                    MarkerStyle markerStyle = new MarkerStyle(new SolidBrush(Color.FromArgb(100, Color.Red)), (float)population / 10e6f * 30.0f, Brushes.Black, SystemFonts.DefaultFont);
+                    MarkerStyle markerStyle = new MarkerStyle(Pens.Red, new SolidBrush(Color.FromArgb(100, Color.Red)), (float)population / 10e6f * 30.0f, Brushes.Black, SystemFonts.DefaultFont, StringFormat.GenericDefault);
                     markers.Add(new Marker(new GeoPoint(lon, lat), markerStyle, name) { Data = population });                    
                 }
 
@@ -195,6 +197,11 @@ namespace DemoApp
             string mm = m.ToString().PadLeft(2, '0');
             string ss = s.ToString("00.00", CultureInfo.InvariantCulture);
             return $"{dd}° {mm}' {ss}\" {sym}";
+        }
+
+        private void mapControl_Paint(object sender, PaintEventArgs e)
+        {
+            
         }
     }
 }

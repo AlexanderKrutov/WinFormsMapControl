@@ -50,5 +50,7 @@ namespace System.Windows.Forms
             Brush = brush;
             Pen = pen;
         }
+
+        public static PolygonStyle Default = new PolygonStyle(new SolidBrush(Color.FromArgb(100, Color.Black)), new Pen(Color.Black) { Width = 2 });
     }
 }

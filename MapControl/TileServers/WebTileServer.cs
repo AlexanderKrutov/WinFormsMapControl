@@ -11,7 +11,7 @@ namespace System.Windows.Forms
     /// <summary>
     /// Base class for all web tile servers
     /// </summary>
-    public abstract class WebTileServer : ICacheableTileServer
+    public abstract class WebTileServer : IFileCacheTileServer
     {
         /// <summary>
         /// Gets tile URI by X and Y coordinates of the tile and zoom level Z.
@@ -29,7 +29,7 @@ namespace System.Windows.Forms
         /// Some web tile servers (for example OpenStreetMap) require valid HTTP User-Agent identifying application.
         /// Faking app's User-Agent may get you blocked.
         /// </remarks>
-        public abstract string UserAgent { get; }
+        public abstract string UserAgent { get; set; }
 
         /// <summary>
         /// Tile expiration period.
@@ -38,7 +38,7 @@ namespace System.Windows.Forms
         /// Different tile servers have various tile usage policies, so do not set small values here to prevent loading same tiles from the server frequently.
         /// For example, for OpenStretMap tile expiration period should not be smaller than 7 days: <see href="https://operations.osmfoundation.org/policies/tiles/"/>
         /// </remarks>
-        public virtual TimeSpan TileExpirationPeriod => TimeSpan.FromDays(30);
+        public virtual TimeSpan TileExpirationPeriod { get; set; } = TimeSpan.FromDays(30);
 
         /// <summary>
         /// Displayable name of the tile server, i.e. human-readable map name, for example, "Open Street Map".
@@ -94,6 +94,20 @@ namespace System.Windows.Forms
 
                 throw new Exception($"Unable to download tile.\n{ex.Message}");
             }
+        }
+
+        protected WebTileServer()
+        {
+            ServicePointManager.ServerCertificateValidationCallback = new Net.Security.RemoteCertificateValidationCallback(AcceptAllCertificates);
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+        }
+
+        /// <summary>
+        /// Function to handle accepting HTTPs certificates 
+        /// </summary>
+        private bool AcceptAllCertificates(object sender, Security.Cryptography.X509Certificates.X509Certificate certification, Security.Cryptography.X509Certificates.X509Chain chain, System.Net.Security.SslPolicyErrors sslPolicyErrors)
+        {
+            return true;
         }
     }
 }

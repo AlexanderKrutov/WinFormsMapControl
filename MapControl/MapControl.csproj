@@ -6,6 +6,9 @@
     <Description>Map control for WindowsForms</Description>
     <Copyright>© Alexander Krutov 2020</Copyright>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net451|AnyCPU'">
+    <DocumentationFile>D:\Acrux\Projects\My\WinFormsMapControl\MapControl\MapControl.xml</DocumentationFile>
+  </PropertyGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="OfflineMaps\**\*.jpg" />
