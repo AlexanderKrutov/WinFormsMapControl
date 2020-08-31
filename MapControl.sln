@@ -15,7 +15,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{676CD423-E06A-45D0-AAC7-52D04DF8A8E8}"
 	ProjectSection(SolutionItems) = preProject
+		Docs\CustomData.md = Docs\CustomData.md
+		Docs\Demo.png = Docs\Demo.png
 		Docs\Index.md = Docs\Index.md
+		Docs\TileServer.md = Docs\TileServer.md
 	EndProjectSection
 EndProject
 Global
