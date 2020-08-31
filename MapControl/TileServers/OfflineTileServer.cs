@@ -38,7 +38,7 @@ namespace System.Windows.Forms
         /// <returns>Tile image.</returns>
         public Image GetTile(int x, int y, int z)
         {
-            Stream stream = Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream($"MapControl.OfflineMaps._{z}._{x}.{(1 << z) - y - 1}.jpg");
+            Stream stream = Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream($"System.Windows.Forms.OfflineMaps._{z}._{x}.{(1 << z) - y - 1}.jpg");
             if (stream != null)
             {
                 return new Bitmap(stream);

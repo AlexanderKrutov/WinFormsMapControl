@@ -84,7 +84,7 @@
   <ItemGroup>
     <ProjectReference Include="..\MapControl\MapControl.csproj">
       <Project>{f347f6dd-9c88-4671-b427-be8bd84d1eb3}</Project>
-      <Name>System.Windows.Forms.MapControl</Name>
+      <Name>MapControl</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

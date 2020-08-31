@@ -1,6 +1,8 @@
 # WinFormsMapControl
 Windows Forms control for displaying online and offline maps.
 
+![Demo](/Docs/Demo.png)
+
 ## Installation [![NuGet Status](http://img.shields.io/nuget/v/WinFormsMapControl.svg?style=flat)](https://www.nuget.org/packages/WinFormsMapControl/)
 ```
 PM> Install-Package WinFormsMapControl

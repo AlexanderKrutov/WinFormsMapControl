@@ -29,6 +29,11 @@ namespace DemoApp
             }
         }
 
+        private void Sample0()
+        {
+
+        }
+
         private void Sample1()
         {           
             var centralLine = new Track(new TrackStyle(new Pen(Color.Red) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dot }));
@@ -73,6 +78,7 @@ namespace DemoApp
             
             cmbExample.Items.AddRange(new Sample[]
             {
+                new Sample("Empty Map", Sample0),
                 new Sample("Map of Solar Eclipse 11 Aug 1999", Sample1),
                 new Sample("Magellan's Circumnavigation Map", Sample2),
                 new Sample("World Greatest Cities", Sample3)
