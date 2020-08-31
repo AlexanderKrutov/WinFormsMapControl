@@ -67,3 +67,60 @@ private void mapControl_DrawMarker(object sender, DrawMarkerEventArgs e)
 
 ```
 You can use different images for markers. To distinguish markers, use `Data` property of the `Marker` class. It can be any object you want, for example, marker unique identifier.
+
+## Tracks
+To add a track to the map, do the following:
+
+```csharp
+// Initializing collection of points,
+// filling points with data omitted
+var points = new List<GeoPoint>();
+
+// Creating a track with default style
+var track = new Track(TrackStyle.Default);
+
+// Add points to the track
+track.AddRange(points);
+
+// Add track to the map
+mapControl.Tracks.Add(track);
+```
+
+Track style is also customizable:
+```csharp
+// Define custom track style
+var style = new TrackStyle(new Pen(Color.Blue) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash });
+
+// Assign style to the track
+var track = new Track(style);
+```
+
+## Polygons
+Working with polygons is similar to deal with tracks.
+To create a new area object to the map, do something like:
+
+```csharp
+// Default-styled polygon
+var polygon = new Polygon(PolygonStyle.Default);
+
+// Add points
+polygon.AddRange(points);
+
+// Add it to the map
+mapControl.Polygons.Add(polygon);
+```
+
+Again, if you need to customize style of the polygon:
+```csharp
+// Brush to fill polygon area
+var brush = Brushes.Gray;
+
+// Pen to draw polygon outline
+var pen = Pens.Black;
+
+// Custom style
+var style = new PolygonStyle(brush, pen);
+
+// Make styled polygon
+var polygon = new Polygon(style);
+```
