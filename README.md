@@ -16,9 +16,9 @@ PM> Install-Package WinFormsMapControl
   * [OpenTopoMap](https://opentopomap.org/)
   * [Stamen Terrain](http://maps.stamen.com/terrain/)
 * Easy to add new tile sources
-* Map is infinite in longitude
-* Supports file system and in-memory tile cache
-* Supports custom data to be drawn over the map:
+* Infinite map (endless in longitude)
+* File system and in-memory tile cache
+* Custom data over the map:
   * Markers
   * Tracks
   * Polygons
