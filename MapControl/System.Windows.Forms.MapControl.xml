@@ -1029,7 +1029,7 @@
         </member>
         <member name="T:System.Windows.Forms.StamenTerrainTileServer">
             <summary>
-            Represents <see href="http://maps.stamen.com">Stamen Terrain</see> web tile server. 
+            Represents <see href="http://maps.stamen.com/terrain/">Stamen Terrain</see> web tile server. 
             </summary>
         </member>
         <member name="F:System.Windows.Forms.StamenTerrainTileServer._Random">

@@ -7,14 +7,15 @@
     <Copyright>© Alexander Krutov 2020</Copyright>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Title>System.Windows.Forms.MapControl</Title>
-    <PackageId>System.Windows.Forms.MapControl</PackageId>    
+    <Summary>Map control for WindowsForms</Summary>
+    <PackageId>WinFormsMapControl</PackageId>    
     <Authors>Alexander Krutov</Authors>
     <Company>Alexander Krutov</Company>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/AlexanderKrutov/WinFormsMapControl</PackageProjectUrl>
     <RepositoryUrl>https://github.com/AlexanderKrutov/WinFormsMapControl.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>Windows Forms, Map Control, OpenStreetMap</PackageTags>
+    <PackageTags>WindowsForms, MapControl, OpenStreetMap</PackageTags>
     <AssemblyName>System.Windows.Forms.MapControl</AssemblyName>
     <RootNamespace>System.Windows.Forms</RootNamespace>
     <Deterministic>true</Deterministic>
