@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
+﻿using System.ComponentModel;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace System.Windows.Forms
 {
+    /// <summary>
+    /// Extended <see cref="LinkLabel"/> control with auto-parsing of HTML links in the <see cref="Text"/> property.
+    /// </summary>
     [DesignerCategory("Code")]
     internal class HtmlLinkLabel : LinkLabel
     {

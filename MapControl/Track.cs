@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace System.Windows.Forms
 {
     /// <summary>
-    /// Represents track (collection of line connected points)
+    /// Represents track (collection of connected points).
     /// </summary>
     public class Track : List<GeoPoint>
     {

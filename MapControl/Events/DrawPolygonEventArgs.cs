@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Drawing.Drawing2D;
 
 namespace System.Windows.Forms
 {
@@ -15,7 +8,7 @@ namespace System.Windows.Forms
     public class DrawPolygonEventArgs : MapControlDrawEventArgs
     {
         /// <summary>
-        /// <see cref="System.Windows.Forms.Polygon"/> instance to be drawn.
+        /// <see cref="Forms.Polygon"/> instance to be drawn.
         /// </summary>
         public Polygon Polygon { get; internal set; }
 

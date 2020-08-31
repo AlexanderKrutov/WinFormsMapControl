@@ -1,0 +1,1195 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>System.Windows.Forms.MapControl</name>
+    </assembly>
+    <members>
+        <member name="T:System.Windows.Forms.DrawMarkerEventArgs">
+            <summary>
+            Provides data for <see cref="E:System.Windows.Forms.MapControl.DrawMarker"/> event.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.DrawMarkerEventArgs.Marker">
+            <summary>
+            <see cref="T:System.Windows.Forms.Marker"/> instance to be drawn.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.DrawMarkerEventArgs.Point">
+            <summary>
+            Coordinates of the marker on the map.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.DrawMarkerEventArgs.#ctor">
+            <summary>
+            Creates new instance of <see cref="T:System.Windows.Forms.DrawMarkerEventArgs"/>.
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.DrawPolygonEventArgs">
+            <summary>
+            Provides data for <see cref="E:System.Windows.Forms.MapControl.DrawPolygon"/> event.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.DrawPolygonEventArgs.Polygon">
+            <summary>
+            <see cref="T:System.Windows.Forms.Polygon"/> instance to be drawn.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.DrawPolygonEventArgs.Path">
+            <summary>
+            <see cref="T:System.Drawing.Drawing2D.GraphicsPath"/> instance describing polygon interior. 
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.DrawPolygonEventArgs.#ctor">
+            <summary>
+            Creates new instance of <see cref="T:System.Windows.Forms.DrawPolygonEventArgs"/>.
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.DrawTrackEventArgs">
+            <summary>
+            Provides data for <see cref="E:System.Windows.Forms.MapControl.DrawTrack"/> event.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.DrawTrackEventArgs.Track">
+            <summary>
+            <see cref="T:System.Windows.Forms.Track"/> instance to be drawn.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.DrawTrackEventArgs.Points">
+            <summary>
+            Array of points defining track polyline.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.DrawTrackEventArgs.#ctor">
+            <summary>
+            Creates new instance of <see cref="T:System.Windows.Forms.DrawTrackEventArgs"/>.
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.MapControlDrawEventArgs">
+            <summary>
+            Represents base class for all <see cref="T:System.Windows.Forms.MapControl"/> drawing events.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControlDrawEventArgs.Graphics">
+            <summary>
+            <see cref="T:System.Drawing.Graphics"/> instance to draw on.
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.GeoPoint">
+            <summary>
+            Represents point on the Earth surface with geographical coordinates
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.GeoPoint.Longitude">
+            <summary>
+            Longitude of the point, in degrees, from 0 to ±180, positive East, negative West. 0 is a point on prime meridian.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.GeoPoint.Latitude">
+            <summary>
+            Latitude of the point, in degrees, from +90 (North pole) to -90 (South Pole). 0 is a point on equator.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.GeoPoint.#ctor(System.Single,System.Single)">
+            <summary>
+            Creates new instance of <see cref="T:System.Windows.Forms.GeoPoint"/> and initializes it with longitude and latitude values.
+            </summary>
+            <param name="longitude">Longitude of the point, in degrees, from 0 to ±180, positive East, negative West. 0 is a point on prime meridian.</param>
+            <param name="latitude">Latitude of the point, in degrees, from +90 (North pole) to -90 (South Pole). 0 is a point on equator.</param>
+        </member>
+        <member name="T:System.Windows.Forms.GraphicsExtensions">
+            <summary>
+            Set of useful graphics extensions
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.GraphicsExtensions.DrawPolyline(System.Drawing.Graphics,System.Drawing.Pen,System.Drawing.PointF[],System.Boolean)">
+            <summary>
+            Draws polyline. This method is more optimized than default <see cref="M:System.Drawing.Graphics.DrawLines(System.Drawing.Pen,System.Drawing.PointF[])"/> 
+            because it draws only visible segments of the line.
+            </summary>
+            <param name="gr">Graphics object</param>
+            <param name="pen">Pen object</param>
+            <param name="points">Array of points defining the polyline</param>
+            <param name="isClosedLine">Flag indicating the line is closed one (last point should be connected with first point)</param>
+        </member>
+        <member name="M:System.Windows.Forms.GraphicsExtensions.DrawGraphicsPath(System.Drawing.Graphics,System.Drawing.Drawing2D.GraphicsPath,System.Drawing.Brush,System.Drawing.Pen)">
+            <summary>
+            Draws graphics path, optionally with fill and/or outline
+            </summary>
+            <param name="gr">Graphics object</param>
+            <param name="path">Path to be drawn</param>
+            <param name="brush">Fill brush</param>
+            <param name="pen">Outline pen</param>
+        </member>
+        <member name="M:System.Windows.Forms.GraphicsExtensions.Nearest(System.Drawing.PointF,System.Drawing.PointF[])">
+            <summary>
+            Finds nearest points for a point with specified coordinates
+            </summary>
+            <param name="point">Point to find nearest point for.</param>
+            <param name="points">Array of points to select nearest one.</param>
+            <returns>Nearest point from the array closest to the specified one.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.GraphicsExtensions.FindVisiblePartOfSegment(System.Drawing.Graphics,System.Drawing.PointF,System.Drawing.PointF)">
+            <summary>
+            Finds visible part of segment
+            </summary>
+            <param name="g">Graphics object</param>
+            <param name="p1">First point of a segment</param>
+            <param name="p2">Last point of a segment</param>
+            <returns>Visible part of segment, i.e. first and last points</returns>
+        </member>
+        <member name="M:System.Windows.Forms.GraphicsExtensions.FindClipBoundsIntersections(System.Drawing.Graphics,System.Drawing.PointF,System.Drawing.PointF)">
+            <summary>
+            Finds intersections of a line segment with clip bounds
+            </summary>
+            <param name="g">Graphics object</param>
+            <param name="p1">First point of a segment</param>
+            <param name="p2">Last point of a segment</param>
+            <returns>Intersection points. Count can be from 0 to 2.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.GraphicsExtensions.SegmentsIntersection(System.Drawing.PointF,System.Drawing.PointF,System.Drawing.PointF,System.Drawing.PointF)">
+            <summary>
+            Finds point of intersection of two segments
+            </summary>
+            <param name="p1">First point of first segment</param>
+            <param name="p2">Last point of first segment</param>
+            <param name="p3">First point of second segment</param>
+            <param name="p4">Last point of second segment</param>
+            <returns>Point of intersection of two segments, or null if no intersection</returns>
+        </member>
+        <member name="M:System.Windows.Forms.GraphicsExtensions.VectorMult(System.Single,System.Single,System.Single,System.Single)">
+            <summary>
+            Multiplies two vectors defined by coordinates
+            </summary>
+            <param name="ax"></param>
+            <param name="ay"></param>
+            <param name="bx"></param>
+            <param name="by"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Windows.Forms.GraphicsExtensions.LineEquation(System.Drawing.PointF,System.Drawing.PointF,System.Single@,System.Single@,System.Single@)">
+            <summary>
+            Calculates constants of a line equation by two points lie on that line.
+            </summary>
+            <param name="p1">First point lies on the line</param>
+            <param name="p2">Second point lies on the line</param>
+            <param name="A">A-constant</param>
+            <param name="B">B-constant</param>
+            <param name="C">C-constant</param>
+        </member>
+        <member name="T:System.Windows.Forms.HtmlLinkLabel">
+            <summary>
+            Extended <see cref="T:System.Windows.Forms.LinkLabel"/> control with auto-parsing of HTML links in the <see cref="P:System.Windows.Forms.HtmlLinkLabel.Text"/> property.
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.MapControl">
+            <summary>
+            Map control for displaying online and offline maps.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl.TILE_SIZE">
+            <summary>
+            Tile size, in pixels.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._Offset">
+            <summary>
+            First tile offset.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._MouseCaptured">
+            <summary>
+            Flag indicating thar mouse is captured.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._LastMouse">
+            <summary>
+            Last known mouse position.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._Cache">
+            <summary>
+            Cache used to store tile images in memory.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._RequestPool">
+            <summary>
+            Pool of tiles to be requested from the server.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._Worker">
+            <summary>
+            Worker thread to process tile requests to the server.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._WorkerWaitHandle">
+            <summary>
+            Event handle to stop/resume requests processing.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._AlignCenterStringFormat">
+            <summary>
+            String format to draw text aligned to center.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._LinkLabel">
+            <summary>
+            Link label displayed in the bottom right corner of the map with attribution text.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.FullMapSizeInTiles">
+            <summary>
+            Gets size of map in tiles.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.FullMapSizeInPixels">
+            <summary>
+            Gets maps size in pixels.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._ZoomLevel">
+            <summary>
+            Backing field for <see cref="P:System.Windows.Forms.MapControl.ZoomLevel"/> property.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.ZoomLevel">
+            <summary>
+            Map zoom level.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._CacheFolder">
+            <summary>
+            Backing field for <see cref="P:System.Windows.Forms.MapControl.CacheFolder"/> property.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.CacheFolder">
+            <summary>
+            Path to tile cache folder. Should be set if tile server supports file system caching.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._MinZoomLevel">
+            <summary>
+            Backing field for <see cref="P:System.Windows.Forms.MapControl.MinZoomLevel"/> property.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.MinZoomLevel">
+            <summary>
+            Gets or sets minimal zoom level.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._MaxZoomLevel">
+            <summary>
+            Backing field for <see cref="P:System.Windows.Forms.MapControl.MaxZoomLevel"/> property.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.MaxZoomLevel">
+            <summary>
+            Gets or sets maximal zoom level.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._TileServer">
+            <summary>
+            Backing field for <see cref="P:System.Windows.Forms.MapControl.TileServer"/> property.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.TileServer">
+            <summary>
+            Gets or sets tile server instance used to obtain map tiles.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.Center">
+            <summary>
+            Gets or sets geographical coordinates of the map center.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.Mouse">
+            <summary>
+            Gets geographical coordinates of the current position of mouse.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.Markers">
+            <summary>
+            Gets collection of markers to be displayed on the map.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.Tracks">
+            <summary>
+            Gets collection of tracks to be displayed on the map.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.Polygons">
+            <summary>
+            Gets collection of polygons to be displayed on the map.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._FitToBounds">
+            <summary>
+            Backing field for <see cref="P:System.Windows.Forms.MapControl.FitToBounds"/> property.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.FitToBounds">
+            <summary>
+            Gets or sets value indicating should the map fit to vertical bounds of the control or not.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.ErrorColor">
+            <summary>
+            Gets or sets color used to draw error messages.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.ThumbnailText">
+            <summary>
+            Gets or sets text to be displayed instead of tile when it is being downloaded.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.ThumbnailForeColor">
+            <summary>
+            Gets or sets color of the text to be displayed instead of tile when it is being downloaded.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.ThumbnailBackColor">
+            <summary>
+            Gets or sets backgound of the thumbnail to be displayed when a tile is being downloaded.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.ShowThumbnails">
+            <summary>
+            Gets or sets flag indicating show thumbnails while downloading tile images or not.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.ForeColor">
+            <summary>
+            Gets or sets the foreground color of the map.
+            </summary>
+        </member>
+        <member name="E:System.Windows.Forms.MapControl.DrawMarker">
+            <summary>
+            Raised when marker is drawn on the map.
+            </summary>
+        </member>
+        <member name="E:System.Windows.Forms.MapControl.DrawTrack">
+            <summary>
+            Raised when track is drawn on the map.
+            </summary>
+        </member>
+        <member name="E:System.Windows.Forms.MapControl.DrawPolygon">
+            <summary>
+            Raised when polygon is drawn on the map.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.#ctor">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.MapControl"/> control.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.OnCreateControl">
+            <summary>
+            Called on creating control.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl._LinkLabel_LinkClicked(System.Object,System.Windows.Forms.LinkLabelLinkClickedEventArgs)">
+            <summary>
+            Handles clicks on LinkLabel links
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.OnPaint(System.Windows.Forms.PaintEventArgs)">
+            <summary>
+            Does painting of the map.
+            </summary>
+            <param name="pe">Paint event args.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.OnSizeChanged(System.EventArgs)">
+            <summary>
+            Called when control size is changed.
+            </summary>
+            <param name="e">Event args.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.OnMouseDown(System.Windows.Forms.MouseEventArgs)">
+            <summary>
+            Called when mouse is down.
+            </summary>
+            <param name="e">Event args.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.OnMouseUp(System.Windows.Forms.MouseEventArgs)">
+            <summary>
+            Called when mouse is up.
+            </summary>
+            <param name="e">Event args.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.OnMouseMove(System.Windows.Forms.MouseEventArgs)">
+            <summary>
+            Called when mouse is moving.
+            </summary>
+            <param name="e">Event args.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.OnMouseWheel(System.Windows.Forms.MouseEventArgs)">
+            <summary>
+            Called when mouse is wheeling.
+            </summary>
+            <param name="e">Event args.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.AdjustMapBounds">
+            <summary>
+            Adjusts map bounds if required.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.NormalizeTileNumber(System.Single)">
+            <summary>
+            Normalizes tile number to fit value from 0 to FullMapSizeInTiles.
+            </summary>
+            <param name="n">Tile number, with fractions.</param>
+            <returns>Tile number in range from 0 to FullMapSizeInTiles.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.DrawErrorString(System.Drawing.Graphics,System.String)">
+            <summary>
+            Draws error string on the map.
+            </summary>
+            <param name="gr">Graphics instance to draw on.</param>
+            <param name="text">Error string to be drawn.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.DrawTiles(System.Drawing.Graphics)">
+            <summary>
+            Draws map tiles.
+            </summary>
+            <param name="g">Graphics instance to draw on.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.DrawMarkers(System.Drawing.Graphics)">
+            <summary>
+            Draws markers on the map
+            </summary>
+            <param name="gr">Graphics instance to draw on.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.DrawTracks(System.Drawing.Graphics)">
+            <summary>
+            Draws tracks on the map
+            </summary>
+            <param name="gr">Graphics instance to draw on.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.DrawPolygons(System.Drawing.Graphics)">
+            <summary>
+            Draws polygons on the map
+            </summary>
+            <param name="gr">Graphics instance to draw on.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.DrawTilePart(System.Drawing.Graphics,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Drawing.Image)">
+            <summary>
+            Draws part of a tile.
+            This method is needed to draw portion of a tile with highest zoom level if a tile with smallest zoom is not ready yet.
+            </summary>
+            <param name="gr">Graphics instance to draw on.</param>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="xRemainder">X-index of a tile portion to be drawn.</param>
+            <param name="yRemainder">Y-index of a tile portion to be drawn.</param>
+            <param name="frac">Portion of a tile to be drawn, 2 means 1/2, 4 means 1/4 etc.</param>
+            <param name="image">Full tile image.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.DrawTile(System.Drawing.Graphics,System.Int32,System.Int32,System.Drawing.Image)">
+            <summary>
+            Draws a tile on the map.
+            </summary>
+            <param name="gr">Graphics instance to draw on.</param>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="image">Tile image.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.DrawThumbnail(System.Drawing.Graphics,System.Int32,System.Int32,System.String,System.Boolean)">
+            <summary>
+            Draws thumbnail frame and text instead of a tile.
+            </summary>
+            <param name="gr">Graphics instance to draw on.</param>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="message">Message to be displayed instead of the tile.</param>
+            <param name="isError">Flag indicating the message should be displayed with error color.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.Draw(System.Drawing.Graphics,System.Action)">
+            <summary>
+            Does the draw action.
+            The method is needed for repeating drawing because map is infinite in longitude.
+            </summary>
+            <param name="gr">Graphics instance to draw on.</param>
+            <param name="draw">Draw action to perform several times for all visible width of the map.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.SetZoomLevel(System.Int32,System.Drawing.Point)">
+            <summary>
+            Sets zoom level with specifying central point to zoom in/out.
+            </summary>
+            <param name="z">Zoom level to be set.</param>
+            <param name="p">Central point to zoom in/out.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.GetTile(System.Int32,System.Int32,System.Int32,System.Boolean)">
+            <summary>
+            Gets tile image by X and Y indices and zoom level.
+            </summary>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="z">Zoom level.</param>
+            <param name="fromCacheOnly">Flag indicating the tile can be fetched from cache only (server request is not allowed).</param>
+            <returns><see cref="T:System.Windows.Forms.Tile"/> instance.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.RequestTile(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Does a tile request to the tile server
+            </summary>
+            <param name="x">X-index of the tile to be requested.</param>
+            <param name="y">Y-index of the tile to be requested.</param>
+            <param name="z">Zoom level</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.ProcessRequests">
+            <summary>
+            Background worker function. 
+            Processes tiles requests if requests pool is not empty, 
+            than stops execution until the pool gets a new image request.
+            Breaks execution on disposing.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.Project(System.Windows.Forms.GeoPoint)">
+            <summary>
+            Gets projection of geographical coordinates onto the map.
+            </summary>
+            <param name="g">Point with geographical coordinates.</param>
+            <returns><see cref="T:System.Drawing.PointF"/> object representing projection of the specified geographical coordinates on the map.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.WorldToTilePos(System.Windows.Forms.GeoPoint)">
+            <summary>
+            Converts geographical coordinates to tile indices with fractions.
+            </summary>
+            <param name="g">Point with geographical coordinates.</param>
+            <returns>Point representing X/Y indices of the specified geographical coordinates in Slippy map scheme.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.TileToWorldPos(System.Double,System.Double)">
+            <summary>
+            Converts tile indices to geographical coordinates.
+            </summary>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <returns>Point representing geographical coordinates.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.ClearCache(System.Boolean)">
+            <summary>
+            Clears map cache. If <paramref name="allTileServers"/> flag is set to true, cache for all tile servers will be cleared.
+            If no, only current tile server cache will be cleared.
+            </summary>
+            <param name="allTileServers">If flag is set to true, cache for all tile servers will be cleared.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.ClearAll">
+            <summary>
+            Removes all markers, tracks and polygons from the map.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl.components">
+            <summary>
+            Required designer variable.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.Dispose(System.Boolean)">
+            <summary>
+            Clean up any resources being used.
+            </summary>
+            <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.InitializeComponent">
+            <summary>
+            Required method for Designer support - do not modify 
+            the contents of this method with the code editor.
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.Marker">
+            <summary>
+            Represents marker point on the map.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Marker.Point">
+            <summary>
+            Marker coordinates.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Marker.Style">
+            <summary>
+            Style to draw the marker.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Marker.Label">
+            <summary>
+            Marker label.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Marker.Data">
+            <summary>
+            Custom data associated with the marker.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Marker.#ctor(System.Windows.Forms.GeoPoint)">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.Marker"/> object with specified coordinates.
+            </summary>
+            <param name="point">Coordinates of the marker.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Marker.#ctor(System.Windows.Forms.GeoPoint,System.Windows.Forms.MarkerStyle)">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.Marker"/> object with specified coordinates and style.
+            </summary>
+            <param name="point">Coordinates of the marker.</param>
+            <param name="style">Marker style.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Marker.#ctor(System.Windows.Forms.GeoPoint,System.String)">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.Marker"/> object with specified coordinates and label.
+            </summary>
+            <param name="point">Coordinates of the marker.</param>
+            <param name="label">Marker label.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Marker.#ctor(System.Windows.Forms.GeoPoint,System.Windows.Forms.MarkerStyle,System.String)">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.Marker"/> object with specified coordinates, style and label.
+            </summary>
+            <param name="point">Coordinates of the marker.</param>
+            <param name="style">Marker style.</param>
+            <param name="label">Marker label.</param>
+        </member>
+        <member name="T:System.Windows.Forms.MarkerStyle">
+            <summary>
+            Defines visual style of the <see cref="T:System.Windows.Forms.Marker"/>.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MarkerStyle.MarkerPen">
+            <summary>
+            Pen to draw marker outline.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MarkerStyle.MarkerBrush">
+            <summary>
+            Brush to fill marker interior.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MarkerStyle.MarkerWidth">
+            <summary>
+            Width of the marker circle, in pixels.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MarkerStyle.LabelBrush">
+            <summary>
+            Brush to draw marker label.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MarkerStyle.LabelFont">
+            <summary>
+            Font used to draw marker label.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MarkerStyle.LabelFormat">
+            <summary>
+            String format used to draw marker label.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.MarkerStyle.#ctor">
+            <summary>
+            Creates new marker style.
+            </summary>        
+        </member>
+        <member name="M:System.Windows.Forms.MarkerStyle.#ctor(System.Single)">
+            <summary>
+            Creates new marker style.
+            </summary>
+            <param name="markerWidth">Width of the marker circle, in pixels.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MarkerStyle.#ctor(System.Single,System.Drawing.Brush)">
+            <summary>
+            Creates new marker style.
+            </summary>
+            <param name="markerWidth">Width of the marker circle, in pixels.</param>
+            /// <param name="markerBrush">Brush to fill marker interior.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MarkerStyle.#ctor(System.Single,System.Drawing.Brush,System.Drawing.Pen,System.Drawing.Brush,System.Drawing.Font,System.Drawing.StringFormat)">
+            <summary>
+            Creates new marker style.
+            </summary>
+            <param name="markerWidth">Width of the marker circle, in pixels.</param>
+            <param name="markerBrush">Brush to fill marker interior.</param>
+            <param name="markerPen">Pen to draw marker outline.</param>
+            <param name="labelBrush">Brush to draw marker label.</param>
+            <param name="labelFont">Font used to draw marker label.</param>
+            <param name="labelFormat">String format used to draw marker label.</param>
+        </member>
+        <member name="F:System.Windows.Forms.MarkerStyle.Default">
+            <summary>
+            Default marker style.
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.Polygon">
+            <summary>
+             Represents filled closed area on the map.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Polygon.Style">
+            <summary>
+            Gets or sets polygon style.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Polygon.#ctor">
+            <summary>
+            Creates new polygon without assigned style
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Polygon.#ctor(System.Windows.Forms.PolygonStyle)">
+            <summary>
+            Creates new polygon with specified style.
+            </summary>
+            <param name="style"></param>
+        </member>
+        <member name="T:System.Windows.Forms.PolygonStyle">
+            <summary>
+            Defines drawing style for <see cref="T:System.Windows.Forms.Polygon" /> object.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.PolygonStyle.Brush">
+            <summary>
+            Fill brush
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.PolygonStyle.Pen">
+            <summary>
+            Outline pen.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.PolygonStyle.#ctor(System.Drawing.Brush)">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.PolygonStyle"/> with fill brush and without outline.
+            </summary>
+            <param name="brush">Fill brush.</param>
+        </member>
+        <member name="M:System.Windows.Forms.PolygonStyle.#ctor(System.Drawing.Pen)">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.PolygonStyle"/> with outline and without fill.
+            </summary>
+            <param name="pen">Outline pen.</param>
+        </member>
+        <member name="M:System.Windows.Forms.PolygonStyle.#ctor(System.Drawing.Brush,System.Drawing.Pen)">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.PolygonStyle"/> with fill brush and outline pen.
+            </summary>
+            <param name="brush">Fill brush.</param>
+            <param name="pen">Outline pen.</param>
+        </member>
+        <member name="F:System.Windows.Forms.PolygonStyle.Default">
+            <summary>
+            Default polygon style.
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.Tile">
+            <summary>
+            Used to store tile image in memory 
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Tile.X">
+            <summary>
+            X-index of the tile image
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Tile.Y">
+            <summary>
+            Y-index of the tile image
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Tile.Z">
+            <summary>
+            Zoom level of the tile image
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Tile.TileServer">
+            <summary>
+            Tile server name
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Tile.Image">
+            <summary>
+            Tile image
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Tile.ErrorMessage">
+            <summary>
+            Error message that should be displayed if tile does not exist by some reason (incorrect X/Y indices, zoom level, server unavailable etc.).
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Tile.Used">
+            <summary>
+            Flag indicating image recently used (requested to be drawn on the map).
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Tile.#ctor(System.Int32,System.Int32,System.Int32,System.String)">
+            <summary>
+            Creates new tile with X/Y indices, zoom level, and tileServer name.
+            </summary>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="z">Zoom level.</param>
+            <param name="tileServer">Tile server name.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Tile.#ctor(System.Drawing.Image,System.Int32,System.Int32,System.Int32,System.String)">
+            <summary>
+            Creates new tile with image, X/Y indices, zoom level, and tileServer name.
+            </summary>
+            <param name="image">Tile image</param>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="z">Zoom level.</param>
+            <param name="tileServer">Tile server name.</param>
+        </member>
+        <member name="T:System.Windows.Forms.IFileCacheTileServer">
+            <summary>
+            Defines interface for a tile server that supports file system caching of tiles.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.IFileCacheTileServer.TileExpirationPeriod">
+            <summary>
+            Gets tile validity period of a tile image. 
+            Tile will be requested again from the tile server 
+            if the tile's image file from the file system cache is older than specified value. 
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.ITileServer">
+            <summary>
+            Provides the functionality of a Tile Server implementations
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.ITileServer.Name">
+            <summary>
+            Displayable name of the tile server, i.e. human-readable map name, for example, "Open Street Map".
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.ITileServer.AttributionText">
+            <summary>
+            Attribution text that will be displayed in bottom-right corner of the map.
+            Can be null (no attribution text) or can contain html links for navigating with default system web browser.
+            </summary>
+            <example>© <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors</example>
+        </member>
+        <member name="P:System.Windows.Forms.ITileServer.MinZoomLevel">
+            <summary>
+            Gets minimal zoom level allowed for the tile server
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.ITileServer.MaxZoomLevel">
+            <summary>
+            Gets maximal zoom level allowed for the tile server
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.ITileServer.GetTile(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Requests tile image by X and Y indices of the tile and zoom level Z.
+            </summary>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index coordinate of the tile.</param>
+            <param name="z">Zoom level</param>
+            <returns>
+            Tile image
+            </returns>
+            <remarks>
+            See about tile indexing schema here: <see href="https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames" />
+            </remarks>
+        </member>
+        <member name="T:System.Windows.Forms.OfflineTileServer">
+            <summary>
+            Tile server for offline maps.
+            Uses embedded tiles from <see href="https://www.maptiler.com/copyright/">MapTiler</see>.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.OfflineTileServer.Name">
+            <summary>
+            Displayable name of the tile server
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.OfflineTileServer.AttributionText">
+            <summary>
+            Attribution text that will be displayed in bottom-right corner of the map.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.OfflineTileServer.MinZoomLevel">
+            <summary>
+            Gets minimal zoom level allowed for the tile server.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.OfflineTileServer.MaxZoomLevel">
+            <summary>
+            Gets maximal zoom level allowed for the tile server.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.OfflineTileServer.GetTile(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Gets tile image by X and Y indices of the tile and zoom level Z.
+            </summary>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="z">Zoom level.</param>
+            <returns>Tile image.</returns>
+        </member>
+        <member name="T:System.Windows.Forms.OpenStreetMapTileServer">
+            <summary>
+            Represents <see href="https://www.openstreetmap.org/">OpenStreetMap</see> web tile server.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.OpenStreetMapTileServer._Random">
+            <summary>
+            Used to access random tile subdomains.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.OpenStreetMapTileServer._Subdomains">
+            <summary>
+            Tile server subdomains.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.OpenStreetMapTileServer.Name">
+            <summary>
+            Gets displayable name of the Tile server.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.OpenStreetMapTileServer.AttributionText">
+            <summary>
+            Gets attribution text.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.OpenStreetMapTileServer.UserAgent">
+            <summary>
+            User-Agent string used to dowload tile images from the tile server.
+            </summary>
+            <remarks>
+            OpenStreetMap requires valid HTTP User-Agent identifying application.
+            Faking app's User-Agent may get you blocked.
+            </remarks>
+        </member>
+        <member name="M:System.Windows.Forms.OpenStreetMapTileServer.GetTileUri(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Gets tile URI by X and Y indices of the tile and zoom level Z.
+            </summary>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="z">Zoom level.</param>
+            <returns><see cref="T:System.Uri"/> instance.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.OpenStreetMapTileServer.#ctor(System.String)">
+            <summary>
+            Creates new instance of <see cref="T:System.Windows.Forms.OpenStreetMapTileServer"/>.
+            </summary>
+            <param name="userAgent">User-Agent string used to dowload tile images from OpenStreetMap tile servers.</param>
+            <remarks>
+            OpenStreetMap usage policy requires valid HTTP User-Agent identifying application. 
+            Faking another app’s User-Agent WILL get you blocked
+            </remarks>
+        </member>
+        <member name="T:System.Windows.Forms.OpenTopoMapServer">
+            <summary>
+            Represents <see href="https://opentopomap.org/">OpenTopoMap</see> web tile server.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.OpenTopoMapServer._Random">
+            <summary>
+            Used to access random tile subdomains.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.OpenTopoMapServer._Subdomains">
+            <summary>
+            Tile server subdomains.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.OpenTopoMapServer.Name">
+            <summary>
+            Gets displayable name of the Tile server.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.OpenTopoMapServer.AttributionText">
+            <summary>
+            Gets attribution text.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.OpenTopoMapServer.MinZoomLevel">
+            <summary>
+            Minimal zoom level.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.OpenTopoMapServer.MaxZoomLevel">
+            <summary>
+            Maximal zoom level.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.OpenTopoMapServer.UserAgent">
+            <summary>
+            User-Agent string used to dowload tile images from the tile server.
+            </summary>
+            <remarks>
+            </remarks>
+        </member>
+        <member name="M:System.Windows.Forms.OpenTopoMapServer.GetTileUri(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Gets tile URI by X and Y indices of the tile and zoom level Z.
+            </summary>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="z">Zoom level.</param>
+            <returns><see cref="T:System.Uri"/> instance.</returns>
+        </member>
+        <member name="T:System.Windows.Forms.StamenTerrainTileServer">
+            <summary>
+            Represents <see href="http://maps.stamen.com">Stamen Terrain</see> web tile server. 
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.StamenTerrainTileServer._Random">
+            <summary>
+            Used to access random tile subdomains.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.StamenTerrainTileServer._Subdomains">
+            <summary>
+            Tile server subdomains.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.StamenTerrainTileServer.Name">
+            <summary>
+            Gets displayable name of the Tile server.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.StamenTerrainTileServer.AttributionText">
+            <summary>
+            Gets attribution text.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.StamenTerrainTileServer.MaxZoomLevel">
+            <summary>
+            Maximal zoom level.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.StamenTerrainTileServer.UserAgent">
+            <summary>
+            User-Agent string used to dowload tile images from the tile server.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.StamenTerrainTileServer.GetTileUri(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Gets tile URI by X and Y indices of the tile and zoom level Z.
+            </summary>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="z">Zoom level.</param>
+            <returns><see cref="T:System.Uri"/> instance.</returns>
+        </member>
+        <member name="T:System.Windows.Forms.WebTileServer">
+            <summary>
+            Base class for all web tile servers
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.WebTileServer.GetTileUri(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Gets tile URI by X and Y indices of the tile and zoom level Z.
+            </summary>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="z">Zoom level.</param>
+            <returns><see cref="T:System.Uri"/> instance.</returns>
+        </member>
+        <member name="P:System.Windows.Forms.WebTileServer.UserAgent">
+            <summary>
+            User-Agent string used to dowload tile images from the tile server.
+            </summary>
+            <remarks>
+            Some web tile servers (for example OpenStreetMap) require valid HTTP User-Agent identifying application.
+            Faking app's User-Agent may get you blocked.
+            </remarks>
+        </member>
+        <member name="P:System.Windows.Forms.WebTileServer.TileExpirationPeriod">
+            <summary>
+            Tile expiration period.
+            </summary>
+            <remarks>
+            Different tile servers have various tile usage policies, so do not set small values here to prevent loading same tiles from the server frequently.
+            For example, for OpenStretMap tile expiration period should not be smaller than 7 days: <see href="https://operations.osmfoundation.org/policies/tiles/"/>
+            </remarks>
+        </member>
+        <member name="P:System.Windows.Forms.WebTileServer.Name">
+            <summary>
+            Displayable name of the tile server, i.e. human-readable map name, for example, "Open Street Map".
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.WebTileServer.AttributionText">
+            <summary>
+            Attribution text that will be displayed in bottom-right corner of the map.
+            Can be null (no attribution text) or can contain html links for navigating with default system web browser.
+            </summary>
+            <example>© <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors</example>
+        </member>
+        <member name="P:System.Windows.Forms.WebTileServer.MinZoomLevel">
+            <summary>
+            Gets minimal zoom level allowed for the tile server
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.WebTileServer.MaxZoomLevel">
+            <summary>
+            Gets maximal zoom level allowed for the tile server
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.WebTileServer.GetTile(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Gets tile image by X and Y coordinates of the tile and zoom level Z.
+            </summary>
+            <param name="x">X-coordinate of the tile.</param>
+            <param name="y">Y-coordinate of the tile.</param>
+            <param name="z">Zoom level</param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Windows.Forms.WebTileServer.#ctor">
+            <summary>
+            Base constructor for initializing <see cref="T:System.Windows.Forms.WebTileServer"/>.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.WebTileServer.AcceptAllCertificates(System.Object,System.Security.Cryptography.X509Certificates.X509Certificate,System.Security.Cryptography.X509Certificates.X509Chain,System.Net.Security.SslPolicyErrors)">
+            <summary>
+            Function to handle accepting HTTPs certificates 
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.Track">
+            <summary>
+            Represents track (collection of connected points).
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Track.Style">
+            <summary>
+            Style to draw the track
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Track.Data">
+            <summary>
+            Custom data associated with the marker
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Track.#ctor(System.Windows.Forms.TrackStyle)">
+            <summary>
+            Creates a track with specified style
+            </summary>
+            <param name="style"></param>
+        </member>
+        <member name="T:System.Windows.Forms.TrackStyle">
+            <summary>
+            Defines visual style of the <see cref="T:System.Windows.Forms.Track"/>.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TrackStyle.Pen">
+            <summary>
+            Pen used to draw track path.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TrackStyle.#ctor">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.TrackStyle"/>.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TrackStyle.#ctor(System.Drawing.Pen)">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.TrackStyle"/>.
+            </summary>
+            <param name="pen"> Pen used to draw track path.</param>
+        </member>
+        <member name="F:System.Windows.Forms.TrackStyle.Default">
+            <summary>
+            Default track style.
+            </summary>
+        </member>
+    </members>
+</doc>

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace System.Windows.Forms
+﻿namespace System.Windows.Forms
 {
     /// <summary>
     /// Represents point on the Earth surface with geographical coordinates

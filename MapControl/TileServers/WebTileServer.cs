@@ -1,8 +1,5 @@
-﻿using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Drawing;
+﻿using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Threading;
 
@@ -14,12 +11,12 @@ namespace System.Windows.Forms
     public abstract class WebTileServer : IFileCacheTileServer
     {
         /// <summary>
-        /// Gets tile URI by X and Y coordinates of the tile and zoom level Z.
+        /// Gets tile URI by X and Y indices of the tile and zoom level Z.
         /// </summary>
-        /// <param name="x">X-coordinate of the tile.</param>
-        /// <param name="y">Y-coordinate of the tile.</param>
-        /// <param name="z">Zoom level</param>
-        /// <returns></returns>
+        /// <param name="x">X-index of the tile.</param>
+        /// <param name="y">Y-index of the tile.</param>
+        /// <param name="z">Zoom level.</param>
+        /// <returns><see cref="Uri"/> instance.</returns>
         public abstract Uri GetTileUri(int x, int y, int z);
 
         /// <summary>
@@ -96,6 +93,9 @@ namespace System.Windows.Forms
             }
         }
 
+        /// <summary>
+        /// Base constructor for initializing <see cref="WebTileServer"/>.
+        /// </summary>
         protected WebTileServer()
         {
             ServicePointManager.ServerCertificateValidationCallback = new Net.Security.RemoteCertificateValidationCallback(AcceptAllCertificates);

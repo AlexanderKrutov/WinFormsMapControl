@@ -112,7 +112,6 @@ namespace DemoApp
             this.mapControl.ThumbnailText = "Downloading...";
             this.mapControl.ZoomLevel = 0;
             this.mapControl.DrawMarker += new System.EventHandler<System.Windows.Forms.DrawMarkerEventArgs>(this.mapControl_DrawMarker);
-            this.mapControl.Paint += new System.Windows.Forms.PaintEventHandler(this.mapControl_Paint);
             this.mapControl.DoubleClick += new System.EventHandler(this.mapControl_DoubleClick);
             this.mapControl.MouseMove += new System.Windows.Forms.MouseEventHandler(this.mapControl_MouseMove);
             this.mapControl.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.mapControl_MouseWheel);

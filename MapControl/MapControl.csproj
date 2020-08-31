@@ -5,18 +5,28 @@
     <Product>System.Windows.Forms.MapControl</Product>
     <Description>Map control for WindowsForms</Description>
     <Copyright>© Alexander Krutov 2020</Copyright>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Title>System.Windows.Forms.MapControl</Title>
+    <PackageId>System.Windows.Forms.MapControl</PackageId>    
+    <Authors>Alexander Krutov</Authors>
+    <Company>Alexander Krutov</Company>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/AlexanderKrutov/WinFormsMapControl</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/AlexanderKrutov/WinFormsMapControl.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>Windows Forms, Map Control, OpenStreetMap</PackageTags>
+    <AssemblyName>System.Windows.Forms.MapControl</AssemblyName>
+    <RootNamespace>System.Windows.Forms</RootNamespace>
+    <Deterministic>true</Deterministic>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net451|AnyCPU'">
-    <DocumentationFile>D:\Acrux\Projects\My\WinFormsMapControl\MapControl\MapControl.xml</DocumentationFile>
-  </PropertyGroup>
-
+    <DocumentationFile>System.Windows.Forms.MapControl.xml</DocumentationFile>
+  </PropertyGroup>  
   <ItemGroup>
     <EmbeddedResource Include="OfflineMaps\**\*.jpg" />
   </ItemGroup>
-
   <ItemGroup>
     <Reference Include="System.Windows" />
     <Reference Include="System.Windows.Forms" />
-  </ItemGroup>
-  
+  </ItemGroup>  
 </Project>

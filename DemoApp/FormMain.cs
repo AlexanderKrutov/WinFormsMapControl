@@ -15,6 +15,8 @@ namespace DemoApp
 {
     public partial class FormMain : Form
     {
+        private Image imageMarker = Image.FromStream(System.Reflection.Assembly.GetEntryAssembly().GetManifestResourceStream($"DemoApp.Marker.png"));
+
         public class Sample
         {
             public string Title { get; private set; }
@@ -41,7 +43,6 @@ namespace DemoApp
             var shadowPath = new Polygon(new PolygonStyle(new SolidBrush(Color.FromArgb(100, Color.Black)), Pens.Black));
             shadowPath.AddRange(ReadPointsFromResource("ShadowPath.txt"));
 
-            mapControl.BackColor = Color.Black;
             mapControl.Tracks.Add(centralLine);
             mapControl.Tracks.Add(riseSetCurves);
             mapControl.Tracks.Add(penumbraLimit);
@@ -51,7 +52,7 @@ namespace DemoApp
         private void Sample2()
         {
             var magellanTraveling = new Track(TrackStyle.Default);
-            magellanTraveling.AddRange(ReadPointsFromResource("MagellanExpedition.csv", reversed: true));
+            magellanTraveling.AddRange(ReadPointsFromResource("MagellanExpedition.txt"));
             mapControl.Tracks.Add(magellanTraveling);
         }
 
@@ -70,11 +71,10 @@ namespace DemoApp
            
             mapControl.CacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MapControl");
             
-
             cmbExample.Items.AddRange(new Sample[]
             {
                 new Sample("Map of Solar Eclipse 11 Aug 1999", Sample1),
-                new Sample("Magellan's Circumnavigation Map ", Sample2),
+                new Sample("Magellan's Circumnavigation Map", Sample2),
                 new Sample("World Greatest Cities", Sample3)
             });
 
@@ -88,7 +88,6 @@ namespace DemoApp
 
             cmbTileServers.Items.AddRange(tileServers);
             cmbTileServers.SelectedIndex = 0;
-
             cmbExample.SelectedIndex = 0;
         }
 
@@ -105,15 +104,14 @@ namespace DemoApp
                     float lon = float.Parse(sp[1], CultureInfo.InvariantCulture);
                     float lat = float.Parse(sp[2], CultureInfo.InvariantCulture);
                     long population = long.Parse(sp[3]);
-                    MarkerStyle markerStyle = new MarkerStyle(Pens.Red, new SolidBrush(Color.FromArgb(100, Color.Red)), (float)population / 10e6f * 30.0f, Brushes.Black, SystemFonts.DefaultFont, StringFormat.GenericDefault);
-                    markers.Add(new Marker(new GeoPoint(lon, lat), markerStyle, name) { Data = population });                    
+                    markers.Add(new Marker(new GeoPoint(lon, lat), MarkerStyle.Default, name) { Data = population });                    
                 }
 
                 return markers;
             }
         }
 
-        private ICollection<GeoPoint> ReadPointsFromResource(string resourceName, bool reversed = false)
+        private ICollection<GeoPoint> ReadPointsFromResource(string resourceName)
         {
             using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"DemoApp.MapObjects.{resourceName}"))
             using (StreamReader reader = new StreamReader(stream))
@@ -122,8 +120,8 @@ namespace DemoApp
                 List<GeoPoint> points = new List<GeoPoint>();
                 foreach (var sp in stringPoints)
                 {
-                    float lon = float.Parse(sp[reversed ? 0 : 1], CultureInfo.InvariantCulture);
-                    float lat = float.Parse(sp[reversed ? 1 : 0], CultureInfo.InvariantCulture);
+                    float lon = float.Parse(sp[1], CultureInfo.InvariantCulture);
+                    float lat = float.Parse(sp[0], CultureInfo.InvariantCulture);
                     points.Add(new GeoPoint(lon, lat));
                 }
                 return points;
@@ -161,16 +159,19 @@ namespace DemoApp
         private void cmbExample_SelectedIndexChanged(object sender, EventArgs e)
         {
             ActiveControl = mapControl;
-            mapControl.ClearOverlays();
+            mapControl.ClearAll();
             var sample = cmbExample.SelectedItem as Sample;
             sample.InitAction();
         }
 
         private void mapControl_DrawMarker(object sender, DrawMarkerEventArgs e)
         {
-            //e.Graphics.FillEllipse(Brushes.Red, e.Point.X - 20, e.Point.Y - 20, 40, 40);
-            //e.Handled = true;
-            //e.Graphics.DrawString(e.Marker.Label, e.Marker.Style.LabelFont, e.Marker.Style.LabelBrush, e.Point.X + 20 * 0.35f, e.Point.Y + 20 * 0.35f);
+            e.Handled = true;
+            e.Graphics.DrawImage(imageMarker, new Rectangle( (int)e.Point.X - 12, (int)e.Point.Y - 24, 24, 24 ));
+            if (mapControl.ZoomLevel >= 5)
+            {
+                e.Graphics.DrawString(e.Marker.Label, SystemFonts.DefaultFont, Brushes.Red, new PointF(e.Point.X, e.Point.Y + 5), new StringFormat() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Near });
+            }
         }
 
         private void mapControl_DoubleClick(object sender, EventArgs e)
@@ -197,11 +198,6 @@ namespace DemoApp
             string mm = m.ToString().PadLeft(2, '0');
             string ss = s.ToString("00.00", CultureInfo.InvariantCulture);
             return $"{dd}° {mm}' {ss}\" {sym}";
-        }
-
-        private void mapControl_Paint(object sender, PaintEventArgs e)
-        {
-            
         }
     }
 }

@@ -67,7 +67,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <EmbeddedResource Include="MapObjects\MagellanExpedition.csv" />
+    <EmbeddedResource Include="MapObjects\MagellanExpedition.txt" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -101,6 +101,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="MapObjects\Cities.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Marker.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

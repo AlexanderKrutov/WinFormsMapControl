@@ -6,7 +6,6 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading;
 
 namespace System.Windows.Forms
@@ -18,72 +17,72 @@ namespace System.Windows.Forms
     public partial class MapControl : Control
     {
         /// <summary>
-        /// Tile size, in pixels
+        /// Tile size, in pixels.
         /// </summary>
         private const int TILE_SIZE = 256;
 
         /// <summary>
-        /// First tile offset
+        /// First tile offset.
         /// </summary>
         private Point _Offset = new Point();
 
         /// <summary>
-        /// Flag indicating thar mouse is captures
+        /// Flag indicating thar mouse is captured.
         /// </summary>
         private bool _MouseCaptured = false;
 
         /// <summary>
-        /// Last known mouse position
+        /// Last known mouse position.
         /// </summary>
         private Point _LastMouse = new Point();
 
         /// <summary>
-        /// Cache used to store tile images
+        /// Cache used to store tile images in memory.
         /// </summary>
         private ConcurrentBag<Tile> _Cache = new ConcurrentBag<Tile>();
 
         /// <summary>
-        /// Pool of tiles to be requested from the server
+        /// Pool of tiles to be requested from the server.
         /// </summary>
         private ConcurrentBag<Tile> _RequestPool = new ConcurrentBag<Tile>();
 
         /// <summary>
-        /// Worker thread for downloading images from the server
+        /// Worker thread to process tile requests to the server.
         /// </summary>
         private Thread _Worker = null;
 
         /// <summary>
-        /// Event handle to stop/resume downloading
+        /// Event handle to stop/resume requests processing.
         /// </summary>
         private EventWaitHandle _WorkerWaitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
 
         /// <summary>
-        /// String format to draw text aligned to center
+        /// String format to draw text aligned to center.
         /// </summary>
         private readonly StringFormat _AlignCenterStringFormat = new StringFormat() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
 
         /// <summary>
-        /// Link label displaying in the bottom right corner of the map with attribution text
+        /// Link label displayed in the bottom right corner of the map with attribution text.
         /// </summary>
         private HtmlLinkLabel _LinkLabel;
 
         /// <summary>
-        /// Gets size of map in tiles
+        /// Gets size of map in tiles.
         /// </summary>
         private int FullMapSizeInTiles => 1 << ZoomLevel;
 
         /// <summary>
-        /// Gets maps size in pixels
+        /// Gets maps size in pixels.
         /// </summary>
         private int FullMapSizeInPixels => FullMapSizeInTiles * TILE_SIZE;
 
         /// <summary>
-        /// Backing field for <see cref="ZoomLevel"/> property
+        /// Backing field for <see cref="ZoomLevel"/> property.
         /// </summary>
         private int _ZoomLevel = 0;
 
         /// <summary>
-        /// Map zoom level
+        /// Map zoom level.
         /// </summary>
         [Description("Map zoom level"), Category("Behavior")]
         public int ZoomLevel
@@ -99,12 +98,12 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
-        /// Backing field for <see cref="CacheFolder"/> property
+        /// Backing field for <see cref="CacheFolder"/> property.
         /// </summary>
         private string _CacheFolder = null;
 
         /// <summary>
-        /// Path to tile cache folder
+        /// Path to tile cache folder. Should be set if tile server supports file system caching.
         /// </summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -124,12 +123,12 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
-        /// Minimal zoom level backing field
+        /// Backing field for <see cref="MinZoomLevel"/> property.
         /// </summary>
         private int _MinZoomLevel = 0;
 
         /// <summary>
-        /// Minimal zoom level
+        /// Gets or sets minimal zoom level.
         /// </summary>
         [Description("Minimal zoom level"), Category("Behavior")]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -147,12 +146,12 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
-        /// Maximal zoom level backing field
+        /// Backing field for <see cref="MaxZoomLevel"/> property.
         /// </summary>
         private int _MaxZoomLevel = 19;
 
         /// <summary>
-        /// Maximal zoom level
+        /// Gets or sets maximal zoom level.
         /// </summary>
         [Description("Maximal zoom level"), Category("Behavior")]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -170,12 +169,12 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
-        /// Backing field for <see cref="TileServer"/> property
+        /// Backing field for <see cref="TileServer"/> property.
         /// </summary>
         private ITileServer _TileServer;
 
         /// <summary>
-        /// Gets or sets tile server used to obtain map tiles
+        /// Gets or sets tile server instance used to obtain map tiles.
         /// </summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -211,7 +210,7 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
-        /// Gets or sets geographical coordinates of map center
+        /// Gets or sets geographical coordinates of the map center.
         /// </summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -219,7 +218,7 @@ namespace System.Windows.Forms
         {
             get
             {
-                float x = ArrangeTileNumber(-(_Offset.X - Width / 2) / TILE_SIZE);
+                float x = NormalizeTileNumber(-(_Offset.X - Width / 2) / TILE_SIZE);
                 float y = -(_Offset.Y - Height / 2) / TILE_SIZE;
                 return TileToWorldPos(x, y);
             }
@@ -235,7 +234,7 @@ namespace System.Windows.Forms
 
 
         /// <summary>
-        /// Gets geographical coordinates of current position of mouse
+        /// Gets geographical coordinates of the current position of mouse.
         /// </summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -243,28 +242,28 @@ namespace System.Windows.Forms
         {
             get
             {
-                float x = ArrangeTileNumber(-(float)(_Offset.X - _LastMouse.X) / TILE_SIZE);
+                float x = NormalizeTileNumber(-(float)(_Offset.X - _LastMouse.X) / TILE_SIZE);
                 float y = -(float)(_Offset.Y - _LastMouse.Y) / TILE_SIZE;
                 return TileToWorldPos(x, y);
             }
         }
 
         /// <summary>
-        /// Gets collection of markers to be displayed on the map
+        /// Gets collection of markers to be displayed on the map.
         /// </summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ICollection<Marker> Markers { get; } = new List<Marker>();
 
         /// <summary>
-        /// Gets collection of tracks to be displayed on the map
+        /// Gets collection of tracks to be displayed on the map.
         /// </summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ICollection<Track> Tracks { get; } = new List<Track>();
 
         /// <summary>
-        /// Gets collection of polygons to be displayed on the map
+        /// Gets collection of polygons to be displayed on the map.
         /// </summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -290,7 +289,7 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
-        /// Gets or sets color used to draw error messages
+        /// Gets or sets color used to draw error messages.
         /// </summary>
         [Description("Color used to draw error messages."), Category("Appearance")]
         public Color ErrorColor { get; set; } = Color.Red;
@@ -334,17 +333,17 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
-        /// Raised when marker is drawn on the map
+        /// Raised when marker is drawn on the map.
         /// </summary>
         public event EventHandler<DrawMarkerEventArgs> DrawMarker;
 
         /// <summary>
-        /// Raised when track is drawn on the map
+        /// Raised when track is drawn on the map.
         /// </summary>
         public event EventHandler<DrawTrackEventArgs> DrawTrack;
 
         /// <summary>
-        /// Raised when polygon is drawn on the map
+        /// Raised when polygon is drawn on the map.
         /// </summary>
         public event EventHandler<DrawPolygonEventArgs> DrawPolygon;
 
@@ -367,22 +366,27 @@ namespace System.Windows.Forms
             Controls.Add(_LinkLabel);
         }
 
+        /// <summary>
+        /// Called on creating control.
+        /// </summary>
         protected override void OnCreateControl()
         {
             base.OnCreateControl();
             Center = new GeoPoint(0, 0);
         }
 
+        /// <summary>
+        /// Handles clicks on LinkLabel links
+        /// </summary>
         private void _LinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             Process.Start(e.Link.LinkData.ToString());
         }
 
-        private void DrawErrorString(Graphics gr, string text)
-        {
-            gr.DrawString(text, Font, new SolidBrush(ErrorColor), new Point(Width / 2, Height / 2), _AlignCenterStringFormat);
-        }
-
+        /// <summary>
+        /// Does painting of the map.
+        /// </summary>
+        /// <param name="pe">Paint event args.</param>
         protected override void OnPaint(PaintEventArgs pe)
         {
             bool drawContent = true;
@@ -405,7 +409,6 @@ namespace System.Windows.Forms
             {
                 if (TileServer == null)
                 {
-                    CacheFolder = Path.Combine(Path.GetTempPath(), "MapControl");
                     TileServer = new OfflineTileServer();
                 }
             }
@@ -424,34 +427,25 @@ namespace System.Windows.Forms
             base.OnPaint(pe);
         }
 
+        /// <summary>
+        /// Called when control size is changed.
+        /// </summary>
+        /// <param name="e">Event args.</param>
         protected override void OnSizeChanged(EventArgs e)
         {
+            base.OnSizeChanged(e);
+
             _LinkLabel.Left = Width - _LinkLabel.Width;
             _LinkLabel.Top = Height - _LinkLabel.Height;
-
+           
             AdjustMapBounds();
-
-            base.OnSizeChanged(e);
             Invalidate();
         }
 
-        private void AdjustMapBounds()
-        {
-            if (FitToBounds)
-            {
-                if (FullMapSizeInPixels > Height)
-                {
-                    if (_Offset.Y > 0) _Offset.Y = 0;
-                    if (_Offset.Y + FullMapSizeInPixels < Height) _Offset.Y = Height - FullMapSizeInPixels;
-                }
-                else
-                {
-                    if (_Offset.Y > Height - FullMapSizeInPixels) _Offset.Y = Height - FullMapSizeInPixels;
-                    if (_Offset.Y < 0) _Offset.Y = 0;
-                }
-            }
-        }
-
+        /// <summary>
+        /// Called when mouse is down.
+        /// </summary>
+        /// <param name="e">Event args.</param>
         protected override void OnMouseDown(MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
@@ -463,12 +457,20 @@ namespace System.Windows.Forms
             base.OnMouseDown(e);
         }
 
+        /// <summary>
+        /// Called when mouse is up.
+        /// </summary>
+        /// <param name="e">Event args.</param>
         protected override void OnMouseUp(MouseEventArgs e)
         {
             _MouseCaptured = false;
             base.OnMouseUp(e);
         }
 
+        /// <summary>
+        /// Called when mouse is moving.
+        /// </summary>
+        /// <param name="e">Event args.</param>
         protected override void OnMouseMove(MouseEventArgs e)
         {
             if (_MouseCaptured)
@@ -495,6 +497,10 @@ namespace System.Windows.Forms
             base.OnMouseMove(e);
         }
 
+        /// <summary>
+        /// Called when mouse is wheeling.
+        /// </summary>
+        /// <param name="e">Event args.</param>
         protected override void OnMouseWheel(MouseEventArgs e)
         {
             int z = ZoomLevel;
@@ -511,12 +517,51 @@ namespace System.Windows.Forms
             base.OnMouseWheel(e);            
         }
 
-        private float ArrangeTileNumber(float n)
+        /// <summary>
+        /// Adjusts map bounds if required.
+        /// </summary>
+        private void AdjustMapBounds()
+        {
+            if (FitToBounds)
+            {
+                if (FullMapSizeInPixels > Height)
+                {
+                    if (_Offset.Y > 0) _Offset.Y = 0;
+                    if (_Offset.Y + FullMapSizeInPixels < Height) _Offset.Y = Height - FullMapSizeInPixels;
+                }
+                else
+                {
+                    if (_Offset.Y > Height - FullMapSizeInPixels) _Offset.Y = Height - FullMapSizeInPixels;
+                    if (_Offset.Y < 0) _Offset.Y = 0;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Normalizes tile number to fit value from 0 to FullMapSizeInTiles.
+        /// </summary>
+        /// <param name="n">Tile number, with fractions.</param>
+        /// <returns>Tile number in range from 0 to FullMapSizeInTiles.</returns>
+        private float NormalizeTileNumber(float n)
         {
             int size = FullMapSizeInTiles;
             return (n %= size) >= 0 ? n : (n + size);
         }
 
+        /// <summary>
+        /// Draws error string on the map.
+        /// </summary>
+        /// <param name="gr">Graphics instance to draw on.</param>
+        /// <param name="text">Error string to be drawn.</param>
+        private void DrawErrorString(Graphics gr, string text)
+        {
+            gr.DrawString(text, Font, new SolidBrush(ErrorColor), new Point(Width / 2, Height / 2), _AlignCenterStringFormat);
+        }
+
+        /// <summary>
+        /// Draws map tiles.
+        /// </summary>
+        /// <param name="g">Graphics instance to draw on.</param>
         private void DrawTiles(Graphics g)
         {
             // indices of first visible tile
@@ -526,10 +571,12 @@ namespace System.Windows.Forms
             // count of visible tiles (vertically and horizontally)
             int tilesByWidth = (int)Math.Ceiling((float)Width / TILE_SIZE);
             int tilesByHeight = (int)Math.Ceiling((float)Height / TILE_SIZE);
-
+            
+            // indices of last visible tile
             int toX = fromX + tilesByWidth;
             int toY = fromY + tilesByHeight;
 
+            // flush used flag for all memory-cached tiles
             foreach (var c in _Cache)
             {
                 c.Used = false;
@@ -539,7 +586,7 @@ namespace System.Windows.Forms
             {
                 for (int y = fromY; y <= toY; y++)
                 {
-                    int x_ = (int)ArrangeTileNumber(x);
+                    int x_ = (int)NormalizeTileNumber(x);
                     if (y >= 0 && y < FullMapSizeInTiles)
                     {
                         Tile tile = GetTile(x_, y, ZoomLevel);
@@ -598,6 +645,10 @@ namespace System.Windows.Forms
             _Cache = new ConcurrentBag<Tile>(_Cache.Where(c => c.Used));
         }
 
+        /// <summary>
+        /// Draws markers on the map
+        /// </summary>
+        /// <param name="gr">Graphics instance to draw on.</param>
         private void DrawMarkers(Graphics gr)
         {
             foreach (Marker m in Markers)
@@ -635,6 +686,10 @@ namespace System.Windows.Forms
             }
         }
 
+        /// <summary>
+        /// Draws tracks on the map
+        /// </summary>
+        /// <param name="gr">Graphics instance to draw on.</param>
         private void DrawTracks(Graphics gr)
         {
             foreach (var track in Tracks)
@@ -677,6 +732,10 @@ namespace System.Windows.Forms
             }
         }
 
+        /// <summary>
+        /// Draws polygons on the map
+        /// </summary>
+        /// <param name="gr">Graphics instance to draw on.</param>
         private void DrawPolygons(Graphics gr)
         {
             foreach (var polygon in Polygons)
@@ -731,6 +790,75 @@ namespace System.Windows.Forms
             }
         }
 
+        /// <summary>
+        /// Draws part of a tile.
+        /// This method is needed to draw portion of a tile with highest zoom level if a tile with smallest zoom is not ready yet.
+        /// </summary>
+        /// <param name="gr">Graphics instance to draw on.</param>
+        /// <param name="x">X-index of the tile.</param>
+        /// <param name="y">Y-index of the tile.</param>
+        /// <param name="xRemainder">X-index of a tile portion to be drawn.</param>
+        /// <param name="yRemainder">Y-index of a tile portion to be drawn.</param>
+        /// <param name="frac">Portion of a tile to be drawn, 2 means 1/2, 4 means 1/4 etc.</param>
+        /// <param name="image">Full tile image.</param>
+        private void DrawTilePart(Graphics gr, int x, int y, int xRemainder, int yRemainder, int frac, Image image)
+        {
+            // coordinates of a tile on the map
+            Point p = new Point();
+            p.X = _Offset.X + x * TILE_SIZE;
+            p.Y = _Offset.Y + y * TILE_SIZE;
+
+            // Calc source portion of the tile
+            Rectangle srcRect = new Rectangle(TILE_SIZE / frac * xRemainder, TILE_SIZE / frac * yRemainder, TILE_SIZE / frac, TILE_SIZE / frac);
+
+            // Destination rectangle
+            Rectangle destRect = new Rectangle(p.X, p.Y, TILE_SIZE, TILE_SIZE);
+            gr.DrawImage(image, destRect, srcRect, GraphicsUnit.Pixel);
+        }
+
+        /// <summary>
+        /// Draws a tile on the map.
+        /// </summary>
+        /// <param name="gr">Graphics instance to draw on.</param>
+        /// <param name="x">X-index of the tile.</param>
+        /// <param name="y">Y-index of the tile.</param>
+        /// <param name="image">Tile image.</param>
+        private void DrawTile(Graphics gr, int x, int y, Image image)
+        {
+            Point p = new Point();
+            p.X = _Offset.X + x * TILE_SIZE;
+            p.Y = _Offset.Y + y * TILE_SIZE;
+            gr.DrawImageUnscaled(image, p);
+        }
+
+        /// <summary>
+        /// Draws thumbnail frame and text instead of a tile.
+        /// </summary>
+        /// <param name="gr">Graphics instance to draw on.</param>
+        /// <param name="x">X-index of the tile.</param>
+        /// <param name="y">Y-index of the tile.</param>
+        /// <param name="message">Message to be displayed instead of the tile.</param>
+        /// <param name="isError">Flag indicating the message should be displayed with error color.</param>
+        private void DrawThumbnail(Graphics gr, int x, int y, string message, bool isError)
+        {
+            if (ShowThumbnails || isError)
+            {
+                Point p = new Point();
+                p.X = _Offset.X + x * TILE_SIZE;
+                p.Y = _Offset.Y + y * TILE_SIZE;
+                Rectangle rectangle = new Rectangle(p.X, p.Y, TILE_SIZE, TILE_SIZE);
+                gr.FillRectangle(new SolidBrush(ThumbnailBackColor), rectangle);
+                gr.DrawRectangle(new Pen(ThumbnailForeColor) { DashStyle = DashStyle.Dot }, rectangle);
+                gr.DrawString(message, Font, new SolidBrush(isError ? ErrorColor : ThumbnailForeColor), rectangle, _AlignCenterStringFormat);
+            }
+        }
+
+        /// <summary>
+        /// Does the draw action.
+        /// The method is needed for repeating drawing because map is infinite in longitude.
+        /// </summary>
+        /// <param name="gr">Graphics instance to draw on.</param>
+        /// <param name="draw">Draw action to perform several times for all visible width of the map.</param>
         private void Draw(Graphics gr, Action draw)
         {
             int count = (int)Math.Ceiling((double)Width / FullMapSizeInPixels) + 1;
@@ -744,10 +872,10 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
-        /// Sets zoom level with specifying central point to zoom in/out
+        /// Sets zoom level with specifying central point to zoom in/out.
         /// </summary>
-        /// <param name="z">Zoom level to be set</param>
-        /// <param name="p">Central point to zoom in/out</param>
+        /// <param name="z">Zoom level to be set.</param>
+        /// <param name="p">Central point to zoom in/out.</param>
         private void SetZoomLevel(int z, Point p)
         {
             int max = TileServer != null ? Math.Min(MaxZoomLevel, TileServer.MaxZoomLevel) : MaxZoomLevel;
@@ -770,47 +898,14 @@ namespace System.Windows.Forms
             }
         }
 
-        private void DrawTilePart(Graphics g, int x, int y, int xRemainder, int yRemainder, int frac, Image image)
-        {
-            Point p = new Point();
-            p.X = _Offset.X + x * TILE_SIZE;
-            p.Y = _Offset.Y + y * TILE_SIZE;
-
-            Rectangle srcRect = new Rectangle(TILE_SIZE / frac * xRemainder, TILE_SIZE / frac * yRemainder, TILE_SIZE / frac, TILE_SIZE / frac);
-            Rectangle destRect = new Rectangle(p.X, p.Y, TILE_SIZE, TILE_SIZE);
-            g.DrawImage(image, destRect, srcRect, GraphicsUnit.Pixel);
-        }
-
-        private void DrawTile(Graphics g, int x, int y, Image image)
-        {
-            Point p = new Point();
-            p.X = _Offset.X + x * TILE_SIZE;
-            p.Y = _Offset.Y + y * TILE_SIZE;
-            g.DrawImageUnscaled(image, p);
-        }
-
-        private void DrawThumbnail(Graphics g, int x, int y, string message, bool isError)
-        {
-            if (ShowThumbnails || isError)
-            {
-                Point p = new Point();
-                p.X = _Offset.X + x * TILE_SIZE;
-                p.Y = _Offset.Y + y * TILE_SIZE;
-                Rectangle rectangle = new Rectangle(p.X, p.Y, TILE_SIZE, TILE_SIZE);
-                g.FillRectangle(new SolidBrush(ThumbnailBackColor), rectangle);
-                g.DrawRectangle(new Pen(ThumbnailForeColor) { DashStyle = DashStyle.Dot }, rectangle);
-                g.DrawString(message, Font, new SolidBrush(isError ? ErrorColor : ThumbnailForeColor), rectangle, _AlignCenterStringFormat);
-            }
-        }
-
         /// <summary>
-        /// Gets tile image by X and Y indices and zoom level
+        /// Gets tile image by X and Y indices and zoom level.
         /// </summary>
-        /// <param name="x">X-index of the tile</param>
-        /// <param name="y">Y-index of the tile</param>
-        /// <param name="z">Zoom level</param>
-        /// <param name="fromCacheOnly">Flag indicating the tile can be fetched from cache only (server request is not allowed)</param>
-        /// <returns><see cref="Tile"/> instance</returns>
+        /// <param name="x">X-index of the tile.</param>
+        /// <param name="y">Y-index of the tile.</param>
+        /// <param name="z">Zoom level.</param>
+        /// <param name="fromCacheOnly">Flag indicating the tile can be fetched from cache only (server request is not allowed).</param>
+        /// <returns><see cref="Tile"/> instance.</returns>
         private Tile GetTile(int x, int y, int z, bool fromCacheOnly = false)
         {
             try
@@ -858,8 +953,8 @@ namespace System.Windows.Forms
         /// <summary>
         /// Does a tile request to the tile server
         /// </summary>
-        /// <param name="x">X-index of the tile to be requested</param>
-        /// <param name="y">Y-index of the tile to be requested</param>
+        /// <param name="x">X-index of the tile to be requested.</param>
+        /// <param name="y">Y-index of the tile to be requested.</param>
         /// <param name="z">Zoom level</param>
         private void RequestTile(int x, int y, int z)
         {
@@ -881,8 +976,8 @@ namespace System.Windows.Forms
 
         /// <summary>
         /// Background worker function. 
-        /// Processes images requests if requests pool is not empty, 
-        /// than stops the execution until the pool gets new image request.
+        /// Processes tiles requests if requests pool is not empty, 
+        /// than stops execution until the pool gets a new image request.
         /// Breaks execution on disposing.
         /// </summary>
         private void ProcessRequests()
@@ -943,9 +1038,9 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
-        /// Gets projection of geographical coordinates onto the map
+        /// Gets projection of geographical coordinates onto the map.
         /// </summary>
-        /// <param name="g">Point with geographical coordinates</param>
+        /// <param name="g">Point with geographical coordinates.</param>
         /// <returns><see cref="PointF"/> object representing projection of the specified geographical coordinates on the map.</returns>
         public PointF Project(GeoPoint g)
         {
@@ -953,6 +1048,11 @@ namespace System.Windows.Forms
             return new PointF(p.X * TILE_SIZE + _Offset.X, p.Y * TILE_SIZE + _Offset.Y);
         }
 
+        /// <summary>
+        /// Converts geographical coordinates to tile indices with fractions.
+        /// </summary>
+        /// <param name="g">Point with geographical coordinates.</param>
+        /// <returns>Point representing X/Y indices of the specified geographical coordinates in Slippy map scheme.</returns>
         public PointF WorldToTilePos(GeoPoint g)
         {
             PointF p = new Point();
@@ -963,14 +1063,18 @@ namespace System.Windows.Forms
             return p;
         }
 
-        public GeoPoint TileToWorldPos(double tile_x, double tile_y)
+        /// <summary>
+        /// Converts tile indices to geographical coordinates.
+        /// </summary>
+        /// <param name="x">X-index of the tile.</param>
+        /// <param name="y">Y-index of the tile.</param>
+        /// <returns>Point representing geographical coordinates.</returns>
+        public GeoPoint TileToWorldPos(double x, double y)
         {
             GeoPoint g = new GeoPoint();
-            double n = Math.PI - ((2.0 * Math.PI * tile_y) / Math.Pow(2.0, ZoomLevel));
-
-            g.Longitude = (float)((tile_x / Math.Pow(2.0, ZoomLevel) * 360.0) - 180.0);
+            double n = Math.PI - ((2.0 * Math.PI * y) / Math.Pow(2.0, ZoomLevel));
+            g.Longitude = (float)((x / Math.Pow(2.0, ZoomLevel) * 360.0) - 180.0);
             g.Latitude = (float)(180.0 / Math.PI * Math.Atan(Math.Sinh(n)));
-
             return g;
         }
 
@@ -1017,7 +1121,7 @@ namespace System.Windows.Forms
         /// <summary>
         /// Removes all markers, tracks and polygons from the map.
         /// </summary>
-        public void ClearOverlays()
+        public void ClearAll()
         {
             Markers.Clear();
             Tracks.Clear();

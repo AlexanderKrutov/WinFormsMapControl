@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Drawing;
 
 namespace System.Windows.Forms
 {
@@ -40,12 +35,11 @@ namespace System.Windows.Forms
         /// <param name="x">X-index of the tile.</param>
         /// <param name="y">Y-index coordinate of the tile.</param>
         /// <param name="z">Zoom level</param>
-        /// <param name="callback">Callback method to be invoked when the tile is ready.</param>
         /// <returns>
         /// Tile image
         /// </returns>
         /// <remarks>
-        /// See about tile indexing here: <see href="https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames" />
+        /// See about tile indexing schema here: <see href="https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames" />
         /// </remarks>
         Image GetTile(int x, int y, int z);
     }

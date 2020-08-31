@@ -47,6 +47,13 @@ namespace System.Windows.Forms
         /// </summary>
         public bool Used { get; set; }
 
+        /// <summary>
+        /// Creates new tile with X/Y indices, zoom level, and tileServer name.
+        /// </summary>
+        /// <param name="x">X-index of the tile.</param>
+        /// <param name="y">Y-index of the tile.</param>
+        /// <param name="z">Zoom level.</param>
+        /// <param name="tileServer">Tile server name.</param>
         public Tile(int x, int y, int z, string tileServer)
         {
             X = x;
@@ -55,6 +62,14 @@ namespace System.Windows.Forms
             TileServer = tileServer;
         }
 
+        /// <summary>
+        /// Creates new tile with image, X/Y indices, zoom level, and tileServer name.
+        /// </summary>
+        /// <param name="image">Tile image</param>
+        /// <param name="x">X-index of the tile.</param>
+        /// <param name="y">Y-index of the tile.</param>
+        /// <param name="z">Zoom level.</param>
+        /// <param name="tileServer">Tile server name.</param>
         public Tile(Image image, int x, int y, int z, string tileServer)
         {
             Image = image;
