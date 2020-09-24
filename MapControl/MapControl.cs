@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -94,6 +95,7 @@ namespace System.Windows.Forms
                     throw new ArgumentException($"{value} is an incorrect value for {nameof(ZoomLevel)} property. Value should be in range from 0 to 19.");
 
                 SetZoomLevel(value, new Point(Width / 2, Height / 2));
+                CenterChanged?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -206,6 +208,7 @@ namespace System.Windows.Forms
                 }
 
                 Invalidate();
+                TileServerChanged?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -218,8 +221,8 @@ namespace System.Windows.Forms
         {
             get
             {
-                float x = NormalizeTileNumber(-(_Offset.X - Width / 2) / TILE_SIZE);
-                float y = -(_Offset.Y - Height / 2) / TILE_SIZE;
+                float x = NormalizeTileNumber(-(float)(_Offset.X - Width / 2) / TILE_SIZE);
+                float y = -(float)(_Offset.Y - Height / 2) / TILE_SIZE;
                 return TileToWorldPos(x, y);
             }
             set
@@ -229,9 +232,9 @@ namespace System.Windows.Forms
                 _Offset.Y = -(int)(center.Y * TILE_SIZE) + Height / 2;
                 _Offset.X = (int)(_Offset.X % FullMapSizeInPixels);
                 Invalidate();
+                CenterChanged?.Invoke(this, EventArgs.Empty);
             }
         }
-
 
         /// <summary>
         /// Gets geographical coordinates of the current position of mouse.
@@ -244,6 +247,66 @@ namespace System.Windows.Forms
             {
                 float x = NormalizeTileNumber(-(float)(_Offset.X - _LastMouse.X) / TILE_SIZE);
                 float y = -(float)(_Offset.Y - _LastMouse.Y) / TILE_SIZE;
+                return TileToWorldPos(x, y);
+            }
+        }
+
+        /// <summary>
+        /// Gets geographical coordinates of the top left point of the map
+        /// </summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public GeoPoint TopLeft
+        {
+            get
+            {
+                float x = NormalizeTileNumber(-(float)(_Offset.X) / TILE_SIZE);
+                float y = -(float)(_Offset.Y) / TILE_SIZE;
+                return TileToWorldPos(x, y);
+            }
+        }
+
+        /// <summary>
+        /// Gets geographical coordinates of the top right point of the map
+        /// </summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public GeoPoint TopRight
+        {
+            get
+            {
+                float x = NormalizeTileNumber(-(float)(_Offset.X - Width) / TILE_SIZE);
+                float y = -(float)(_Offset.Y) / TILE_SIZE;
+                return TileToWorldPos(x, y);
+            }
+        }
+
+        /// <summary>
+        /// Gets geographical coordinates of the bottom left point of the map
+        /// </summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public GeoPoint BottomLeft
+        {
+            get
+            {
+                float x = NormalizeTileNumber(-(float)(_Offset.X) / TILE_SIZE);
+                float y = -(float)(_Offset.Y - Height) / TILE_SIZE;
+                return TileToWorldPos(x, y);
+            }
+        }
+
+        /// <summary>
+        /// Gets geographical coordinates of the bottom right point of the map
+        /// </summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public GeoPoint BottomRight
+        {
+            get
+            {
+                float x = NormalizeTileNumber(-(float)(_Offset.X - Width) / TILE_SIZE);
+                float y = -(float)(_Offset.Y - Height) / TILE_SIZE;
                 return TileToWorldPos(x, y);
             }
         }
@@ -333,6 +396,12 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
+        /// Image attributes to be applied to a tile image when drawing.
+        /// </summary>
+        [Description("Image attributes to be applied to a tile image when drawing."), Category("Appearance")]
+        public ImageAttributes TileImageAttributes { get; set; } = null;
+
+        /// <summary>
         /// Raised when marker is drawn on the map.
         /// </summary>
         public event EventHandler<DrawMarkerEventArgs> DrawMarker;
@@ -346,6 +415,21 @@ namespace System.Windows.Forms
         /// Raised when polygon is drawn on the map.
         /// </summary>
         public event EventHandler<DrawPolygonEventArgs> DrawPolygon;
+
+        /// <summary>
+        /// Raised when <see cref="Center"/> property value is changed.
+        /// </summary>
+        public event EventHandler<EventArgs> CenterChanged;
+
+        /// <summary>
+        /// Raised when <see cref="Mouse"/> property value is changed.
+        /// </summary>
+        public event EventHandler<EventArgs> MouseChanged;
+
+        /// <summary>
+        /// Raised when <see cref="TileServer"/> property value is changed.
+        /// </summary>
+        public event EventHandler<EventArgs> TileServerChanged;
 
         /// <summary>
         /// Creates new <see cref="MapControl"/> control.
@@ -440,6 +524,7 @@ namespace System.Windows.Forms
            
             AdjustMapBounds();
             Invalidate();
+            CenterChanged?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>
@@ -487,12 +572,14 @@ namespace System.Windows.Forms
                     _Offset.Y = Height;
 
                 AdjustMapBounds();
-
                 Invalidate();
+                CenterChanged?.Invoke(this, EventArgs.Empty);
             }
 
             _LastMouse.X = e.X;
             _LastMouse.Y = e.Y;
+
+            MouseChanged?.Invoke(this, EventArgs.Empty);
 
             base.OnMouseMove(e);
         }
@@ -513,8 +600,8 @@ namespace System.Windows.Forms
             SetZoomLevel(z, new Point(e.X, e.Y));
 
             AdjustMapBounds();
-
-            base.OnMouseWheel(e);            
+            base.OnMouseWheel(e);
+            CenterChanged?.Invoke(this, EventArgs.Empty);          
         }
 
         /// <summary>
@@ -744,7 +831,6 @@ namespace System.Windows.Forms
                 using (GraphicsPath gp = new GraphicsPath())
                 {
                     gp.StartFigure();
-
                     for (int i = 0; i < polygon.Count; i++)
                     {
                         GeoPoint g = polygon.ElementAt(i);
@@ -754,8 +840,11 @@ namespace System.Windows.Forms
                             p = p0.Nearest(p, new PointF(p.X - FullMapSizeInPixels, p.Y), new PointF(p.X + FullMapSizeInPixels, p.Y));
                             gp.AddLine(p0, p);
                         }
+
                         p0 = p;
                     }
+
+                    gp.CloseFigure();
 
                     var eventArgs = new DrawPolygonEventArgs()
                     {
@@ -812,8 +901,15 @@ namespace System.Windows.Forms
             Rectangle srcRect = new Rectangle(TILE_SIZE / frac * xRemainder, TILE_SIZE / frac * yRemainder, TILE_SIZE / frac, TILE_SIZE / frac);
 
             // Destination rectangle
-            Rectangle destRect = new Rectangle(p.X, p.Y, TILE_SIZE, TILE_SIZE);
-            gr.DrawImage(image, destRect, srcRect, GraphicsUnit.Pixel);
+            Rectangle destRect = new Rectangle(p.X - frac, p.Y - frac, TILE_SIZE + 2 * frac, TILE_SIZE + 2 * frac);
+
+            var state = gr.Save();            
+            gr.SmoothingMode = SmoothingMode.HighSpeed;
+            gr.InterpolationMode = InterpolationMode.NearestNeighbor;
+            gr.PixelOffsetMode = PixelOffsetMode.HighSpeed;
+            gr.CompositingQuality = CompositingQuality.HighSpeed;
+            gr.DrawImage(image, destRect, srcRect.X, srcRect.Y, srcRect.Width, srcRect.Height, GraphicsUnit.Pixel, TileImageAttributes);
+            gr.Restore(state);
         }
 
         /// <summary>
@@ -828,7 +924,8 @@ namespace System.Windows.Forms
             Point p = new Point();
             p.X = _Offset.X + x * TILE_SIZE;
             p.Y = _Offset.Y + y * TILE_SIZE;
-            gr.DrawImageUnscaled(image, p);
+
+            gr.DrawImage(image, new Rectangle(p, new Drawing.Size(TILE_SIZE, TILE_SIZE)), 0, 0, TILE_SIZE, TILE_SIZE, GraphicsUnit.Pixel, TileImageAttributes);
         }
 
         /// <summary>

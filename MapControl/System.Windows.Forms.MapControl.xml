@@ -96,6 +96,9 @@
             <param name="longitude">Longitude of the point, in degrees, from 0 to ±180, positive East, negative West. 0 is a point on prime meridian.</param>
             <param name="latitude">Latitude of the point, in degrees, from +90 (North pole) to -90 (South Pole). 0 is a point on equator.</param>
         </member>
+        <member name="M:System.Windows.Forms.GeoPoint.ToString">
+            <inheritdoc/>
+        </member>
         <member name="T:System.Windows.Forms.GraphicsExtensions">
             <summary>
             Set of useful graphics extensions
@@ -306,6 +309,26 @@
             Gets geographical coordinates of the current position of mouse.
             </summary>
         </member>
+        <member name="P:System.Windows.Forms.MapControl.TopLeft">
+            <summary>
+            Gets geographical coordinates of the top left point of the map
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.TopRight">
+            <summary>
+            Gets geographical coordinates of the top right point of the map
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.BottomLeft">
+            <summary>
+            Gets geographical coordinates of the bottom left point of the map
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.MapControl.BottomRight">
+            <summary>
+            Gets geographical coordinates of the bottom right point of the map
+            </summary>
+        </member>
         <member name="P:System.Windows.Forms.MapControl.Markers">
             <summary>
             Gets collection of markers to be displayed on the map.
@@ -361,6 +384,11 @@
             Gets or sets the foreground color of the map.
             </summary>
         </member>
+        <member name="P:System.Windows.Forms.MapControl.TileImageAttributes">
+            <summary>
+            Image attributes to be applied to a tile image when drawing.
+            </summary>
+        </member>
         <member name="E:System.Windows.Forms.MapControl.DrawMarker">
             <summary>
             Raised when marker is drawn on the map.
@@ -374,6 +402,21 @@
         <member name="E:System.Windows.Forms.MapControl.DrawPolygon">
             <summary>
             Raised when polygon is drawn on the map.
+            </summary>
+        </member>
+        <member name="E:System.Windows.Forms.MapControl.CenterChanged">
+            <summary>
+            Raised when <see cref="P:System.Windows.Forms.MapControl.Center"/> property value is changed.
+            </summary>
+        </member>
+        <member name="E:System.Windows.Forms.MapControl.MouseChanged">
+            <summary>
+            Raised when <see cref="P:System.Windows.Forms.MapControl.Mouse"/> property value is changed.
+            </summary>
+        </member>
+        <member name="E:System.Windows.Forms.MapControl.TileServerChanged">
+            <summary>
+            Raised when <see cref="P:System.Windows.Forms.MapControl.TileServer"/> property value is changed.
             </summary>
         </member>
         <member name="M:System.Windows.Forms.MapControl.#ctor">

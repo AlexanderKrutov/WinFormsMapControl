@@ -137,7 +137,7 @@ namespace DemoApp
         private void UpdateWindowTitle()
         {
             GeoPoint g = mapControl.Mouse;
-            this.Text = $"Longitude = {DegreeToString(g.Longitude, "W", "E")} / Latitude = {DegreeToString(g.Latitude, "S", "N")} / Zoom = {mapControl.ZoomLevel}";
+            this.Text = $"Mouse = {g} / Zoom = {mapControl.ZoomLevel} / Bounding Box = TL:{mapControl.TopLeft}, TR:{mapControl.TopRight}, BR:{mapControl.BottomRight}, BL:{mapControl.BottomLeft}";
         }
 
         private void mapControl_MouseMove(object sender, MouseEventArgs e)
@@ -184,26 +184,8 @@ namespace DemoApp
         {
             var coord = mapControl.Mouse;
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"Latitude: {DegreeToString(coord.Latitude, "S", "N")}");
-            sb.AppendLine($"Longitude: {DegreeToString(coord.Longitude, "W", "E")}");
+            sb.AppendLine($"Location: {coord}");
             MessageBox.Show(sb.ToString(), "Info");
-        }
-
-        private string DegreeToString(double coordinate, string negativeSym, string positiveSym)
-        {
-            string sym = coordinate < 0d ? negativeSym : positiveSym;
-            coordinate = Math.Abs(coordinate);
-            double d = Math.Floor(coordinate);
-            coordinate -= d;
-            coordinate *= 60;
-            double m = Math.Floor(coordinate);
-            coordinate -= m;
-            coordinate *= 60;
-            double s = coordinate;
-            string dd = d.ToString();
-            string mm = m.ToString().PadLeft(2, '0');
-            string ss = s.ToString("00.00", CultureInfo.InvariantCulture);
-            return $"{dd}° {mm}' {ss}\" {sym}";
         }
     }
 }
