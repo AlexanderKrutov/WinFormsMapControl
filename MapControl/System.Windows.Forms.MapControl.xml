@@ -878,6 +878,78 @@
             <param name="z">Zoom level.</param>
             <param name="tileServer">Tile server name.</param>
         </member>
+        <member name="T:System.Windows.Forms.BingMapsTileServer">
+            <summary>
+            Base class for Bing Maps tile providers
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.BingMapsTileServer.UserAgent">
+            <summary>
+            Not used here
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.BingMapsTileServer.Layer">
+            <summary>
+            Gets tile layer type: a = aerial, r = roads, h = hybrid
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.BingMapsTileServer.AttributionText">
+            <inheritdoc />
+        </member>
+        <member name="P:System.Windows.Forms.BingMapsTileServer.MinZoomLevel">
+            <inheritdoc />
+        </member>
+        <member name="F:System.Windows.Forms.BingMapsTileServer._Random">
+            <summary>
+            Used to access random tile subdomains.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.BingMapsTileServer.GetTileUri(System.Int32,System.Int32,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:System.Windows.Forms.BingMapsTileServer.TileXYToQuadKey(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Converts x,y,z to QuadKey string used by MS maps.
+            </summary>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="z">Zoom level.</param>
+            <returns>QuadKey string</returns>
+            <remarks>See details: <see href="https://docs.microsoft.com/en-us/bingmaps/articles/bing-maps-tile-system"/></remarks> 
+        </member>
+        <member name="T:System.Windows.Forms.BingMapsAerialTileServer">
+            <summary>
+            Represents Bing Maps Aerial web tile server.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.BingMapsAerialTileServer.Name">
+            <inheritdoc />
+        </member>
+        <member name="P:System.Windows.Forms.BingMapsAerialTileServer.Layer">
+            <inheritdoc />
+        </member>
+        <member name="T:System.Windows.Forms.BingMapsRoadsTileServer">
+            <summary>
+            Represents Bing Maps Roads web tile server.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.BingMapsRoadsTileServer.Name">
+            <inheritdoc />
+        </member>
+        <member name="P:System.Windows.Forms.BingMapsRoadsTileServer.Layer">
+            <inheritdoc />
+        </member>
+        <member name="T:System.Windows.Forms.BingMapsHybridTileServer">
+            <summary>
+            Represents Bing Maps Hybrid web tile server.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.BingMapsHybridTileServer.Name">
+            <inheritdoc />
+        </member>
+        <member name="P:System.Windows.Forms.BingMapsHybridTileServer.Layer">
+            <inheritdoc />
+        </member>
         <member name="T:System.Windows.Forms.IFileCacheTileServer">
             <summary>
             Defines interface for a tile server that supports file system caching of tiles.
