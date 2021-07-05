@@ -90,6 +90,9 @@ namespace DemoApp
                 new StamenTerrainTileServer(),
                 new OpenTopoMapServer(),
                 new OfflineTileServer(),
+                new BingMapsAerialTileServer(),
+                new BingMapsRoadsTileServer(),
+                new BingMapsHybridTileServer(),
             };
 
             cmbTileServers.Items.AddRange(tileServers);
