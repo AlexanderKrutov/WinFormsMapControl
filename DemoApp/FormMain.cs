@@ -21,10 +21,12 @@ namespace DemoApp
         private MarkerLayer markerLayer = new MarkerLayer(3);
         private TrackLayer trackLayer = new TrackLayer(2);
         private PolygonLayer polygonLayer = new PolygonLayer(1);
+        private EllipseLayer ellipseLayer = new EllipseLayer(4);
 
         private LayerGroup sample1LayerGroup = new LayerGroup();
         private LayerGroup sample2LayerGroup = new LayerGroup();
         private LayerGroup sample3LayerGroup = new LayerGroup();
+        private LayerGroup sample4LayerGroup = new LayerGroup();
 
         public class Sample
         {
@@ -100,6 +102,20 @@ namespace DemoApp
             mapControl.Invalidate();
         }
 
+        private void Sample4()
+        {
+            ellipseLayer.Ellipses.Clear();
+
+            ellipseLayer.Ellipses.Add(new Ellipse(new GeoPoint(13.376935f, 52.516181f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
+            ellipseLayer.Ellipses.Add(new Ellipse(new GeoPoint(12.482932f, 41.89332f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
+            ellipseLayer.Ellipses.Add(new Ellipse(new GeoPoint(-21.942237f, 64.145981f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
+            ellipseLayer.Ellipses.Add(new Ellipse(new GeoPoint(-118.242766f, 34.053691f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
+
+            mapControl.Layers.Clear();
+            mapControl.Layers.Add(sample4LayerGroup);
+            mapControl.Invalidate();
+        }
+
         public FormMain()
         {
             InitializeComponent();
@@ -113,13 +129,16 @@ namespace DemoApp
             sample2LayerGroup.Layers.Add(trackLayer);
 
             sample3LayerGroup.Layers.Add(markerLayer);
+
+            sample4LayerGroup.Layers.Add(ellipseLayer);
             
             cmbExample.Items.AddRange(new Sample[]
             {
                 new Sample("Empty Map", Sample0),
                 new Sample("Map of Solar Eclipse 11 Aug 1999", Sample1),
                 new Sample("Magellan's Circumnavigation Map", Sample2),
-                new Sample("World Greatest Cities", Sample3)
+                new Sample("World Greatest Cities", Sample3),
+                new Sample("Some Ellipses with 50m Diameter", Sample4)
             });
 
             ITileServer[] tileServers = new ITileServer[]

@@ -341,6 +341,13 @@ namespace System.Windows.Forms
         public ICollection<Polygon> Polygons { get; } = new List<Polygon>();
 
         /// <summary>
+        /// Gets collection of ellipses to be displayed on the map.
+        /// </summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public ICollection<Ellipse> Ellipses { get; } = new List<Ellipse>();
+
+        /// <summary>
         /// Backing field for <see cref="FitToBounds"/> property.
         /// </summary>
         private bool _FitToBounds = true;
@@ -423,6 +430,11 @@ namespace System.Windows.Forms
         /// Raised when polygon is drawn on the map.
         /// </summary>
         public event EventHandler<DrawPolygonEventArgs> DrawPolygon;
+
+        /// <summary>
+        /// Raised when ellipse is drawn on the map.
+        /// </summary>
+        public event EventHandler<DrawEllipseEventArgs> DrawEllipse;
 
         /// <summary>
         /// Raised when <see cref="Center"/> property value is changed.
@@ -515,6 +527,7 @@ namespace System.Windows.Forms
                 DrawPolygons(pe.Graphics);
                 DrawTracks(pe.Graphics);
                 DrawMarkers(pe.Graphics);
+                DrawEllipses(pe.Graphics);
             }
 
             base.OnPaint(pe);
@@ -792,6 +805,13 @@ namespace System.Windows.Forms
                         DrawSinglePolygon(polygon, gr);
                     }
                 }
+                else if (layer is EllipseLayer)
+                {
+                    foreach (Ellipse ellipse in ((EllipseLayer)layer).Ellipses)
+                    {
+                        DrawSingleEllipse(ellipse, gr);
+                    }
+                }
             }
         }
 
@@ -970,6 +990,61 @@ namespace System.Windows.Forms
                     }
                 }
             }
+        }
+
+        private void DrawEllipses(Graphics gr)
+        {
+            foreach (var ellipse in Ellipses)
+            {
+                DrawSingleEllipse(ellipse, gr);
+            }
+        }
+
+        private void DrawSingleEllipse(Ellipse ellipse, Graphics gr)
+        {
+            var p = Project(ellipse.Point);
+            Draw(gr, () =>
+            {
+                if (gr.IsVisible(p))
+                {
+                    var eventArgs = new DrawEllipseEventArgs()
+                    {
+                        Graphics = gr,
+                        Ellipse = ellipse,
+                        Point = p
+                    };
+
+                    DrawEllipse?.Invoke(this, eventArgs);
+                    if (!eventArgs.Handled)
+                    {
+                        float ellipseWidth = 0.0f;
+                        float ellipseHeight = 0.0f;
+
+                        if (ellipse.Style.EllipseUnit == EllipseStyle.Unit.PIXELS)
+                        {
+                            ellipseWidth = ellipse.Style.EllipseWidth;
+                            ellipseHeight = ellipse.Style.EllipseHeight;
+                        } 
+                        else if (ellipse.Style.EllipseUnit == EllipseStyle.Unit.METERS)
+                        {
+
+                        }
+                        else if (ellipse.Style.EllipseUnit == EllipseStyle.Unit.YARDS)
+                        {
+
+                        }
+
+                        if (ellipse.Style.EllipseBrush != null)
+                        {
+                            gr.FillEllipse(ellipse.Style.EllipseBrush, p.X - ellipseWidth / 2, p.Y - ellipseHeight / 2, ellipseWidth, ellipseHeight);
+                        }
+                        if (ellipse.Style.EllipsePen != null)
+                        {
+                            gr.DrawEllipse(ellipse.Style.EllipsePen, p.X - ellipseWidth / 2, p.Y - ellipseHeight / 2, ellipseWidth, ellipseHeight);
+                        }
+                    }
+                }
+            });
         }
 
         /// <summary>
