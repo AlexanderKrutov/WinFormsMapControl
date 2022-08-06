@@ -8,6 +8,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Windows.Forms.Maps.Layers;
 
 namespace System.Windows.Forms
 {
@@ -312,6 +313,13 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
+        /// Gets collection of layers to be displayed on the map.
+        /// </summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public ICollection<Layer> Layers { get; } = new List<Layer>();
+
+        /// <summary>
         /// Gets collection of markers to be displayed on the map.
         /// </summary>
         [Browsable(false)]
@@ -503,6 +511,7 @@ namespace System.Windows.Forms
                 DrawTiles(pe.Graphics);
                 pe.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
+                DrawLayers(pe.Graphics);
                 DrawPolygons(pe.Graphics);
                 DrawTracks(pe.Graphics);
                 DrawMarkers(pe.Graphics);
@@ -733,6 +742,60 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
+        /// Draw layers
+        /// </summary>
+        /// <param name="gr">Graphics instance to draw on.</param>
+        private void DrawLayers(Graphics gr)
+        {
+            List<Layer> drawLayerList = new List<Layer>(Layers).OrderBy(l => l.Level).ToList();
+
+            foreach (Layer layer in drawLayerList)
+            {
+                DrawSingleLayer(layer, gr);
+            }
+        }
+
+        /// <summary>
+        /// Draw a single layer
+        /// </summary>
+        /// <param name="layer">Layer to draw.</param>
+        /// <param name="gr">Graphics instance to draw on.</param>
+        private void DrawSingleLayer(Layer layer, Graphics gr)
+        {
+            if (layer.Visible)
+            {
+                if (layer is LayerGroup)
+                {
+                    foreach (Layer l in ((LayerGroup)layer).Layers)
+                    {
+                        DrawSingleLayer(l, gr);
+                    }
+                }
+                else if (layer is MarkerLayer)
+                {
+                    foreach (Marker marker in ((MarkerLayer)layer).Markers)
+                    {
+                        DrawSingleMarker(marker, gr);
+                    }
+                }
+                else if (layer is TrackLayer)
+                {
+                    foreach (Track track in ((TrackLayer)layer).Tracks)
+                    {
+                        DrawSingleTrack(track, gr);
+                    }
+                }
+                else if (layer is PolygonLayer)
+                {
+                    foreach (Polygon polygon in ((PolygonLayer)layer).Polygons)
+                    {
+                        DrawSinglePolygon(polygon, gr);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Draws markers on the map
         /// </summary>
         /// <param name="gr">Graphics instance to draw on.</param>
@@ -740,37 +803,47 @@ namespace System.Windows.Forms
         {
             foreach (Marker m in Markers)
             {
-                var p = Project(m.Point);
-                Draw(gr, () =>
-                {
-                    if (gr.IsVisible(p))
-                    {
-                        var eventArgs = new DrawMarkerEventArgs()
-                        {
-                            Graphics = gr,
-                            Marker = m,
-                            Point = p
-                        };
+                DrawSingleMarker(m, gr);
+            }
+        }
 
-                        DrawMarker?.Invoke(this, eventArgs);
-                        if (!eventArgs.Handled)
+        /// <summary>
+        /// Draw a single marker
+        /// </summary>
+        /// <param name="marker">Marker to draw.</param>
+        /// <param name="gr">Graphics instance to draw on.</param>
+        private void DrawSingleMarker(Marker marker, Graphics gr)
+        {
+            var p = Project(marker.Point);
+            Draw(gr, () =>
+            {
+                if (gr.IsVisible(p))
+                {
+                    var eventArgs = new DrawMarkerEventArgs()
+                    {
+                        Graphics = gr,
+                        Marker = marker,
+                        Point = p
+                    };
+
+                    DrawMarker?.Invoke(this, eventArgs);
+                    if (!eventArgs.Handled)
+                    {
+                        if (marker.Style.MarkerBrush != null)
                         {
-                            if (m.Style.MarkerBrush != null)
-                            {
-                                gr.FillEllipse(m.Style.MarkerBrush, p.X - m.Style.MarkerWidth / 2, p.Y - m.Style.MarkerWidth / 2, m.Style.MarkerWidth, m.Style.MarkerWidth);
-                            }
-                            if (m.Style.MarkerPen != null)
-                            {
-                                gr.DrawEllipse(m.Style.MarkerPen, p.X - m.Style.MarkerWidth / 2, p.Y - m.Style.MarkerWidth / 2, m.Style.MarkerWidth, m.Style.MarkerWidth);
-                            }
-                            if (m.Style.LabelFont != null && m.Style.LabelBrush != null && m.Style.LabelFormat != null)
-                            {
-                                gr.DrawString(m.Label, m.Style.LabelFont, m.Style.LabelBrush, new PointF(p.X + m.Style.MarkerWidth * 0.35f, p.Y + m.Style.MarkerWidth * 0.35f), m.Style.LabelFormat);
-                            }
+                            gr.FillEllipse(marker.Style.MarkerBrush, p.X - marker.Style.MarkerWidth / 2, p.Y - marker.Style.MarkerWidth / 2, marker.Style.MarkerWidth, marker.Style.MarkerWidth);
+                        }
+                        if (marker.Style.MarkerPen != null)
+                        {
+                            gr.DrawEllipse(marker.Style.MarkerPen, p.X - marker.Style.MarkerWidth / 2, p.Y - marker.Style.MarkerWidth / 2, marker.Style.MarkerWidth, marker.Style.MarkerWidth);
+                        }
+                        if (marker.Style.LabelFont != null && marker.Style.LabelBrush != null && marker.Style.LabelFormat != null)
+                        {
+                            gr.DrawString(marker.Label, marker.Style.LabelFont, marker.Style.LabelBrush, new PointF(p.X + marker.Style.MarkerWidth * 0.35f, p.Y + marker.Style.MarkerWidth * 0.35f), marker.Style.LabelFormat);
                         }
                     }
-                });
-            }
+                }
+            });
         }
 
         /// <summary>
@@ -781,40 +854,50 @@ namespace System.Windows.Forms
         {
             foreach (var track in Tracks)
             {
-                PointF[] points = new PointF[track.Count];
+                DrawSingleTrack(track, gr);
+            }
+        }
 
-                for (int i = 0; i < track.Count; i++)
+        /// <summary>
+        /// Draw a single track
+        /// </summary>
+        /// <param name="track">Track to draw.</param>
+        /// <param name="gr">Graphics instance to draw on.</param>
+        private void DrawSingleTrack(Track track, Graphics gr)
+        {
+            PointF[] points = new PointF[track.Count];
+
+            for (int i = 0; i < track.Count; i++)
+            {
+                GeoPoint g = track.ElementAt(i);
+                PointF p = Project(g);
+                if (i > 0)
                 {
-                    GeoPoint g = track.ElementAt(i);
-                    PointF p = Project(g);
-                    if (i > 0)
-                    {
-                        p = points[i - 1].Nearest(p, new PointF(p.X - FullMapSizeInPixels, p.Y), new PointF(p.X + FullMapSizeInPixels, p.Y));
-                    }
-                    points[i] = p;
+                    p = points[i - 1].Nearest(p, new PointF(p.X - FullMapSizeInPixels, p.Y), new PointF(p.X + FullMapSizeInPixels, p.Y));
                 }
+                points[i] = p;
+            }
 
-                var eventArgs = new DrawTrackEventArgs()
-                {
-                    Graphics = gr,
-                    Track = track,
-                    Points = points
-                };
+            var eventArgs = new DrawTrackEventArgs()
+            {
+                Graphics = gr,
+                Track = track,
+                Points = points
+            };
 
-                DrawTrack?.Invoke(this, eventArgs);
-                if (!eventArgs.Handled)
+            DrawTrack?.Invoke(this, eventArgs);
+            if (!eventArgs.Handled)
+            {
+                if (ZoomLevel < 3)
                 {
-                    if (ZoomLevel < 3)
+                    if (track.Style.Pen != null)
                     {
-                        if (track.Style.Pen != null)
-                        {
-                            Draw(gr, () => gr.DrawLines(track.Style.Pen, points));
-                        }
+                        Draw(gr, () => gr.DrawLines(track.Style.Pen, points));
                     }
-                    else
-                    {
-                        Draw(gr, () => gr.DrawPolyline(track.Style.Pen, points));
-                    }
+                }
+                else
+                {
+                    Draw(gr, () => gr.DrawPolyline(track.Style.Pen, points));
                 }
             }
         }
@@ -827,54 +910,64 @@ namespace System.Windows.Forms
         {
             foreach (var polygon in Polygons)
             {
-                PointF p0 = PointF.Empty;
-                using (GraphicsPath gp = new GraphicsPath())
-                {
-                    gp.StartFigure();
-                    for (int i = 0; i < polygon.Count; i++)
-                    {
-                        GeoPoint g = polygon.ElementAt(i);
-                        PointF p = Project(g);
-                        if (i > 0)
-                        {
-                            p = p0.Nearest(p, new PointF(p.X - FullMapSizeInPixels, p.Y), new PointF(p.X + FullMapSizeInPixels, p.Y));
-                            gp.AddLine(p0, p);
-                        }
+                DrawSinglePolygon(polygon, gr);
+            }
+        }
 
-                        p0 = p;
+        /// <summary>
+        /// Draw a single polygon.
+        /// </summary>
+        /// <param name="polygon">Polygon to draw.</param>
+        /// <param name="gr">Graphics instance to draw on.</param>
+        private void DrawSinglePolygon(Polygon polygon, Graphics gr)
+        {
+            PointF p0 = PointF.Empty;
+            using (GraphicsPath gp = new GraphicsPath())
+            {
+                gp.StartFigure();
+                for (int i = 0; i < polygon.Count; i++)
+                {
+                    GeoPoint g = polygon.ElementAt(i);
+                    PointF p = Project(g);
+                    if (i > 0)
+                    {
+                        p = p0.Nearest(p, new PointF(p.X - FullMapSizeInPixels, p.Y), new PointF(p.X + FullMapSizeInPixels, p.Y));
+                        gp.AddLine(p0, p);
                     }
 
-                    gp.CloseFigure();
+                    p0 = p;
+                }
 
-                    var eventArgs = new DrawPolygonEventArgs()
-                    {
-                        Graphics = gr,
-                        Polygon = polygon,
-                        Path = gp
-                    };
+                gp.CloseFigure();
 
-                    DrawPolygon?.Invoke(this, eventArgs);
-                    if (!eventArgs.Handled)
+                var eventArgs = new DrawPolygonEventArgs()
+                {
+                    Graphics = gr,
+                    Polygon = polygon,
+                    Path = gp
+                };
+
+                DrawPolygon?.Invoke(this, eventArgs);
+                if (!eventArgs.Handled)
+                {
+                    if (ZoomLevel < 3)
                     {
-                        if (ZoomLevel < 3)
+                        Draw(gr, () =>
                         {
-                            Draw(gr, () =>
+                            if (polygon.Style.Brush != null)
                             {
-                                if (polygon.Style.Brush != null)
-                                {
-                                    gr.FillPath(polygon.Style.Brush, gp);
-                                }
-                                if (polygon.Style.Pen != null)
-                                {
-                                    gr.DrawPath(polygon.Style.Pen, gp);
-                                }
-                            });
-                        }
-                        else
-                        {
-                            Draw(gr, () => gr.DrawGraphicsPath(gp, polygon.Style.Brush, polygon.Style.Pen));
-                        }
-                    }                    
+                                gr.FillPath(polygon.Style.Brush, gp);
+                            }
+                            if (polygon.Style.Pen != null)
+                            {
+                                gr.DrawPath(polygon.Style.Pen, gp);
+                            }
+                        });
+                    }
+                    else
+                    {
+                        Draw(gr, () => gr.DrawGraphicsPath(gp, polygon.Style.Brush, polygon.Style.Pen));
+                    }
                 }
             }
         }
@@ -1212,6 +1305,15 @@ namespace System.Windows.Forms
                     }
                 }
             }
+            Invalidate();
+        }
+
+        /// <summary>
+        /// Removes all layers from the map.
+        /// </summary>
+        public void ClearAllLayers()
+        {
+            Layers.Clear();
             Invalidate();
         }
 

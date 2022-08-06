@@ -36,6 +36,9 @@ namespace DemoApp
             this.lblExample = new System.Windows.Forms.Label();
             this.lblTileServer = new System.Windows.Forms.Label();
             this.mapControl = new System.Windows.Forms.MapControl();
+            this.cbxMarkerLayer = new System.Windows.Forms.CheckBox();
+            this.cbxTrackLayer = new System.Windows.Forms.CheckBox();
+            this.cbxPolygonLayer = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // btnClearCache
@@ -101,26 +104,70 @@ namespace DemoApp
             this.mapControl.BackColor = System.Drawing.Color.White;
             this.mapControl.Cursor = System.Windows.Forms.Cursors.Cross;
             this.mapControl.ErrorColor = System.Drawing.Color.Red;
+            this.mapControl.FitToBounds = true;
             this.mapControl.ForeColor = System.Drawing.Color.Black;
-            this.mapControl.Location = new System.Drawing.Point(0, 34);
+            this.mapControl.Location = new System.Drawing.Point(0, 76);
             this.mapControl.Name = "mapControl";
             this.mapControl.ShowThumbnails = true;
-            this.mapControl.Size = new System.Drawing.Size(684, 328);
+            this.mapControl.Size = new System.Drawing.Size(684, 286);
             this.mapControl.TabIndex = 0;
             this.mapControl.ThumbnailBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.mapControl.ThumbnailForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(176)))), ((int)(((byte)(176)))), ((int)(((byte)(176)))));
             this.mapControl.ThumbnailText = "Downloading...";
+            this.mapControl.TileImageAttributes = null;
             this.mapControl.ZoomLevel = 0;
             this.mapControl.DrawMarker += new System.EventHandler<System.Windows.Forms.DrawMarkerEventArgs>(this.mapControl_DrawMarker);
             this.mapControl.DoubleClick += new System.EventHandler(this.mapControl_DoubleClick);
             this.mapControl.MouseMove += new System.Windows.Forms.MouseEventHandler(this.mapControl_MouseMove);
             this.mapControl.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.mapControl_MouseWheel);
             // 
+            // cbxMarkerLayer
+            // 
+            this.cbxMarkerLayer.AutoSize = true;
+            this.cbxMarkerLayer.Checked = true;
+            this.cbxMarkerLayer.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cbxMarkerLayer.Location = new System.Drawing.Point(13, 44);
+            this.cbxMarkerLayer.Name = "cbxMarkerLayer";
+            this.cbxMarkerLayer.Size = new System.Drawing.Size(115, 17);
+            this.cbxMarkerLayer.TabIndex = 6;
+            this.cbxMarkerLayer.Text = "Show MarkerLayer";
+            this.cbxMarkerLayer.UseVisualStyleBackColor = true;
+            this.cbxMarkerLayer.CheckedChanged += new System.EventHandler(this.cbxMarkerLayer_CheckedChanged);
+            // 
+            // cbxTrackLayer
+            // 
+            this.cbxTrackLayer.AutoSize = true;
+            this.cbxTrackLayer.Checked = true;
+            this.cbxTrackLayer.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cbxTrackLayer.Location = new System.Drawing.Point(134, 44);
+            this.cbxTrackLayer.Name = "cbxTrackLayer";
+            this.cbxTrackLayer.Size = new System.Drawing.Size(110, 17);
+            this.cbxTrackLayer.TabIndex = 7;
+            this.cbxTrackLayer.Text = "Show TrackLayer";
+            this.cbxTrackLayer.UseVisualStyleBackColor = true;
+            this.cbxTrackLayer.CheckedChanged += new System.EventHandler(this.cbxTrackLayer_CheckedChanged);
+            // 
+            // cbxPolygonLayer
+            // 
+            this.cbxPolygonLayer.AutoSize = true;
+            this.cbxPolygonLayer.Checked = true;
+            this.cbxPolygonLayer.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cbxPolygonLayer.Location = new System.Drawing.Point(250, 44);
+            this.cbxPolygonLayer.Name = "cbxPolygonLayer";
+            this.cbxPolygonLayer.Size = new System.Drawing.Size(120, 17);
+            this.cbxPolygonLayer.TabIndex = 8;
+            this.cbxPolygonLayer.Text = "Show PolygonLayer";
+            this.cbxPolygonLayer.UseVisualStyleBackColor = true;
+            this.cbxPolygonLayer.CheckedChanged += new System.EventHandler(this.cbxPolygonLayer_CheckedChanged);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(684, 362);
+            this.Controls.Add(this.cbxPolygonLayer);
+            this.Controls.Add(this.cbxTrackLayer);
+            this.Controls.Add(this.cbxMarkerLayer);
             this.Controls.Add(this.lblTileServer);
             this.Controls.Add(this.lblExample);
             this.Controls.Add(this.cmbExample);
@@ -143,6 +190,9 @@ namespace DemoApp
         private ComboBox cmbExample;
         private Label lblExample;
         private Label lblTileServer;
+        private CheckBox cbxMarkerLayer;
+        private CheckBox cbxTrackLayer;
+        private CheckBox cbxPolygonLayer;
     }
 }
 

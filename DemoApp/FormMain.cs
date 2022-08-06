@@ -10,12 +10,21 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Forms.Maps.Layers;
 
 namespace DemoApp
 {
     public partial class FormMain : Form
     {
         private Image imageMarker = Image.FromStream(System.Reflection.Assembly.GetEntryAssembly().GetManifestResourceStream($"DemoApp.Marker.png"));
+
+        private MarkerLayer markerLayer = new MarkerLayer(3);
+        private TrackLayer trackLayer = new TrackLayer(2);
+        private PolygonLayer polygonLayer = new PolygonLayer(1);
+
+        private LayerGroup sample1LayerGroup = new LayerGroup();
+        private LayerGroup sample2LayerGroup = new LayerGroup();
+        private LayerGroup sample3LayerGroup = new LayerGroup();
 
         public class Sample
         {
@@ -31,7 +40,9 @@ namespace DemoApp
 
         private void Sample0()
         {
-
+            trackLayer.Tracks.Clear();
+            markerLayer.Markers.Clear();
+            polygonLayer.Polygons.Clear();
         }
 
         private void Sample1()
@@ -48,26 +59,45 @@ namespace DemoApp
             var shadowPath = new Polygon(new PolygonStyle(new SolidBrush(Color.FromArgb(100, Color.Black)), Pens.Black));
             shadowPath.AddRange(ReadPointsFromResource("ShadowPath.txt"));
 
-            mapControl.Tracks.Add(centralLine);
-            mapControl.Tracks.Add(riseSetCurves);
-            mapControl.Tracks.Add(penumbraLimit);
-            mapControl.Polygons.Add(shadowPath);
+            trackLayer.Tracks.Clear();
+            trackLayer.Tracks.Add(centralLine);
+            trackLayer.Tracks.Add(riseSetCurves);
+            trackLayer.Tracks.Add(penumbraLimit);
+
+            polygonLayer.Polygons.Clear();
+            polygonLayer.Polygons.Add(shadowPath);
+
+            mapControl.Layers.Clear();
+            mapControl.Layers.Add(sample1LayerGroup);
+            mapControl.Invalidate();
         }
 
         private void Sample2()
         {
             var magellanTraveling = new Track(TrackStyle.Default);
             magellanTraveling.AddRange(ReadPointsFromResource("MagellanExpedition.txt"));
-            mapControl.Tracks.Add(magellanTraveling);
+
+            trackLayer.Tracks.Clear();
+            trackLayer.Tracks.Add(magellanTraveling);
+
+            mapControl.Layers.Clear();
+            mapControl.Layers.Add(sample2LayerGroup);
+            mapControl.Invalidate();
         }
 
         private void Sample3()
         {
             var cities = ReadCities();
+
+            markerLayer.Markers.Clear();
             foreach (var city in cities)
             {
-                mapControl.Markers.Add(city);
+                markerLayer.Markers.Add(city);
             }
+
+            mapControl.Layers.Clear();
+            mapControl.Layers.Add(sample3LayerGroup);
+            mapControl.Invalidate();
         }
 
         public FormMain()
@@ -75,6 +105,14 @@ namespace DemoApp
             InitializeComponent();
            
             mapControl.CacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MapControl");
+
+            // group layers together
+            sample1LayerGroup.Layers.Add(trackLayer);
+            sample1LayerGroup.Layers.Add(polygonLayer);
+
+            sample2LayerGroup.Layers.Add(trackLayer);
+
+            sample3LayerGroup.Layers.Add(markerLayer);
             
             cmbExample.Items.AddRange(new Sample[]
             {
@@ -171,6 +209,24 @@ namespace DemoApp
             mapControl.ClearAll();
             var sample = cmbExample.SelectedItem as Sample;
             sample.InitAction();
+        }
+
+        private void cbxMarkerLayer_CheckedChanged(object sender, EventArgs e)
+        {
+            markerLayer.Visible = cbxMarkerLayer.Checked;
+            mapControl.Invalidate();
+        }
+
+        private void cbxTrackLayer_CheckedChanged(object sender, EventArgs e)
+        {
+            trackLayer.Visible = cbxTrackLayer.Checked;
+            mapControl.Invalidate();
+        }
+
+        private void cbxPolygonLayer_CheckedChanged(object sender, EventArgs e)
+        {
+            polygonLayer.Visible = cbxPolygonLayer.Checked;
+            mapControl.Invalidate();
         }
 
         private void mapControl_DrawMarker(object sender, DrawMarkerEventArgs e)
