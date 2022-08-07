@@ -471,6 +471,58 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
+        /// Adds a layer to the map control and invalidates map.
+        /// </summary>
+        /// <param name="layer">Layer to add to the map.</param>
+        public void AddLayer(Layer layer)
+        {
+            layer.LayerPropertyChanged += LayerPropertyChanged;
+
+            Layers.Add(layer);
+            Invalidate();
+        }
+
+        /// <summary>
+        /// Adds a marker to the map control and invalidates map.
+        /// </summary>
+        /// <param name="marker">Marker to add to the map.</param>
+        public void AddMarker(Marker marker)
+        {
+            Markers.Add(marker);
+            Invalidate();
+        }
+
+        /// <summary>
+        /// Adds a track to the map control and invalidates map.
+        /// </summary>
+        /// <param name="track">Track to add to the map.</param>
+        public void AddTrack(Track track)
+        {
+            Tracks.Add(track);
+            Invalidate();
+        }
+
+        /// <summary>
+        /// Adds a polygon to the map control and invalidates map.
+        /// </summary>
+        /// <param name="polygon">Polygon to add to the map.</param>
+        public void AddPolygon(Polygon polygon)
+        {
+            Polygons.Add(polygon);
+            Invalidate();
+        }
+
+        /// <summary>
+        /// Adds an ellipse to the map control and invalidates map.
+        /// </summary>
+        /// <param name="ellipse">Ellipse to add to the map.</param>
+        public void AddEllipse(Ellipse ellipse)
+        {
+            Ellipses.Add(ellipse);
+            Invalidate();
+        }
+
+        /// <summary>
         /// Called on creating control.
         /// </summary>
         protected override void OnCreateControl()
@@ -1427,6 +1479,16 @@ namespace System.Windows.Forms
                     }
                 }
             }
+            Invalidate();
+        }
+
+        /// <summary>
+        /// Handles event when a property of a layer is changed.
+        /// </summary>
+        /// <param name="sender">Layer which raised the event.</param>
+        /// <param name="args">Event arguments.</param>
+        private void LayerPropertyChanged(object sender, EventArgs args)
+        {
             Invalidate();
         }
 

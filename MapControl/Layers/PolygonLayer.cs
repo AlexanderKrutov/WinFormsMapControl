@@ -23,5 +23,17 @@ namespace System.Windows.Forms.Maps.Layers
         public PolygonLayer(int level) : base(level)
         {
         }
+
+        public void AddPolygon(Polygon polygon)
+        {
+            Polygons.Add(polygon);
+            RaiseLayerPropertyChangedEvent(this, EventArgs.Empty);
+        }
+
+        public void Clear()
+        {
+            Polygons.Clear();
+            RaiseLayerPropertyChangedEvent(this, EventArgs.Empty);
+        }
     }
 }

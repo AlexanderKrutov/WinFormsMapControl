@@ -23,5 +23,17 @@ namespace System.Windows.Forms.Maps.Layers
         public MarkerLayer(int level): base(level)
         {
         }
+
+        public void AddMarker(Marker marker)
+        {
+            Markers.Add(marker);
+            RaiseLayerPropertyChangedEvent(this, EventArgs.Empty);
+        }
+
+        public void Clear()
+        {
+            Markers.Clear();
+            RaiseLayerPropertyChangedEvent(this, EventArgs.Empty);
+        }
     }
 }

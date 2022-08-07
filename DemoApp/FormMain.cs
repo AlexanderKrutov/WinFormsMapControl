@@ -22,6 +22,7 @@ namespace DemoApp
         private TrackLayer trackLayer = new TrackLayer(2);
         private PolygonLayer polygonLayer = new PolygonLayer(1);
         private EllipseLayer ellipseLayer = new EllipseLayer(4);
+        private EllipseLayer dynamicEllipseLayer = new EllipseLayer(0);
 
         private LayerGroup sample1LayerGroup = new LayerGroup();
         private LayerGroup sample2LayerGroup = new LayerGroup();
@@ -42,10 +43,12 @@ namespace DemoApp
 
         private void Sample0()
         {
-            trackLayer.Tracks.Clear();
-            markerLayer.Markers.Clear();
-            polygonLayer.Polygons.Clear();
-            ellipseLayer.Ellipses.Clear();
+            trackLayer.Clear();
+            markerLayer.Clear();
+            polygonLayer.Clear();
+            ellipseLayer.Clear();
+
+            dynamicEllipseLayer.Clear();
         }
 
         private void Sample1()
@@ -62,17 +65,18 @@ namespace DemoApp
             var shadowPath = new Polygon(new PolygonStyle(new SolidBrush(Color.FromArgb(100, Color.Black)), Pens.Black));
             shadowPath.AddRange(ReadPointsFromResource("ShadowPath.txt"));
 
-            trackLayer.Tracks.Clear();
-            trackLayer.Tracks.Add(centralLine);
-            trackLayer.Tracks.Add(riseSetCurves);
-            trackLayer.Tracks.Add(penumbraLimit);
+            trackLayer.Clear();
+            trackLayer.AddTrack(centralLine);
+            trackLayer.AddTrack(riseSetCurves);
+            trackLayer.AddTrack(penumbraLimit);
 
-            polygonLayer.Polygons.Clear();
-            polygonLayer.Polygons.Add(shadowPath);
+            polygonLayer.Clear();
+            polygonLayer.AddPolygon(shadowPath);
 
-            mapControl.Layers.Clear();
-            mapControl.Layers.Add(sample1LayerGroup);
-            mapControl.Invalidate();
+            sample1LayerGroup.Visible = true;
+            sample2LayerGroup.Visible = false;
+            sample3LayerGroup.Visible = false;
+            sample4LayerGroup.Visible = false;
         }
 
         private void Sample2()
@@ -80,41 +84,44 @@ namespace DemoApp
             var magellanTraveling = new Track(TrackStyle.Default);
             magellanTraveling.AddRange(ReadPointsFromResource("MagellanExpedition.txt"));
 
-            trackLayer.Tracks.Clear();
-            trackLayer.Tracks.Add(magellanTraveling);
+            trackLayer.Clear();
+            trackLayer.AddTrack(magellanTraveling);
 
-            mapControl.Layers.Clear();
-            mapControl.Layers.Add(sample2LayerGroup);
-            mapControl.Invalidate();
+            sample1LayerGroup.Visible = false;
+            sample2LayerGroup.Visible = true;
+            sample3LayerGroup.Visible = false;
+            sample4LayerGroup.Visible = false;
         }
 
         private void Sample3()
         {
             var cities = ReadCities();
 
-            markerLayer.Markers.Clear();
+            markerLayer.Clear();
             foreach (var city in cities)
             {
-                markerLayer.Markers.Add(city);
+                markerLayer.AddMarker(city);
             }
 
-            mapControl.Layers.Clear();
-            mapControl.Layers.Add(sample3LayerGroup);
-            mapControl.Invalidate();
+            sample1LayerGroup.Visible = false;
+            sample2LayerGroup.Visible = false;
+            sample3LayerGroup.Visible = true;
+            sample4LayerGroup.Visible = false;
         }
 
         private void Sample4()
         {
-            ellipseLayer.Ellipses.Clear();
+            ellipseLayer.Clear();
 
-            ellipseLayer.Ellipses.Add(new Ellipse(new GeoPoint(13.376935f, 52.516181f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
-            ellipseLayer.Ellipses.Add(new Ellipse(new GeoPoint(12.482932f, 41.89332f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
-            ellipseLayer.Ellipses.Add(new Ellipse(new GeoPoint(-21.942237f, 64.145981f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
-            ellipseLayer.Ellipses.Add(new Ellipse(new GeoPoint(-118.242766f, 34.053691f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
+            ellipseLayer.AddEllipse(new Ellipse(new GeoPoint(13.376935f, 52.516181f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
+            ellipseLayer.AddEllipse(new Ellipse(new GeoPoint(12.482932f, 41.89332f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
+            ellipseLayer.AddEllipse(new Ellipse(new GeoPoint(-21.942237f, 64.145981f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
+            ellipseLayer.AddEllipse(new Ellipse(new GeoPoint(-118.242766f, 34.053691f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
 
-            mapControl.Layers.Clear();
-            mapControl.Layers.Add(sample4LayerGroup);
-            mapControl.Invalidate();
+            sample1LayerGroup.Visible = false;
+            sample2LayerGroup.Visible = false;
+            sample3LayerGroup.Visible = false;
+            sample4LayerGroup.Visible = true;
         }
 
         public FormMain()
@@ -124,14 +131,21 @@ namespace DemoApp
             mapControl.CacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MapControl");
 
             // group layers together
-            sample1LayerGroup.Layers.Add(trackLayer);
-            sample1LayerGroup.Layers.Add(polygonLayer);
+            sample1LayerGroup.AddLayer(trackLayer);
+            sample1LayerGroup.AddLayer(polygonLayer);
 
-            sample2LayerGroup.Layers.Add(trackLayer);
+            sample2LayerGroup.AddLayer(trackLayer);
 
-            sample3LayerGroup.Layers.Add(markerLayer);
+            sample3LayerGroup.AddLayer(markerLayer);
 
-            sample4LayerGroup.Layers.Add(ellipseLayer);
+            sample4LayerGroup.AddLayer(ellipseLayer);
+
+            // add layers to map
+            mapControl.AddLayer(sample1LayerGroup);
+            mapControl.AddLayer(sample2LayerGroup);
+            mapControl.AddLayer(sample3LayerGroup);
+            mapControl.AddLayer(sample4LayerGroup);
+            mapControl.AddLayer(dynamicEllipseLayer);
             
             cmbExample.Items.AddRange(new Sample[]
             {
@@ -234,25 +248,31 @@ namespace DemoApp
         private void cbxMarkerLayer_CheckedChanged(object sender, EventArgs e)
         {
             markerLayer.Visible = cbxMarkerLayer.Checked;
-            mapControl.Invalidate();
         }
 
         private void cbxTrackLayer_CheckedChanged(object sender, EventArgs e)
         {
             trackLayer.Visible = cbxTrackLayer.Checked;
-            mapControl.Invalidate();
         }
 
         private void cbxPolygonLayer_CheckedChanged(object sender, EventArgs e)
         {
             polygonLayer.Visible = cbxPolygonLayer.Checked;
-            mapControl.Invalidate();
         }
 
         private void cbxEllipseLayer_CheckedChanged(object sender, EventArgs e)
         {
             ellipseLayer.Visible = cbxEllipseLayer.Checked;
-            mapControl.Invalidate();
+        }
+
+        private void cbxDynamicEllipseLayer_CheckedChanged(object sender, EventArgs e)
+        {
+            dynamicEllipseLayer.Visible = cbxDynamicEllipseLayer.Checked;
+        }
+
+        private void btnAddDynamicEllipse_Click(object sender, EventArgs e)
+        {
+            dynamicEllipseLayer.AddEllipse(new Ellipse(new GeoPoint(13.376935f, 52.516181f), new EllipseStyle(500, 300, new SolidBrush(Color.FromArgb(80, Color.Red)), Pens.Red, EllipseStyle.Unit.METERS)));
         }
 
         private void mapControl_DrawMarker(object sender, DrawMarkerEventArgs e)

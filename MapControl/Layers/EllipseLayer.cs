@@ -23,5 +23,17 @@ namespace System.Windows.Forms.Maps.Layers
         public EllipseLayer(int level) : base(level)
         {
         }
+
+        public void AddEllipse(Ellipse ellipse)
+        {
+            Ellipses.Add(ellipse);
+            RaiseLayerPropertyChangedEvent(this, EventArgs.Empty);
+        }
+
+        public void Clear()
+        {
+            Ellipses.Clear();
+            RaiseLayerPropertyChangedEvent(this, EventArgs.Empty);
+        }
     }
 }

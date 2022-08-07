@@ -23,5 +23,17 @@ namespace System.Windows.Forms.Maps.Layers
         public TrackLayer(int level) : base(level)
         {
         }
+
+        public void AddTrack(Track track)
+        {
+            Tracks.Add(track);
+            RaiseLayerPropertyChangedEvent(this, EventArgs.Empty);
+        }
+
+        public void Clear()
+        {
+            Tracks.Clear();
+            RaiseLayerPropertyChangedEvent(this, EventArgs.Empty);
+        }
     }
 }

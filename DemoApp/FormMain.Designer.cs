@@ -40,6 +40,8 @@ namespace DemoApp
             this.cbxTrackLayer = new System.Windows.Forms.CheckBox();
             this.cbxPolygonLayer = new System.Windows.Forms.CheckBox();
             this.cbxEllipseLayer = new System.Windows.Forms.CheckBox();
+            this.btnAddDynamicEllipse = new System.Windows.Forms.Button();
+            this.cbxDynamicEllipseLayer = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // btnClearCache
@@ -174,11 +176,37 @@ namespace DemoApp
             this.cbxEllipseLayer.UseVisualStyleBackColor = true;
             this.cbxEllipseLayer.CheckedChanged += new System.EventHandler(this.cbxEllipseLayer_CheckedChanged);
             // 
+            // btnAddDynamicEllipse
+            // 
+            this.btnAddDynamicEllipse.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnAddDynamicEllipse.Location = new System.Drawing.Point(599, 40);
+            this.btnAddDynamicEllipse.Name = "btnAddDynamicEllipse";
+            this.btnAddDynamicEllipse.Size = new System.Drawing.Size(75, 23);
+            this.btnAddDynamicEllipse.TabIndex = 10;
+            this.btnAddDynamicEllipse.Text = "Dyn Ellipse";
+            this.btnAddDynamicEllipse.UseVisualStyleBackColor = true;
+            this.btnAddDynamicEllipse.Click += new System.EventHandler(this.btnAddDynamicEllipse_Click);
+            // 
+            // cbxDynamicEllipseLayer
+            // 
+            this.cbxDynamicEllipseLayer.AutoSize = true;
+            this.cbxDynamicEllipseLayer.Checked = true;
+            this.cbxDynamicEllipseLayer.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cbxDynamicEllipseLayer.Location = new System.Drawing.Point(494, 44);
+            this.cbxDynamicEllipseLayer.Name = "cbxDynamicEllipseLayer";
+            this.cbxDynamicEllipseLayer.Size = new System.Drawing.Size(131, 17);
+            this.cbxDynamicEllipseLayer.TabIndex = 11;
+            this.cbxDynamicEllipseLayer.Text = "Show DynEllipseLayer";
+            this.cbxDynamicEllipseLayer.UseVisualStyleBackColor = true;
+            this.cbxDynamicEllipseLayer.CheckedChanged += new System.EventHandler(this.cbxDynamicEllipseLayer_CheckedChanged);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(684, 362);
+            this.Controls.Add(this.cbxDynamicEllipseLayer);
+            this.Controls.Add(this.btnAddDynamicEllipse);
             this.Controls.Add(this.cbxEllipseLayer);
             this.Controls.Add(this.cbxPolygonLayer);
             this.Controls.Add(this.cbxTrackLayer);
@@ -209,6 +237,8 @@ namespace DemoApp
         private CheckBox cbxTrackLayer;
         private CheckBox cbxPolygonLayer;
         private CheckBox cbxEllipseLayer;
+        private Button btnAddDynamicEllipse;
+        private CheckBox cbxDynamicEllipseLayer;
     }
 }
 
