@@ -116,9 +116,9 @@ namespace DemoApp
             ellipseLayer.Clear();
 
             ellipseLayer.AddEllipse(new Ellipse(new GeoPoint(13.376935f, 52.516181f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
-            ellipseLayer.AddEllipse(new Ellipse(new GeoPoint(12.482932f, 41.89332f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
-            ellipseLayer.AddEllipse(new Ellipse(new GeoPoint(-21.942237f, 64.145981f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
-            ellipseLayer.AddEllipse(new Ellipse(new GeoPoint(-118.242766f, 34.053691f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
+            ellipseLayer.AddEllipse(new Ellipse(new GeoPoint(8.702953f, 48.890885f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
+            ellipseLayer.AddEllipse(new Ellipse(new GeoPoint(8.682092f, 50.110644f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
+            ellipseLayer.AddEllipse(new Ellipse(new GeoPoint(8.043878f, 52.846134f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
 
             sample1LayerGroup.Visible = false;
             sample2LayerGroup.Visible = false;
@@ -242,7 +242,7 @@ namespace DemoApp
         private void cmbExample_SelectedIndexChanged(object sender, EventArgs e)
         {
             ActiveControl = mapControl;
-            mapControl.ClearAll();
+            mapControl.ClearMarkers();
             var sample = cmbExample.SelectedItem as Sample;
             sample.InitAction();
         }

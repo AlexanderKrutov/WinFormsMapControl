@@ -20,6 +20,8 @@ namespace System.Windows.Forms
     [DesignerCategory("code")]
     public partial class MapControl : Control
     {
+        #region Private Properties
+
         /// <summary>
         /// Tile size, in pixels.
         /// </summary>
@@ -79,6 +81,10 @@ namespace System.Windows.Forms
         /// Gets maps size in pixels.
         /// </summary>
         private int FullMapSizeInPixels => FullMapSizeInTiles * TILE_SIZE;
+
+        #endregion
+
+        #region Public Properties
 
         /// <summary>
         /// Backing field for <see cref="ZoomLevel"/> property.
@@ -418,6 +424,10 @@ namespace System.Windows.Forms
         [Description("Image attributes to be applied to a tile image when drawing."), Category("Appearance")]
         public ImageAttributes TileImageAttributes { get; set; } = null;
 
+        #endregion
+
+        #region Public Events
+
         /// <summary>
         /// Raised when marker is drawn on the map.
         /// </summary>
@@ -452,6 +462,10 @@ namespace System.Windows.Forms
         /// Raised when <see cref="TileServer"/> property value is changed.
         /// </summary>
         public event EventHandler<EventArgs> TileServerChanged;
+
+        #endregion
+
+        #region Public Methods
 
         /// <summary>
         /// Creates new <see cref="MapControl"/> control.
@@ -523,6 +537,74 @@ namespace System.Windows.Forms
             Ellipses.Add(ellipse);
             Invalidate();
         }
+
+
+
+        /// <summary>
+        /// Removes all layers from the map.
+        /// </summary>
+        public void ClearLayers()
+        {
+            Layers.Clear();
+            Invalidate();
+        }
+
+        /// <summary>
+        /// Removes all markers, tracks and polygons from the map.
+        /// </summary>
+        public void ClearMarkers()
+        {
+            Markers.Clear();
+            Tracks.Clear();
+            Polygons.Clear();
+            Invalidate();
+        }
+
+
+
+        /// <summary>
+        /// Clears map cache. If <paramref name="allTileServers"/> flag is set to true, cache for all tile servers will be cleared.
+        /// If no, only current tile server cache will be cleared.
+        /// </summary>
+        /// <param name="allTileServers">If flag is set to true, cache for all tile servers will be cleared.</param>
+        public void ClearCache(bool allTileServers = false)
+        {
+            _Cache = new ConcurrentBag<Tile>();
+            _RequestPool = new ConcurrentBag<Tile>();
+
+            if (TileServer != null)
+            {
+                string cacheFolder = allTileServers ? CacheFolder : Path.Combine(CacheFolder, TileServer.GetType().Name);
+                if (Directory.Exists(cacheFolder))
+                {
+                    if (allTileServers)
+                    {
+                        var subdirs = Directory.EnumerateDirectories(cacheFolder);
+                        foreach (string dir in subdirs)
+                        {
+                            try
+                            {
+                                Directory.Delete(dir, true);
+                            }
+                            catch { }
+                        }
+                    }
+                    else
+                    {
+                        try
+                        {
+                            Directory.Delete(cacheFolder, true);
+                        }
+                        catch { }
+                    }
+                }
+            }
+            Invalidate();
+        }
+
+        #endregion
+
+        #region Protected Override Methods
 
         /// <summary>
         /// Called on creating control.
@@ -680,36 +762,9 @@ namespace System.Windows.Forms
             CenterChanged?.Invoke(this, EventArgs.Empty);          
         }
 
-        /// <summary>
-        /// Adjusts map bounds if required.
-        /// </summary>
-        private void AdjustMapBounds()
-        {
-            if (FitToBounds)
-            {
-                if (FullMapSizeInPixels > Height)
-                {
-                    if (_Offset.Y > 0) _Offset.Y = 0;
-                    if (_Offset.Y + FullMapSizeInPixels < Height) _Offset.Y = Height - FullMapSizeInPixels;
-                }
-                else
-                {
-                    if (_Offset.Y > Height - FullMapSizeInPixels) _Offset.Y = Height - FullMapSizeInPixels;
-                    if (_Offset.Y < 0) _Offset.Y = 0;
-                }
-            }
-        }
+        #endregion
 
-        /// <summary>
-        /// Normalizes tile number to fit value from 0 to FullMapSizeInTiles.
-        /// </summary>
-        /// <param name="n">Tile number, with fractions.</param>
-        /// <returns>Tile number in range from 0 to FullMapSizeInTiles.</returns>
-        private float NormalizeTileNumber(float n)
-        {
-            int size = FullMapSizeInTiles;
-            return (n %= size) >= 0 ? n : (n + size);
-        }
+        #region Private Draw Methods
 
         /// <summary>
         /// Draws error string on the map.
@@ -734,7 +789,7 @@ namespace System.Windows.Forms
             // count of visible tiles (vertically and horizontally)
             int tilesByWidth = (int)Math.Ceiling((float)Width / TILE_SIZE);
             int tilesByHeight = (int)Math.Ceiling((float)Height / TILE_SIZE);
-            
+
             // indices of last visible tile
             int toX = fromX + tilesByWidth;
             int toY = fromY + tilesByHeight;
@@ -1087,12 +1142,12 @@ namespace System.Windows.Forms
                         {
                             ellipseWidth = ellipse.Style.EllipseWidth;
                             ellipseHeight = ellipse.Style.EllipseHeight;
-                        } 
+                        }
                         else if (ellipse.Style.EllipseUnit == EllipseStyle.Unit.METERS)
                         {
                             double pixelPerMeter = MetersToPixels(ellipse.Point.Latitude, ZoomLevel);
 
-                            ellipseWidth = (float) (ellipse.Style.EllipseWidth / pixelPerMeter);
+                            ellipseWidth = (float)(ellipse.Style.EllipseWidth / pixelPerMeter);
                             ellipseHeight = (float)(ellipse.Style.EllipseHeight / pixelPerMeter);
                         }
                         else if (ellipse.Style.EllipseUnit == EllipseStyle.Unit.YARDS)
@@ -1140,7 +1195,7 @@ namespace System.Windows.Forms
             // Destination rectangle
             Rectangle destRect = new Rectangle(p.X - frac, p.Y - frac, TILE_SIZE + 2 * frac, TILE_SIZE + 2 * frac);
 
-            var state = gr.Save();            
+            var state = gr.Save();
             gr.SmoothingMode = SmoothingMode.HighSpeed;
             gr.InterpolationMode = InterpolationMode.NearestNeighbor;
             gr.PixelOffsetMode = PixelOffsetMode.HighSpeed;
@@ -1202,6 +1257,118 @@ namespace System.Windows.Forms
                 gr.TranslateTransform(i * FullMapSizeInPixels, 0);
                 draw();
                 gr.Restore(state);
+            }
+        }
+
+        #endregion
+
+        #region Private Mapping Methods
+
+        /// <summary>
+        /// Normalizes tile number to fit value from 0 to FullMapSizeInTiles.
+        /// </summary>
+        /// <param name="n">Tile number, with fractions.</param>
+        /// <returns>Tile number in range from 0 to FullMapSizeInTiles.</returns>
+        private float NormalizeTileNumber(float n)
+        {
+            int size = FullMapSizeInTiles;
+            return (n %= size) >= 0 ? n : (n + size);
+        }
+
+        /// <summary>
+        /// Returns the number of pixels per meter according to the reference latitude and zoom level.
+        /// </summary>
+        /// <param name="latitude">Latitude for which the distance should be calculated</param>
+        /// <param name="zoomLevel">Current zoomlevel</param>
+        /// <returns>Number of pixels representing one meter.</returns>
+        public double MetersToPixels(double latitude, int zoomLevel)
+        {
+            var earthCircumference = 40075016.69;
+            var worldSize = TILE_SIZE * Math.Pow(2, zoomLevel);
+
+            var latitudeRadians = latitude * (Math.PI / 180);
+
+            return earthCircumference * Math.Cos(latitudeRadians) / worldSize;
+        }
+
+        /// <summary>
+        /// Returns the number of pixels per yard according to the reference latitude and zoom level.
+        /// </summary>
+        /// <param name="latitude">Latitude for which the distance should be calculated</param>
+        /// <param name="zoomLevel">Current zoomlevel</param>
+        /// <returns>Number of pixels representing one yard.</returns>
+        public double YardsToPixels(double latitude, int zoomLevel)
+        {
+            var earthCircumference = 52626768;
+            var worldSize = TILE_SIZE * Math.Pow(2, zoomLevel);
+
+            var latitudeRadians = latitude * (Math.PI / 180);
+
+            return earthCircumference * Math.Cos(latitudeRadians) / worldSize;
+        }
+
+        /// <summary>
+        /// Gets projection of geographical coordinates onto the map.
+        /// </summary>
+        /// <param name="g">Point with geographical coordinates.</param>
+        /// <returns><see cref="PointF"/> object representing projection of the specified geographical coordinates on the map.</returns>
+        public PointF Project(GeoPoint g)
+        {
+            var p = WorldToTilePos(g);
+            return new PointF(p.X * TILE_SIZE + _Offset.X, p.Y * TILE_SIZE + _Offset.Y);
+        }
+
+        /// <summary>
+        /// Converts geographical coordinates to tile indices with fractions.
+        /// </summary>
+        /// <param name="g">Point with geographical coordinates.</param>
+        /// <returns>Point representing X/Y indices of the specified geographical coordinates in Slippy map scheme.</returns>
+        public PointF WorldToTilePos(GeoPoint g)
+        {
+            PointF p = new Point();
+            p.X = (float)((g.Longitude + 180.0) / 360.0 * (1 << ZoomLevel));
+            p.Y = (float)((1.0 - Math.Log(Math.Tan(g.Latitude * Math.PI / 180.0) +
+                1.0 / Math.Cos(g.Latitude * Math.PI / 180.0)) / Math.PI) / 2.0 * (1 << ZoomLevel));
+
+            return p;
+        }
+
+        /// <summary>
+        /// Converts tile indices to geographical coordinates.
+        /// </summary>
+        /// <param name="x">X-index of the tile.</param>
+        /// <param name="y">Y-index of the tile.</param>
+        /// <returns>Point representing geographical coordinates.</returns>
+        public GeoPoint TileToWorldPos(double x, double y)
+        {
+            GeoPoint g = new GeoPoint();
+            double n = Math.PI - ((2.0 * Math.PI * y) / Math.Pow(2.0, ZoomLevel));
+            g.Longitude = (float)((x / Math.Pow(2.0, ZoomLevel) * 360.0) - 180.0);
+            g.Latitude = (float)(180.0 / Math.PI * Math.Atan(Math.Sinh(n)));
+            return g;
+        }
+
+        #endregion
+
+        #region Private Support Methods
+
+        /// <summary>
+        /// Adjusts map bounds if required.
+        /// </summary>
+        private void AdjustMapBounds()
+        {
+            if (FitToBounds)
+            {
+                if (FullMapSizeInPixels > Height)
+                {
+                    if (_Offset.Y > 0) _Offset.Y = 0;
+                    if (_Offset.Y + FullMapSizeInPixels < Height) _Offset.Y = Height - FullMapSizeInPixels;
+                }
+                else
+                {
+                    if (_Offset.Y > Height - FullMapSizeInPixels) _Offset.Y = Height - FullMapSizeInPixels;
+                    if (_Offset.Y < 0) _Offset.Y = 0;
+                }
             }
         }
 
@@ -1269,7 +1436,7 @@ namespace System.Windows.Forms
                         }
                     }
                 }
-                
+
                 // get tile from the server 
                 if (!fromCacheOnly)
                 {
@@ -1359,7 +1526,7 @@ namespace System.Windows.Forms
 
                         // remove the tile from requests pool
                         _RequestPool.TryTake(out tile);
-                        
+
                         // redraw the map
                         Invalidate();
                     }
@@ -1372,119 +1539,6 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
-        /// Returns the number of pixels per meter according to the reference latitude and zoom level.
-        /// </summary>
-        /// <param name="latitude">Latitude for which the distance should be calculated</param>
-        /// <param name="zoomLevel">Current zoomlevel</param>
-        /// <returns>Number of pixels representing one meter.</returns>
-        public double MetersToPixels(double latitude, int zoomLevel)
-        {
-            var earthCircumference = 40075016.69;
-            var worldSize = TILE_SIZE * Math.Pow(2, zoomLevel);
-
-            var latitudeRadians = latitude * (Math.PI / 180);
-
-            return earthCircumference * Math.Cos(latitudeRadians) / worldSize;
-        }
-
-        /// <summary>
-        /// Returns the number of pixels per yard according to the reference latitude and zoom level.
-        /// </summary>
-        /// <param name="latitude">Latitude for which the distance should be calculated</param>
-        /// <param name="zoomLevel">Current zoomlevel</param>
-        /// <returns>Number of pixels representing one yard.</returns>
-        public double YardsToPixels(double latitude, int zoomLevel)
-        {
-            var earthCircumference = 52626768;
-            var worldSize = TILE_SIZE * Math.Pow(2, zoomLevel);
-
-            var latitudeRadians = latitude * (Math.PI / 180);
-
-            return earthCircumference * Math.Cos(latitudeRadians) / worldSize;
-        }
-
-        /// <summary>
-        /// Gets projection of geographical coordinates onto the map.
-        /// </summary>
-        /// <param name="g">Point with geographical coordinates.</param>
-        /// <returns><see cref="PointF"/> object representing projection of the specified geographical coordinates on the map.</returns>
-        public PointF Project(GeoPoint g)
-        {
-            var p = WorldToTilePos(g);
-            return new PointF(p.X * TILE_SIZE + _Offset.X, p.Y * TILE_SIZE + _Offset.Y);
-        }
-
-        /// <summary>
-        /// Converts geographical coordinates to tile indices with fractions.
-        /// </summary>
-        /// <param name="g">Point with geographical coordinates.</param>
-        /// <returns>Point representing X/Y indices of the specified geographical coordinates in Slippy map scheme.</returns>
-        public PointF WorldToTilePos(GeoPoint g)
-        {
-            PointF p = new Point();
-            p.X = (float)((g.Longitude + 180.0) / 360.0 * (1 << ZoomLevel));
-            p.Y = (float)((1.0 - Math.Log(Math.Tan(g.Latitude * Math.PI / 180.0) +
-                1.0 / Math.Cos(g.Latitude * Math.PI / 180.0)) / Math.PI) / 2.0 * (1 << ZoomLevel));
-
-            return p;
-        }
-
-        /// <summary>
-        /// Converts tile indices to geographical coordinates.
-        /// </summary>
-        /// <param name="x">X-index of the tile.</param>
-        /// <param name="y">Y-index of the tile.</param>
-        /// <returns>Point representing geographical coordinates.</returns>
-        public GeoPoint TileToWorldPos(double x, double y)
-        {
-            GeoPoint g = new GeoPoint();
-            double n = Math.PI - ((2.0 * Math.PI * y) / Math.Pow(2.0, ZoomLevel));
-            g.Longitude = (float)((x / Math.Pow(2.0, ZoomLevel) * 360.0) - 180.0);
-            g.Latitude = (float)(180.0 / Math.PI * Math.Atan(Math.Sinh(n)));
-            return g;
-        }
-
-        /// <summary>
-        /// Clears map cache. If <paramref name="allTileServers"/> flag is set to true, cache for all tile servers will be cleared.
-        /// If no, only current tile server cache will be cleared.
-        /// </summary>
-        /// <param name="allTileServers">If flag is set to true, cache for all tile servers will be cleared.</param>
-        public void ClearCache(bool allTileServers = false)
-        {
-            _Cache = new ConcurrentBag<Tile>();
-            _RequestPool = new ConcurrentBag<Tile>();
-
-            if (TileServer != null)
-            {
-                string cacheFolder = allTileServers ? CacheFolder : Path.Combine(CacheFolder, TileServer.GetType().Name);
-                if (Directory.Exists(cacheFolder))
-                {
-                    if (allTileServers)
-                    {
-                        var subdirs = Directory.EnumerateDirectories(cacheFolder);
-                        foreach (string dir in subdirs)
-                        {
-                            try
-                            {
-                                Directory.Delete(dir, true);
-                            }
-                            catch { }
-                        }
-                    }
-                    else
-                    {
-                        try
-                        {
-                            Directory.Delete(cacheFolder, true);
-                        }
-                        catch { }
-                    }
-                }
-            }
-            Invalidate();
-        }
-
-        /// <summary>
         /// Handles event when a property of a layer is changed.
         /// </summary>
         /// <param name="sender">Layer which raised the event.</param>
@@ -1494,24 +1548,6 @@ namespace System.Windows.Forms
             Invalidate();
         }
 
-        /// <summary>
-        /// Removes all layers from the map.
-        /// </summary>
-        public void ClearAllLayers()
-        {
-            Layers.Clear();
-            Invalidate();
-        }
-
-        /// <summary>
-        /// Removes all markers, tracks and polygons from the map.
-        /// </summary>
-        public void ClearAll()
-        {
-            Markers.Clear();
-            Tracks.Clear();
-            Polygons.Clear();
-            Invalidate();
-        }
+        #endregion
     }
 }
