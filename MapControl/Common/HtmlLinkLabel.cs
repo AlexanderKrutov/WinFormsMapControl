@@ -2,7 +2,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace System.Windows.Forms
+namespace System.Windows.Forms.Maps.Common
 {
     /// <summary>
     /// Extended <see cref="LinkLabel"/> control with auto-parsing of HTML links in the <see cref="Text"/> property.

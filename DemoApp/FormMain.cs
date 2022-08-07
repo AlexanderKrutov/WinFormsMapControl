@@ -10,6 +10,8 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Forms.Maps.Common;
+using System.Windows.Forms.Maps.Elements;
 using System.Windows.Forms.Maps.Layers;
 
 namespace DemoApp

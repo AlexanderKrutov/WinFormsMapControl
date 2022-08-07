@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Windows.Forms.Maps.Common;
 
-namespace System.Windows.Forms
+namespace System.Windows.Forms.Maps.Elements
 {
     /// <summary>
     /// Represents ellipse on the map.

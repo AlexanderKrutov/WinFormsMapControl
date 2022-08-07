@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace System.Windows.Forms.Maps.Layers
+﻿namespace System.Windows.Forms.Maps.Layers
 {
     /// <summary>
     /// Represents an abstract base class for layers of each type.

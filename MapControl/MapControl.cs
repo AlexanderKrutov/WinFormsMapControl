@@ -8,6 +8,8 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Windows.Forms.Maps.Common;
+using System.Windows.Forms.Maps.Elements;
 using System.Windows.Forms.Maps.Layers;
 
 namespace System.Windows.Forms
