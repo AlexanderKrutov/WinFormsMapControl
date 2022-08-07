@@ -45,6 +45,7 @@ namespace DemoApp
             trackLayer.Tracks.Clear();
             markerLayer.Markers.Clear();
             polygonLayer.Polygons.Clear();
+            ellipseLayer.Ellipses.Clear();
         }
 
         private void Sample1()
@@ -251,6 +252,7 @@ namespace DemoApp
         private void cbxEllipseLayer_CheckedChanged(object sender, EventArgs e)
         {
             ellipseLayer.Visible = cbxEllipseLayer.Checked;
+            mapControl.Invalidate();
         }
 
         private void mapControl_DrawMarker(object sender, DrawMarkerEventArgs e)
