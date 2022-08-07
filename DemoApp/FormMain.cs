@@ -242,7 +242,7 @@ namespace DemoApp
         private void cmbExample_SelectedIndexChanged(object sender, EventArgs e)
         {
             ActiveControl = mapControl;
-            mapControl.ClearMarkers();
+            mapControl.ClearElements();
             var sample = cmbExample.SelectedItem as Sample;
             sample.InitAction();
         }
@@ -275,6 +275,21 @@ namespace DemoApp
         private void btnAddDynamicEllipse_Click(object sender, EventArgs e)
         {
             dynamicEllipseLayer.AddEllipse(new Ellipse(new GeoPoint(13.376935f, 52.516181f), new EllipseStyle(500, 300, new SolidBrush(Color.FromArgb(80, Color.Red)), Pens.Red, EllipseStyle.Unit.METERS)));
+        }
+
+        private void btnZoomPolygonLayer_Click(object sender, EventArgs e)
+        {
+            mapControl.ZoomTo(polygonLayer);
+        }
+
+        private void btnZoomEllipseLayer_Click(object sender, EventArgs e)
+        {
+            mapControl.ZoomTo(ellipseLayer);
+        }
+
+        private void btnZoomSampleLayerGroup1_Click(object sender, EventArgs e)
+        {
+            mapControl.ZoomTo(sample1LayerGroup);
         }
 
         private void mapControl_DrawMarker(object sender, DrawMarkerEventArgs e)

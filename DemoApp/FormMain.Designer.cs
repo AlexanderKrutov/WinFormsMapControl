@@ -35,13 +35,16 @@ namespace DemoApp
             this.cmbExample = new System.Windows.Forms.ComboBox();
             this.lblExample = new System.Windows.Forms.Label();
             this.lblTileServer = new System.Windows.Forms.Label();
-            this.mapControl = new System.Windows.Forms.MapControl();
             this.cbxMarkerLayer = new System.Windows.Forms.CheckBox();
             this.cbxTrackLayer = new System.Windows.Forms.CheckBox();
             this.cbxPolygonLayer = new System.Windows.Forms.CheckBox();
             this.cbxEllipseLayer = new System.Windows.Forms.CheckBox();
             this.btnAddDynamicEllipse = new System.Windows.Forms.Button();
             this.cbxDynamicEllipseLayer = new System.Windows.Forms.CheckBox();
+            this.btnZoomEllipseLayer = new System.Windows.Forms.Button();
+            this.mapControl = new System.Windows.Forms.MapControl();
+            this.btnZoomPolygonLayer = new System.Windows.Forms.Button();
+            this.btnZoomSampleLayerGroup1 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnClearCache
@@ -98,31 +101,6 @@ namespace DemoApp
             this.lblTileServer.Size = new System.Drawing.Size(59, 13);
             this.lblTileServer.TabIndex = 5;
             this.lblTileServer.Text = "Tile server:";
-            // 
-            // mapControl
-            // 
-            this.mapControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.mapControl.BackColor = System.Drawing.Color.White;
-            this.mapControl.Cursor = System.Windows.Forms.Cursors.Cross;
-            this.mapControl.ErrorColor = System.Drawing.Color.Red;
-            this.mapControl.FitToBounds = true;
-            this.mapControl.ForeColor = System.Drawing.Color.Black;
-            this.mapControl.Location = new System.Drawing.Point(0, 76);
-            this.mapControl.Name = "mapControl";
-            this.mapControl.ShowThumbnails = true;
-            this.mapControl.Size = new System.Drawing.Size(684, 286);
-            this.mapControl.TabIndex = 0;
-            this.mapControl.ThumbnailBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
-            this.mapControl.ThumbnailForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(176)))), ((int)(((byte)(176)))), ((int)(((byte)(176)))));
-            this.mapControl.ThumbnailText = "Downloading...";
-            this.mapControl.TileImageAttributes = null;
-            this.mapControl.ZoomLevel = 0;
-            this.mapControl.DrawMarker += new System.EventHandler<System.Windows.Forms.DrawMarkerEventArgs>(this.mapControl_DrawMarker);
-            this.mapControl.DoubleClick += new System.EventHandler(this.mapControl_DoubleClick);
-            this.mapControl.MouseMove += new System.Windows.Forms.MouseEventHandler(this.mapControl_MouseMove);
-            this.mapControl.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.mapControl_MouseWheel);
             // 
             // cbxMarkerLayer
             // 
@@ -200,11 +178,69 @@ namespace DemoApp
             this.cbxDynamicEllipseLayer.UseVisualStyleBackColor = true;
             this.cbxDynamicEllipseLayer.CheckedChanged += new System.EventHandler(this.cbxDynamicEllipseLayer_CheckedChanged);
             // 
+            // btnZoomEllipseLayer
+            // 
+            this.btnZoomEllipseLayer.Location = new System.Drawing.Point(134, 67);
+            this.btnZoomEllipseLayer.Name = "btnZoomEllipseLayer";
+            this.btnZoomEllipseLayer.Size = new System.Drawing.Size(115, 23);
+            this.btnZoomEllipseLayer.TabIndex = 12;
+            this.btnZoomEllipseLayer.Text = "Zoom EllipseLayer";
+            this.btnZoomEllipseLayer.UseVisualStyleBackColor = true;
+            this.btnZoomEllipseLayer.Click += new System.EventHandler(this.btnZoomEllipseLayer_Click);
+            // 
+            // mapControl
+            // 
+            this.mapControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.mapControl.BackColor = System.Drawing.Color.White;
+            this.mapControl.Cursor = System.Windows.Forms.Cursors.Cross;
+            this.mapControl.ErrorColor = System.Drawing.Color.Red;
+            this.mapControl.FitToBounds = true;
+            this.mapControl.ForeColor = System.Drawing.Color.Black;
+            this.mapControl.Location = new System.Drawing.Point(0, 107);
+            this.mapControl.Name = "mapControl";
+            this.mapControl.ShowThumbnails = true;
+            this.mapControl.Size = new System.Drawing.Size(684, 256);
+            this.mapControl.TabIndex = 0;
+            this.mapControl.ThumbnailBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            this.mapControl.ThumbnailForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(176)))), ((int)(((byte)(176)))), ((int)(((byte)(176)))));
+            this.mapControl.ThumbnailText = "Downloading...";
+            this.mapControl.TileImageAttributes = null;
+            this.mapControl.ZoomLevel = 0;
+            this.mapControl.DrawMarker += new System.EventHandler<System.Windows.Forms.DrawMarkerEventArgs>(this.mapControl_DrawMarker);
+            this.mapControl.DoubleClick += new System.EventHandler(this.mapControl_DoubleClick);
+            this.mapControl.MouseMove += new System.Windows.Forms.MouseEventHandler(this.mapControl_MouseMove);
+            this.mapControl.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.mapControl_MouseWheel);
+            // 
+            // btnZoomPolygonLayer
+            // 
+            this.btnZoomPolygonLayer.Location = new System.Drawing.Point(12, 67);
+            this.btnZoomPolygonLayer.Name = "btnZoomPolygonLayer";
+            this.btnZoomPolygonLayer.Size = new System.Drawing.Size(115, 23);
+            this.btnZoomPolygonLayer.TabIndex = 13;
+            this.btnZoomPolygonLayer.Text = "Zoom PolygonLayer";
+            this.btnZoomPolygonLayer.UseVisualStyleBackColor = true;
+            this.btnZoomPolygonLayer.Click += new System.EventHandler(this.btnZoomPolygonLayer_Click);
+            // 
+            // btnZoomSampleLayerGroup1
+            // 
+            this.btnZoomSampleLayerGroup1.Location = new System.Drawing.Point(255, 67);
+            this.btnZoomSampleLayerGroup1.Name = "btnZoomSampleLayerGroup1";
+            this.btnZoomSampleLayerGroup1.Size = new System.Drawing.Size(149, 23);
+            this.btnZoomSampleLayerGroup1.TabIndex = 14;
+            this.btnZoomSampleLayerGroup1.Text = "Zoom SampleLayerGroup1";
+            this.btnZoomSampleLayerGroup1.UseVisualStyleBackColor = true;
+            this.btnZoomSampleLayerGroup1.Click += new System.EventHandler(this.btnZoomSampleLayerGroup1_Click);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(684, 362);
+            this.Controls.Add(this.btnZoomSampleLayerGroup1);
+            this.Controls.Add(this.btnZoomPolygonLayer);
+            this.Controls.Add(this.btnZoomEllipseLayer);
             this.Controls.Add(this.cbxDynamicEllipseLayer);
             this.Controls.Add(this.btnAddDynamicEllipse);
             this.Controls.Add(this.cbxEllipseLayer);
@@ -239,6 +275,9 @@ namespace DemoApp
         private CheckBox cbxEllipseLayer;
         private Button btnAddDynamicEllipse;
         private CheckBox cbxDynamicEllipseLayer;
+        private Button btnZoomEllipseLayer;
+        private Button btnZoomPolygonLayer;
+        private Button btnZoomSampleLayerGroup1;
     }
 }
 

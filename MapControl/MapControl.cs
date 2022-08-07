@@ -538,8 +538,6 @@ namespace System.Windows.Forms
             Invalidate();
         }
 
-
-
         /// <summary>
         /// Removes all layers from the map.
         /// </summary>
@@ -550,17 +548,16 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
-        /// Removes all markers, tracks and polygons from the map.
+        /// Removes all markers, tracks, polygons and ellipses from the map.
         /// </summary>
-        public void ClearMarkers()
+        public void ClearElements()
         {
             Markers.Clear();
             Tracks.Clear();
             Polygons.Clear();
+            Ellipses.Clear();
             Invalidate();
         }
-
-
 
         /// <summary>
         /// Clears map cache. If <paramref name="allTileServers"/> flag is set to true, cache for all tile servers will be cleared.
@@ -600,6 +597,41 @@ namespace System.Windows.Forms
                 }
             }
             Invalidate();
+        }
+
+        /// <summary>
+        /// Zooms map control to a certain layer.
+        /// </summary>
+        /// <param name="layer">Layer to zoom to.</param>
+        public void ZoomTo(Layer layer)
+        {
+            GeoPoint[] layerBounds = MeasureLayer(layer);
+
+            if (layerBounds != null)
+            {
+                // determine and set center
+                double centerLongitude = layerBounds[0].Longitude + (layerBounds[3].Longitude - layerBounds[0].Longitude) / 2.0;
+                double centerLatitude = layerBounds[0].Latitude + (layerBounds[3].Latitude - layerBounds[0].Latitude) / 2.0;
+
+                Center = new GeoPoint((float)centerLongitude, (float)centerLatitude);
+
+                // find required zoom level iteratively
+                ZoomLevel = 19;
+                while(ZoomLevel > 1)
+                {
+                    bool topLeftFits = (TopLeft.Longitude <= layerBounds[0].Longitude || (_Offset.X > 0 && TopLeft.Longitude >= layerBounds[0].Longitude)) && TopLeft.Latitude >= layerBounds[0].Latitude;
+                    bool bottomRightFits = (BottomRight.Longitude >= layerBounds[3].Longitude || (_Offset.X > 0 && BottomRight.Longitude <= layerBounds[3].Longitude)) && BottomRight.Latitude <= layerBounds[3].Latitude;
+
+                    if (topLeftFits && bottomRightFits)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        ZoomLevel = ZoomLevel - 1;
+                    }
+                }
+            }
         }
 
         #endregion
@@ -1536,6 +1568,182 @@ namespace System.Windows.Forms
                     _WorkerWaitHandle.WaitOne();
                 }
             };
+        }
+
+        /// <summary>
+        /// Returns the bounds of a layer.
+        /// </summary>
+        /// <param name="layer">Layer to measure.</param>
+        /// <returns>Bounds of a layer, null if layer doesn't contain objects.</returns>
+        private GeoPoint[] MeasureLayer(Layer layer)
+        {
+            GeoPoint[] resultPoints = null;
+
+            double lowestLongitude = 180.0;
+            double highestLongitude = -180.0;
+            double lowestLatitude = 90.0;
+            double highestLatitude = -90.0;
+
+            bool layerContainsObjects = false;
+
+            if (layer is LayerGroup)
+            {              
+                foreach(Layer l in ((LayerGroup)layer).Layers)
+                {
+                    GeoPoint[] layerBounds = MeasureLayer(l);
+
+                    if (layerBounds != null)
+                    {
+                        if (layerBounds[0].Longitude < lowestLongitude)
+                        {
+                            lowestLongitude = layerBounds[0].Longitude;
+                        }
+
+                        if (layerBounds[3].Longitude > highestLongitude)
+                        {
+                            highestLongitude = layerBounds[1].Longitude;
+                        }
+
+                        if (layerBounds[3].Latitude < lowestLatitude)
+                        {
+                            lowestLatitude = layerBounds[3].Latitude;
+                        }
+
+                        if (layerBounds[0].Latitude > highestLatitude)
+                        {
+                            highestLatitude = layerBounds[0].Latitude;
+                        }
+
+                        layerContainsObjects = true;
+                    }
+                }
+            }
+            else if (layer is MarkerLayer)
+            {
+                foreach (Marker marker in ((MarkerLayer)layer).Markers)
+                {
+                    if (marker.Point.Longitude < lowestLongitude)
+                    {
+                        lowestLongitude = marker.Point.Longitude;
+                    }
+                    
+                    if (marker.Point.Longitude > highestLongitude)
+                    {
+                        highestLongitude = marker.Point.Longitude;
+                    }
+
+                    if (marker.Point.Latitude < lowestLatitude)
+                    {
+                        lowestLatitude = marker.Point.Latitude;
+                    }
+                    
+                    if (marker.Point.Latitude > highestLatitude)
+                    {
+                        highestLatitude = marker.Point.Latitude;
+                    }
+
+                    layerContainsObjects = true;
+                }
+            }
+            else if (layer is TrackLayer)
+            {
+                foreach (Track track in ((TrackLayer)layer).Tracks)
+                {
+                    foreach (GeoPoint point in track)
+                    {
+                        if (point.Longitude < lowestLongitude)
+                        {
+                            lowestLongitude = point.Longitude;
+                        }
+                        
+                        if (point.Longitude > highestLongitude)
+                        {
+                            highestLongitude = point.Longitude;
+                        }
+
+                        if (point.Latitude < lowestLatitude)
+                        {
+                            lowestLatitude = point.Latitude;
+                        }
+                        
+                        if (point.Latitude > highestLatitude)
+                        {
+                            highestLatitude = point.Latitude;
+                        }
+
+                        layerContainsObjects = true;
+                    }
+                }
+            }
+            else if (layer is PolygonLayer)
+            {
+                foreach (Polygon polygon in ((PolygonLayer)layer).Polygons)
+                {
+                    foreach (GeoPoint point in polygon)
+                    {
+                        if (point.Longitude < lowestLongitude)
+                        {
+                            lowestLongitude = point.Longitude;
+                        }
+                        
+                        if (point.Longitude > highestLongitude)
+                        {
+                            highestLongitude = point.Longitude;
+                        }
+
+                        if (point.Latitude < lowestLatitude)
+                        {
+                            lowestLatitude = point.Latitude;
+                        }
+                        
+                        if (point.Latitude > highestLatitude)
+                        {
+                            highestLatitude = point.Latitude;
+                        }
+
+                        layerContainsObjects = true;
+                    }
+                }
+            }
+            else if (layer is EllipseLayer)
+            {
+                foreach (Ellipse ellipse in ((EllipseLayer)layer).Ellipses)
+                {
+                    if (ellipse.Point.Longitude < lowestLongitude)
+                    {
+                        lowestLongitude = ellipse.Point.Longitude;
+                    }
+                    
+                    if (ellipse.Point.Longitude > highestLongitude)
+                    {
+                        highestLongitude = ellipse.Point.Longitude;
+                    }
+
+                    if (ellipse.Point.Latitude < lowestLatitude)
+                    {
+                        lowestLatitude = ellipse.Point.Latitude;
+                    }
+                    
+                    if (ellipse.Point.Latitude > highestLatitude)
+                    {
+                        highestLatitude = ellipse.Point.Latitude;
+                    }
+
+                    layerContainsObjects = true;
+                }
+            }
+
+            if (layerContainsObjects)
+            {
+                resultPoints = new GeoPoint[4];
+
+                resultPoints[0] = new GeoPoint((float)lowestLongitude, (float)highestLatitude);     // TOP LEFT
+                resultPoints[1] = new GeoPoint((float)highestLongitude, (float)highestLatitude);    // TOP RIGHT
+                resultPoints[2] = new GeoPoint((float)lowestLongitude, (float)lowestLatitude);      // BOTTOM LEFT
+                resultPoints[3] = new GeoPoint((float)highestLongitude, (float)lowestLatitude);     // BOTTOM RIGHT
+            }
+
+            return resultPoints;
         }
 
         /// <summary>
