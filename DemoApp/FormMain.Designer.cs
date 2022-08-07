@@ -39,6 +39,7 @@ namespace DemoApp
             this.cbxMarkerLayer = new System.Windows.Forms.CheckBox();
             this.cbxTrackLayer = new System.Windows.Forms.CheckBox();
             this.cbxPolygonLayer = new System.Windows.Forms.CheckBox();
+            this.cbxEllipseLayer = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // btnClearCache
@@ -160,11 +161,25 @@ namespace DemoApp
             this.cbxPolygonLayer.UseVisualStyleBackColor = true;
             this.cbxPolygonLayer.CheckedChanged += new System.EventHandler(this.cbxPolygonLayer_CheckedChanged);
             // 
+            // cbxEllipseLayer
+            // 
+            this.cbxEllipseLayer.AutoSize = true;
+            this.cbxEllipseLayer.Checked = true;
+            this.cbxEllipseLayer.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cbxEllipseLayer.Location = new System.Drawing.Point(376, 44);
+            this.cbxEllipseLayer.Name = "cbxEllipseLayer";
+            this.cbxEllipseLayer.Size = new System.Drawing.Size(112, 17);
+            this.cbxEllipseLayer.TabIndex = 9;
+            this.cbxEllipseLayer.Text = "Show EllipseLayer";
+            this.cbxEllipseLayer.UseVisualStyleBackColor = true;
+            this.cbxEllipseLayer.CheckedChanged += new System.EventHandler(this.cbxEllipseLayer_CheckedChanged);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(684, 362);
+            this.Controls.Add(this.cbxEllipseLayer);
             this.Controls.Add(this.cbxPolygonLayer);
             this.Controls.Add(this.cbxTrackLayer);
             this.Controls.Add(this.cbxMarkerLayer);
@@ -193,6 +208,7 @@ namespace DemoApp
         private CheckBox cbxMarkerLayer;
         private CheckBox cbxTrackLayer;
         private CheckBox cbxPolygonLayer;
+        private CheckBox cbxEllipseLayer;
     }
 }
 

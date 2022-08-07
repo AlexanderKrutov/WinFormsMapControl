@@ -992,6 +992,10 @@ namespace System.Windows.Forms
             }
         }
 
+        /// <summary>
+        /// Draws ellipses on the map.
+        /// </summary>
+        /// <param name="gr">Graphics instance to draw on.</param>
         private void DrawEllipses(Graphics gr)
         {
             foreach (var ellipse in Ellipses)
@@ -1000,6 +1004,11 @@ namespace System.Windows.Forms
             }
         }
 
+        /// <summary>
+        /// Draw a single ellipse.
+        /// </summary>
+        /// <param name="ellipse">Ellipse to draw.</param>
+        /// <param name="gr">Graphics instance to draw on.</param>
         private void DrawSingleEllipse(Ellipse ellipse, Graphics gr)
         {
             var p = Project(ellipse.Point);
@@ -1027,11 +1036,17 @@ namespace System.Windows.Forms
                         } 
                         else if (ellipse.Style.EllipseUnit == EllipseStyle.Unit.METERS)
                         {
+                            double pixelPerMeter = MetersToPixels(ellipse.Point.Latitude, ZoomLevel);
 
+                            ellipseWidth = (float) (ellipse.Style.EllipseWidth / pixelPerMeter);
+                            ellipseHeight = (float)(ellipse.Style.EllipseHeight / pixelPerMeter);
                         }
                         else if (ellipse.Style.EllipseUnit == EllipseStyle.Unit.YARDS)
                         {
+                            double pixelPerYard = YardsToPixels(ellipse.Point.Latitude, ZoomLevel);
 
+                            ellipseWidth = (float)(ellipse.Style.EllipseWidth / pixelPerYard);
+                            ellipseHeight = (float)(ellipse.Style.EllipseHeight / pixelPerYard);
                         }
 
                         if (ellipse.Style.EllipseBrush != null)
@@ -1300,6 +1315,38 @@ namespace System.Windows.Forms
                     _WorkerWaitHandle.WaitOne();
                 }
             };
+        }
+
+        /// <summary>
+        /// Returns the number of pixels per meter according to the reference latitude and zoom level.
+        /// </summary>
+        /// <param name="latitude">Latitude for which the distance should be calculated</param>
+        /// <param name="zoomLevel">Current zoomlevel</param>
+        /// <returns>Number of pixels representing one meter.</returns>
+        public double MetersToPixels(double latitude, int zoomLevel)
+        {
+            var earthCircumference = 40075016.69;
+            var worldSize = TILE_SIZE * Math.Pow(2, zoomLevel);
+
+            var latitudeRadians = latitude * (Math.PI / 180);
+
+            return earthCircumference * Math.Cos(latitudeRadians) / worldSize;
+        }
+
+        /// <summary>
+        /// Returns the number of pixels per yard according to the reference latitude and zoom level.
+        /// </summary>
+        /// <param name="latitude">Latitude for which the distance should be calculated</param>
+        /// <param name="zoomLevel">Current zoomlevel</param>
+        /// <returns>Number of pixels representing one yard.</returns>
+        public double YardsToPixels(double latitude, int zoomLevel)
+        {
+            var earthCircumference = 52626768;
+            var worldSize = TILE_SIZE * Math.Pow(2, zoomLevel);
+
+            var latitudeRadians = latitude * (Math.PI / 180);
+
+            return earthCircumference * Math.Cos(latitudeRadians) / worldSize;
         }
 
         /// <summary>

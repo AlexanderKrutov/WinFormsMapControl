@@ -248,6 +248,11 @@ namespace DemoApp
             mapControl.Invalidate();
         }
 
+        private void cbxEllipseLayer_CheckedChanged(object sender, EventArgs e)
+        {
+            ellipseLayer.Visible = cbxEllipseLayer.Checked;
+        }
+
         private void mapControl_DrawMarker(object sender, DrawMarkerEventArgs e)
         {
             e.Handled = true;
