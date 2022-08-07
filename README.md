@@ -22,6 +22,8 @@ PM> Install-Package WinFormsMapControl
   * Markers
   * Tracks
   * Polygons
+  * Ellipses (with size in meters, yards or pixels)
+* Layers for grouping data together
 
 ## How to use it?
 [See documentation](/Docs/Index.md)
