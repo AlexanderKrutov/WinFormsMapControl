@@ -34,6 +34,31 @@ namespace System.Windows.Forms.Maps.Common
             return $"{DegreeToString(Longitude, "W", "E")}, {DegreeToString(Latitude, "S", "N")}";
         }
 
+        /// <summary>
+        /// Calculates the distance in meters to a reference <see cref="GeoPoint" />
+        /// </summary>
+        /// <param name="reference">Reference geo point</param>
+        /// <returns></returns>
+        public double GetDistanceTo(GeoPoint reference)
+        {
+            var baseRad = Math.PI * Latitude / 180;
+            var referenceRad = Math.PI * reference.Latitude / 180;
+            var theta = Longitude - reference.Longitude;
+            var thetaRad = Math.PI * theta / 180;
+
+            double distance = 
+                Math.Sin(baseRad) * Math.Sin(referenceRad) + Math.Cos(baseRad) *
+                Math.Cos(referenceRad) * Math.Cos(thetaRad);
+
+            distance = Math.Acos(distance);
+
+            distance = distance * 180 / Math.PI;            // rad2deg
+            distance = distance * 60 * 1.1515 * 1.609344;   // to kilometers
+            distance = distance * 1000;
+
+            return distance;
+        }
+
         private static string DegreeToString(double coordinate, string negativeSym, string positiveSym)
         {
             string sym = coordinate < 0d ? negativeSym : positiveSym;

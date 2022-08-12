@@ -38,6 +38,16 @@ namespace System.Windows.Forms
         private bool _MouseCaptured = false;
 
         /// <summary>
+        /// Last element used to send an enter, leave or click event.
+        /// </summary>
+        private IElement _LastElement = null;
+
+        /// <summary>
+        /// Last layer in which an element for enter, leave or click event has been found.
+        /// </summary>
+        private Layer _LastLayer = null;
+
+        /// <summary>
         /// Last known mouse position.
         /// </summary>
         private Point _LastMouse = new Point();
@@ -449,6 +459,21 @@ namespace System.Windows.Forms
         public event EventHandler<DrawEllipseEventArgs> DrawEllipse;
 
         /// <summary>
+        /// Raised when <see cref="IElement"/> of an layer has been clicked.
+        /// </summary>
+        public event EventHandler<MapControlElementEventArgs> ElementClick;
+
+        /// <summary>
+        /// Raised when <see cref="IElement"/> of an layer is entered.
+        /// </summary>
+        public event EventHandler<MapControlElementEventArgs> ElementEnter;
+
+        /// <summary>
+        /// Raised when <see cref="IElement"/> of an layer is leaved.
+        /// </summary>
+        public event EventHandler<MapControlElementEventArgs> ElementLeave;
+
+        /// <summary>
         /// Raised when <see cref="Center"/> property value is changed.
         /// </summary>
         public event EventHandler<EventArgs> CenterChanged;
@@ -738,6 +763,24 @@ namespace System.Windows.Forms
         /// <param name="e">Event args.</param>
         protected override void OnMouseUp(MouseEventArgs e)
         {
+            if (_MouseCaptured)
+            {
+                foreach (Layer layer in Layers.OrderByDescending(l => l.Level))
+                {
+                    if (_LastLayer != null && _LastLayer.Equals(layer))
+                    {
+                        Debug.WriteLine(_LastElement.GetType().Name + " clicked!");
+                        
+                        ElementClick?.Invoke(this, new MapControlElementEventArgs()
+                        {
+                            Element = _LastElement
+                        });
+
+                        break;
+                    }
+                }
+            }
+
             _MouseCaptured = false;
             base.OnMouseUp(e);
         }
@@ -768,6 +811,41 @@ namespace System.Windows.Forms
 
             _LastMouse.X = e.X;
             _LastMouse.Y = e.Y;
+
+            foreach(Layer layer in Layers.OrderByDescending(l => l.Level))
+            {
+                if (layer.Visible && layer.Hoverable)
+                {
+                    IElement touchedElement = FindTouchedElement(layer, e.X, e.Y);
+
+                    if (touchedElement != null && _LastElement == null)
+                    {
+                        Debug.WriteLine(touchedElement.GetType().Name + " entered!");
+                        
+                        ElementEnter?.Invoke(this, new MapControlElementEventArgs()
+                        {
+                            Element = touchedElement
+                        });
+
+                        _LastElement = touchedElement;
+                        _LastLayer = layer;
+
+                        break;
+                    }
+                    else if (touchedElement == null && _LastElement != null && _LastLayer.Equals(layer))
+                    {
+                        Debug.WriteLine(_LastElement.GetType().Name + " leaved!");
+
+                        ElementLeave?.Invoke(this, new MapControlElementEventArgs()
+                        {
+                            Element = _LastElement
+                        });
+
+                        _LastElement = null;
+                        _LastLayer = null;
+                    }
+                }
+            }
 
             MouseChanged?.Invoke(this, EventArgs.Empty);
 
@@ -1744,6 +1822,148 @@ namespace System.Windows.Forms
             }
 
             return resultPoints;
+        }
+
+        /// <summary>
+        /// Iterates over all elements in layers and returns the first matching element of the top most layer.
+        /// </summary>
+        /// <param name="position">Cursor positon</param>
+        /// <returns>The first matching element, null if there was no element found</returns>
+        private IElement FindTouchedElement(Layer layer, double x, double y)
+        {
+            PointF screenPoint = new PointF((float) x, (float) y);
+            
+            if (layer is LayerGroup)
+            {
+                foreach (Layer l in ((LayerGroup)layer).Layers.OrderByDescending(l => l.Level))
+                {
+                    IElement touchedElement = FindTouchedElement(l, x, y);
+
+                    if (touchedElement != null)
+                    {
+                        return touchedElement;
+                    }
+                }
+            }
+            else if (layer is MarkerLayer)
+            {
+                foreach (Marker marker in ((MarkerLayer)layer).Markers)
+                {
+                    PointF point = Project(marker.Point);
+                    double distance = Math.Sqrt(Math.Pow(point.X - screenPoint.X, 2) + Math.Pow(point.Y - screenPoint.Y, 2));
+
+                    if (distance <= marker.Style.MarkerWidth + 5)
+                    {
+                        return marker;
+                    }
+                }
+            }
+            else if (layer is TrackLayer)
+            {
+                foreach (Track track in ((TrackLayer)layer).Tracks)
+                {
+                    foreach(GeoPoint trackPoint in track)
+                    {
+                        PointF point = Project(trackPoint);
+                        double distance = Math.Sqrt(Math.Pow(point.X - screenPoint.X, 2) + Math.Pow(point.Y - screenPoint.Y, 2));
+
+                        if (distance <= 5)
+                        {
+                            return track;
+                        }
+                    }
+                    
+                }
+            }
+            else if (layer is PolygonLayer)
+            {
+                foreach (Polygon polygon in ((PolygonLayer)layer).Polygons)
+                {
+                    // find outer bounds of the polygon
+                    double minX = polygon[0].Latitude;
+                    double maxX = polygon[0].Latitude;
+                    double minY = polygon[0].Longitude;
+                    double maxY = polygon[0].Longitude;
+                    for (int i = 1; i < polygon.Count; i++)
+                    {
+                        PointF q = Project(polygon[i]);
+                        minX = Math.Min(q.X, minX);
+                        maxX = Math.Max(q.X, maxX);
+                        minY = Math.Min(q.Y, minY);
+                        maxY = Math.Max(q.Y, maxY);
+                    }
+
+                    // if screen point is outside these bounds, it cannot be in polygon
+                    // -> continue with next one
+                    if (screenPoint.X < minX || screenPoint.X > maxX || screenPoint.Y < minY || screenPoint.Y > maxY)
+                    {
+                        continue;
+                    }
+
+                    // check whether screen point is in the area drawn by the polygon
+                    bool inside = false;
+                    for (int i = 0, j = polygon.Count - 1; i < polygon.Count; j = i++)
+                    {
+                        PointF pointI = Project(polygon[i]);
+                        PointF pointJ = Project(polygon[j]);
+                        
+                        if ((pointI.Y > screenPoint.Y) != (pointJ.Y > screenPoint.Y) && screenPoint.X < (pointJ.X - pointI.X) * (screenPoint.Y - pointI.Y) / (pointJ.Y - pointI.Y) + pointI.X)
+                        {
+                            inside = !inside;
+                        }
+                    }
+
+                    // if inside == true -> screen point is in polygon
+                    if (inside)
+                    {
+                        return polygon;
+                    }
+                }
+            }
+            else if (layer is EllipseLayer)
+            {
+                foreach (Ellipse ellipse in ((EllipseLayer)layer).Ellipses)
+                {
+                    PointF ellipsePoint = Project(ellipse.Point);
+                    float ellipseWidth = 0.0f;
+                    float ellipseHeight = 0.0f;
+
+                    if (ellipse.Style.EllipseUnit == EllipseStyle.Unit.PIXELS)
+                    {
+                        ellipseWidth = ellipse.Style.EllipseWidth;
+                        ellipseHeight = ellipse.Style.EllipseHeight;
+                    }
+                    else if (ellipse.Style.EllipseUnit == EllipseStyle.Unit.METERS)
+                    {
+                        double pixelPerMeter = MetersToPixels(ellipse.Point.Latitude, ZoomLevel);
+
+                        ellipseWidth = (float)(ellipse.Style.EllipseWidth / pixelPerMeter);
+                        ellipseHeight = (float)(ellipse.Style.EllipseHeight / pixelPerMeter);
+                    }
+                    else if (ellipse.Style.EllipseUnit == EllipseStyle.Unit.YARDS)
+                    {
+                        double pixelPerYard = YardsToPixels(ellipse.Point.Latitude, ZoomLevel);
+
+                        ellipseWidth = (float)(ellipse.Style.EllipseWidth / pixelPerYard);
+                        ellipseHeight = (float)(ellipse.Style.EllipseHeight / pixelPerYard);
+                    }
+
+                    if (ellipseWidth >= 2 && ellipseHeight >= 2)
+                    {
+                        double inside = (Math.Pow(screenPoint.X - ellipsePoint.X, 2) /
+                                        Math.Pow(ellipseWidth / 2, 2)) +
+                                        (Math.Pow(screenPoint.Y - ellipsePoint.Y, 2) /
+                                        Math.Pow(ellipseHeight / 2, 2));
+
+                        if (inside <= 1)
+                        {
+                            return ellipse;
+                        }
+                    }
+                }
+            }
+
+            return null;
         }
 
         /// <summary>

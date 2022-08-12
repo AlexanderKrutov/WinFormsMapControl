@@ -6,7 +6,7 @@ namespace System.Windows.Forms.Maps.Elements
     /// <summary>
     ///  Represents filled closed area on the map.
     /// </summary>
-    public class Polygon : List<GeoPoint>
+    public class Polygon : List<GeoPoint>, IElement
     {
         /// <summary>
         /// Gets or sets polygon style.

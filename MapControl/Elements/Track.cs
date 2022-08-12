@@ -6,7 +6,7 @@ namespace System.Windows.Forms.Maps.Elements
     /// <summary>
     /// Represents track (collection of connected points).
     /// </summary>
-    public class Track : List<GeoPoint>
+    public class Track : List<GeoPoint>, IElement
     {
         /// <summary>
         /// Style to draw the track

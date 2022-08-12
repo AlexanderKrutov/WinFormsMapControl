@@ -3,8 +3,13 @@
     /// <summary>
     /// Represents an abstract base class for layers of each type.
     /// </summary>
-    public abstract class Layer
+    public abstract class Layer : IEquatable<Layer>
     {
+        /// <summary>
+        /// Internal GUID to uniquely identify an layer.
+        /// </summary>
+        private Guid _id;
+        
         /// <summary>
         /// Backing field for <see cref="Level"/> property.
         /// </summary>
@@ -42,6 +47,16 @@
         }
 
         /// <summary>
+        /// Returns or sets whether the elements of the layer are hoverable or not.
+        /// </summary>
+        public bool Hoverable { get; set; } = true;
+
+        /// <summary>
+        /// Returns or sets whether the elements of the layer are clickable or not.
+        /// </summary>
+        public bool Clickable { get; set; } = true;
+
+        /// <summary>
         /// Raised when <see cref="Layer"/> property value is changed.
         /// </summary>
         public event EventHandler<EventArgs> LayerPropertyChanged;
@@ -54,6 +69,8 @@
         {
             Level = level;
             Visible = true;
+
+            _id = Guid.NewGuid();
         }
 
         /// <summary>
@@ -64,6 +81,21 @@
         protected void RaiseLayerPropertyChangedEvent(object sender, EventArgs args)
         {
             LayerPropertyChanged?.Invoke(sender, args);
+        }
+
+        /// <summary>
+        /// Compares two layers.
+        /// </summary>
+        /// <param name="other">Layer to compare</param>
+        /// <returns>Whether the layers are equal</returns>
+        public bool Equals(Layer other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+
+            return _id.Equals(other._id);
         }
     }
 }

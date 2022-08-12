@@ -5,7 +5,7 @@ namespace System.Windows.Forms.Maps.Elements
     /// <summary>
     /// Represents marker point on the map.
     /// </summary>
-    public class Marker
+    public class Marker : IElement
     {
         /// <summary>
         /// Marker coordinates.

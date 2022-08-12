@@ -5,7 +5,7 @@ namespace System.Windows.Forms.Maps.Elements
     /// <summary>
     /// Represents ellipse on the map.
     /// </summary>
-    public class Ellipse
+    public class Ellipse : IElement
     {
         /// <summary>
         /// Ellipse coordinates.
