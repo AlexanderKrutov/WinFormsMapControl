@@ -309,5 +309,20 @@ namespace DemoApp
             sb.AppendLine($"Location: {coord}");
             MessageBox.Show(sb.ToString(), "Info");
         }
+
+        private void mapControl_ElementClick(object sender, MapControlElementEventArgs e)
+        {
+
+        }
+
+        private void mapControl_ElementEnter(object sender, MapControlElementEventArgs e)
+        {
+
+        }
+
+        private void mapControl_ElementLeave(object sender, MapControlElementEventArgs e)
+        {
+
+        }
     }
 }

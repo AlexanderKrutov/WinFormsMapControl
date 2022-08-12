@@ -57,5 +57,8 @@ Other properties are also available, see documenation comments.
 ## Layers
 [See here](/Docs/Layer.md) how to use layers in the map.
 
+## Events
+[See how](/Docs/Event.md) to react to basic events on elements.
+
 ## Custom tile servers
 [Instruction](/Docs/TileServer.md) how to create own tile server.

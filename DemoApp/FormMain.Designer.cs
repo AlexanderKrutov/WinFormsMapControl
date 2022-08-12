@@ -209,6 +209,9 @@ namespace DemoApp
             this.mapControl.TileImageAttributes = null;
             this.mapControl.ZoomLevel = 0;
             this.mapControl.DrawMarker += new System.EventHandler<System.Windows.Forms.DrawMarkerEventArgs>(this.mapControl_DrawMarker);
+            this.mapControl.ElementClick += new System.EventHandler<System.Windows.Forms.MapControlElementEventArgs>(this.mapControl_ElementClick);
+            this.mapControl.ElementEnter += new System.EventHandler<System.Windows.Forms.MapControlElementEventArgs>(this.mapControl_ElementEnter);
+            this.mapControl.ElementLeave += new System.EventHandler<System.Windows.Forms.MapControlElementEventArgs>(this.mapControl_ElementLeave);
             this.mapControl.DoubleClick += new System.EventHandler(this.mapControl_DoubleClick);
             this.mapControl.MouseMove += new System.Windows.Forms.MouseEventHandler(this.mapControl_MouseMove);
             this.mapControl.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.mapControl_MouseWheel);

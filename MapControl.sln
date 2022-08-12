@@ -17,6 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{676CD423-E
 	ProjectSection(SolutionItems) = preProject
 		Docs\CustomData.md = Docs\CustomData.md
 		Docs\Demo.png = Docs\Demo.png
+		Docs\Event.md = Docs\Event.md
 		Docs\Index.md = Docs\Index.md
 		Layer.md = Layer.md
 		Docs\TileServer.md = Docs\TileServer.md
