@@ -11,7 +11,7 @@ namespace System.Windows.Forms.Maps.Elements
         /// <summary>
         /// Gets or sets polygon style.
         /// </summary>
-        public PolygonStyle Style { get; set; }
+        public PolygonStyle Style { get; set; } = PolygonStyle.Default;
 
 
         /// <summary>

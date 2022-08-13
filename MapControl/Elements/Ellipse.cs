@@ -15,7 +15,7 @@ namespace System.Windows.Forms.Maps.Elements
         /// <summary>
         /// Style to draw the ellipse.
         /// </summary>
-        public EllipseStyle Style { get; set; }
+        public EllipseStyle Style { get; set; } = EllipseStyle.Default;
 
         /// <summary>
         /// Custom data associated with the ellipse.

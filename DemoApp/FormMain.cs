@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.Maps.Common;
 using System.Windows.Forms.Maps.Elements;
@@ -126,6 +125,15 @@ namespace DemoApp
             sample4LayerGroup.Visible = true;
         }
 
+        private void Sample5()
+        {
+            mapControl.ClearElements();
+            mapControl.AddMarker(new Marker(new GeoPoint(0, 0)));
+
+            mapControl.Center = new GeoPoint(0, 0);
+            mapControl.ZoomLevel = 15;
+        }
+
         public FormMain()
         {
             InitializeComponent();
@@ -155,7 +163,8 @@ namespace DemoApp
                 new Sample("Map of Solar Eclipse 11 Aug 1999", Sample1),
                 new Sample("Magellan's Circumnavigation Map", Sample2),
                 new Sample("World Greatest Cities", Sample3),
-                new Sample("Some Ellipses with 50m Diameter", Sample4)
+                new Sample("Some Ellipses with 50m Diameter", Sample4),
+                new Sample("Center Marker directly in map", Sample5),
             });
 
             ITileServer[] tileServers = new ITileServer[]
@@ -312,17 +321,17 @@ namespace DemoApp
 
         private void mapControl_ElementClick(object sender, MapControlElementEventArgs e)
         {
-
+            Debug.WriteLine(e.Element.GetType().Name + " clicked!");
         }
 
         private void mapControl_ElementEnter(object sender, MapControlElementEventArgs e)
         {
-
+            Debug.WriteLine(e.Element.GetType().Name + " entered!");
         }
 
         private void mapControl_ElementLeave(object sender, MapControlElementEventArgs e)
         {
-
+            Debug.WriteLine(e.Element.GetType().Name + " leaved!");
         }
     }
 }

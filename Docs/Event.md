@@ -1,9 +1,5 @@
 # React to events
-By using events you can add a tooltip when a polygon is entered by mouse or show a message box when a marker is clicked. 
-
-_Note: Events work only for elements added into layers! Elementes added to map directly will not raise events!_
-
-Also, elements are considered in the order they're displayed in the map. That means if a marker is displayed on top of a polygon, only the marker will trigger an event!
+By using events you can add a tooltip when a polygon is entered by mouse or show a message box when a marker is clicked. Elements are considered in the order they're displayed in the map. That means if a marker is displayed on top of a polygon, only the marker will trigger an event!
 
 ## Layers
 Each layer requires a z-index in constructor. A higher z-index will show a layer before other layers with a lower z-index.

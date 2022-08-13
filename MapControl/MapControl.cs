@@ -28,6 +28,26 @@ namespace System.Windows.Forms
         private const int TILE_SIZE = 256;
 
         /// <summary>
+        /// Layer for markers added directly to the map.
+        /// </summary>
+        private MarkerLayer _BaseMarkerLayer = new MarkerLayer(Int32.MaxValue) { Name = "BaseMarkerLayer" };
+
+        /// <summary>
+        /// Layer for tracks added directly to the map.
+        /// </summary>
+        private TrackLayer _BaseTrackLayer = new TrackLayer(Int32.MaxValue) { Name = "BaseTrackLayer" };
+
+        /// <summary>
+        /// Layer for polgons added directly to the map.
+        /// </summary>
+        private PolygonLayer _BasePolygonLayer = new PolygonLayer(Int32.MaxValue) { Name = "BasePolygonLayer" };
+
+        /// <summary>
+        /// Layer for ellipses added directly to the map.
+        /// </summary>
+        private EllipseLayer _BaseEllipseLayer = new EllipseLayer(Int32.MaxValue) { Name = "BaseEllipseLayer" };
+
+        /// <summary>
         /// First tile offset.
         /// </summary>
         private Point _Offset = new Point();
@@ -347,7 +367,7 @@ namespace System.Windows.Forms
         /// <summary>
         /// Gets collection of tracks to be displayed on the map.
         /// </summary>
-        [Browsable(false)]
+        /*[Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ICollection<Track> Tracks { get; } = new List<Track>();
 
@@ -363,7 +383,7 @@ namespace System.Windows.Forms
         /// </summary>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public ICollection<Ellipse> Ellipses { get; } = new List<Ellipse>();
+        public ICollection<Ellipse> Ellipses { get; } = new List<Ellipse>();*/
 
         /// <summary>
         /// Backing field for <see cref="FitToBounds"/> property.
@@ -509,6 +529,12 @@ namespace System.Windows.Forms
             _LinkLabel.LinkClicked += _LinkLabel_LinkClicked;
 
             Controls.Add(_LinkLabel);
+
+            // add base layers
+            AddLayer(_BaseMarkerLayer);
+            AddLayer(_BaseTrackLayer);
+            AddLayer(_BasePolygonLayer);
+            AddLayer(_BaseEllipseLayer);
         }
 
         /// <summary>
@@ -529,8 +555,10 @@ namespace System.Windows.Forms
         /// <param name="marker">Marker to add to the map.</param>
         public void AddMarker(Marker marker)
         {
-            Markers.Add(marker);
-            Invalidate();
+            _BaseMarkerLayer.AddMarker(marker);
+            
+            // Markers.Add(marker);
+            // Invalidate();
         }
 
         /// <summary>
@@ -539,7 +567,9 @@ namespace System.Windows.Forms
         /// <param name="track">Track to add to the map.</param>
         public void AddTrack(Track track)
         {
-            Tracks.Add(track);
+            _BaseTrackLayer.AddTrack(track);
+            
+            // Tracks.Add(track);
             Invalidate();
         }
 
@@ -549,7 +579,9 @@ namespace System.Windows.Forms
         /// <param name="polygon">Polygon to add to the map.</param>
         public void AddPolygon(Polygon polygon)
         {
-            Polygons.Add(polygon);
+            _BasePolygonLayer.AddPolygon(polygon);
+            
+            // Polygons.Add(polygon);
             Invalidate();
         }
 
@@ -559,7 +591,9 @@ namespace System.Windows.Forms
         /// <param name="ellipse">Ellipse to add to the map.</param>
         public void AddEllipse(Ellipse ellipse)
         {
-            Ellipses.Add(ellipse);
+            _BaseEllipseLayer.AddEllipse(ellipse);
+            
+            // Ellipses.Add(ellipse);
             Invalidate();
         }
 
@@ -577,10 +611,15 @@ namespace System.Windows.Forms
         /// </summary>
         public void ClearElements()
         {
-            Markers.Clear();
+            _BaseMarkerLayer.Clear();
+            _BaseTrackLayer.Clear();
+            _BasePolygonLayer.Clear();
+            _BaseEllipseLayer.Clear();
+            
+            /*Markers.Clear();
             Tracks.Clear();
             Polygons.Clear();
-            Ellipses.Clear();
+            Ellipses.Clear();*/
             Invalidate();
         }
 
@@ -709,10 +748,10 @@ namespace System.Windows.Forms
                 pe.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
                 DrawLayers(pe.Graphics);
-                DrawPolygons(pe.Graphics);
+                /*DrawPolygons(pe.Graphics);
                 DrawTracks(pe.Graphics);
                 DrawMarkers(pe.Graphics);
-                DrawEllipses(pe.Graphics);
+                DrawEllipses(pe.Graphics);*/
             }
 
             base.OnPaint(pe);
@@ -761,8 +800,6 @@ namespace System.Windows.Forms
                 {
                     if (_LastLayer != null && _LastLayer.Equals(layer))
                     {
-                        Debug.WriteLine(_LastElement.GetType().Name + " clicked!");
-
                         ElementClick?.Invoke(this, new MapControlElementEventArgs()
                         {
                             X = e.X,
@@ -1086,13 +1123,13 @@ namespace System.Windows.Forms
         /// Draws tracks on the map
         /// </summary>
         /// <param name="gr">Graphics instance to draw on.</param>
-        private void DrawTracks(Graphics gr)
+        /* private void DrawTracks(Graphics gr)
         {
             foreach (var track in Tracks)
             {
                 DrawSingleTrack(track, gr);
             }
-        }
+        } */
 
         /// <summary>
         /// Draw a single track
@@ -1142,13 +1179,13 @@ namespace System.Windows.Forms
         /// Draws polygons on the map
         /// </summary>
         /// <param name="gr">Graphics instance to draw on.</param>
-        private void DrawPolygons(Graphics gr)
+        /* private void DrawPolygons(Graphics gr)
         {
             foreach (var polygon in Polygons)
             {
                 DrawSinglePolygon(polygon, gr);
             }
-        }
+        } */
 
         /// <summary>
         /// Draw a single polygon.
@@ -1212,13 +1249,13 @@ namespace System.Windows.Forms
         /// Draws ellipses on the map.
         /// </summary>
         /// <param name="gr">Graphics instance to draw on.</param>
-        private void DrawEllipses(Graphics gr)
+        /* private void DrawEllipses(Graphics gr)
         {
             foreach (var ellipse in Ellipses)
             {
                 DrawSingleEllipse(ellipse, gr);
             }
-        }
+        }*/
 
         /// <summary>
         /// Draw a single ellipse.

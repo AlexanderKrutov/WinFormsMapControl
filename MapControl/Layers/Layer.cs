@@ -9,6 +9,11 @@
         /// Internal GUID to uniquely identify an layer.
         /// </summary>
         private Guid _id;
+
+        /// <summary>
+        /// Informational name of the layer.
+        /// </summary>
+        public string Name { get; set; }
         
         /// <summary>
         /// Backing field for <see cref="Level"/> property.

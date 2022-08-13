@@ -50,7 +50,7 @@ namespace DemoApp
             // btnClearCache
             // 
             this.btnClearCache.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnClearCache.Location = new System.Drawing.Point(599, 5);
+            this.btnClearCache.Location = new System.Drawing.Point(633, 5);
             this.btnClearCache.Name = "btnClearCache";
             this.btnClearCache.Size = new System.Drawing.Size(75, 23);
             this.btnClearCache.TabIndex = 1;
@@ -65,7 +65,7 @@ namespace DemoApp
             this.cmbTileServers.DisplayMember = "Name";
             this.cmbTileServers.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbTileServers.FormattingEnabled = true;
-            this.cmbTileServers.Location = new System.Drawing.Point(381, 6);
+            this.cmbTileServers.Location = new System.Drawing.Point(415, 6);
             this.cmbTileServers.Name = "cmbTileServers";
             this.cmbTileServers.Size = new System.Drawing.Size(210, 21);
             this.cmbTileServers.TabIndex = 2;
@@ -96,7 +96,7 @@ namespace DemoApp
             // 
             this.lblTileServer.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.lblTileServer.AutoSize = true;
-            this.lblTileServer.Location = new System.Drawing.Point(316, 10);
+            this.lblTileServer.Location = new System.Drawing.Point(350, 10);
             this.lblTileServer.Name = "lblTileServer";
             this.lblTileServer.Size = new System.Drawing.Size(59, 13);
             this.lblTileServer.TabIndex = 5;
@@ -157,7 +157,7 @@ namespace DemoApp
             // btnAddDynamicEllipse
             // 
             this.btnAddDynamicEllipse.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnAddDynamicEllipse.Location = new System.Drawing.Point(599, 40);
+            this.btnAddDynamicEllipse.Location = new System.Drawing.Point(633, 40);
             this.btnAddDynamicEllipse.Name = "btnAddDynamicEllipse";
             this.btnAddDynamicEllipse.Size = new System.Drawing.Size(75, 23);
             this.btnAddDynamicEllipse.TabIndex = 10;
@@ -201,7 +201,7 @@ namespace DemoApp
             this.mapControl.Location = new System.Drawing.Point(0, 107);
             this.mapControl.Name = "mapControl";
             this.mapControl.ShowThumbnails = true;
-            this.mapControl.Size = new System.Drawing.Size(684, 256);
+            this.mapControl.Size = new System.Drawing.Size(718, 256);
             this.mapControl.TabIndex = 0;
             this.mapControl.ThumbnailBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.mapControl.ThumbnailForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(176)))), ((int)(((byte)(176)))), ((int)(((byte)(176)))));
@@ -240,7 +240,7 @@ namespace DemoApp
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(684, 362);
+            this.ClientSize = new System.Drawing.Size(718, 362);
             this.Controls.Add(this.btnZoomSampleLayerGroup1);
             this.Controls.Add(this.btnZoomPolygonLayer);
             this.Controls.Add(this.btnZoomEllipseLayer);

@@ -15,7 +15,7 @@ namespace System.Windows.Forms.Maps.Elements
         /// <summary>
         /// Style to draw the marker.
         /// </summary>
-        public MarkerStyle Style { get; set; }
+        public MarkerStyle Style { get; set; } = MarkerStyle.Default;
 
         /// <summary>
         /// Marker label.

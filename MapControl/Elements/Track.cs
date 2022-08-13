@@ -11,7 +11,7 @@ namespace System.Windows.Forms.Maps.Elements
         /// <summary>
         /// Style to draw the track
         /// </summary>
-        public TrackStyle Style { get; set; }
+        public TrackStyle Style { get; set; } = TrackStyle.Default;
 
         /// <summary>
         /// Custom data associated with the marker
