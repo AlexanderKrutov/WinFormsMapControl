@@ -673,14 +673,6 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
-        /// Handles clicks on LinkLabel links
-        /// </summary>
-        private void _LinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            Process.Start(e.Link.LinkData.ToString());
-        }
-
-        /// <summary>
         /// Does painting of the map.
         /// </summary>
         /// <param name="pe">Paint event args.</param>
@@ -770,9 +762,12 @@ namespace System.Windows.Forms
                     if (_LastLayer != null && _LastLayer.Equals(layer))
                     {
                         Debug.WriteLine(_LastElement.GetType().Name + " clicked!");
-                        
+
                         ElementClick?.Invoke(this, new MapControlElementEventArgs()
                         {
+                            X = e.X,
+                            Y = e.Y,
+                            Layer = _LastLayer,
                             Element = _LastElement
                         });
 
@@ -820,10 +815,11 @@ namespace System.Windows.Forms
 
                     if (touchedElement != null && _LastElement == null)
                     {
-                        Debug.WriteLine(touchedElement.GetType().Name + " entered!");
-                        
                         ElementEnter?.Invoke(this, new MapControlElementEventArgs()
                         {
+                            X = e.X,
+                            Y = e.Y,
+                            Layer = layer,
                             Element = touchedElement
                         });
 
@@ -834,10 +830,11 @@ namespace System.Windows.Forms
                     }
                     else if (touchedElement == null && _LastElement != null && _LastLayer.Equals(layer))
                     {
-                        Debug.WriteLine(_LastElement.GetType().Name + " leaved!");
-
                         ElementLeave?.Invoke(this, new MapControlElementEventArgs()
                         {
+                            X = e.X,
+                            Y = e.Y,
+                            Layer = _LastLayer,
                             Element = _LastElement
                         });
 
@@ -1974,6 +1971,14 @@ namespace System.Windows.Forms
         private void LayerPropertyChanged(object sender, EventArgs args)
         {
             Invalidate();
+        }
+
+        /// <summary>
+        /// Handles clicks on LinkLabel links
+        /// </summary>
+        private void _LinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Process.Start(e.Link.LinkData.ToString());
         }
 
         #endregion
