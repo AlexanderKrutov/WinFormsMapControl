@@ -45,6 +45,7 @@ namespace DemoApp
             this.mapControl = new System.Windows.Forms.MapControl();
             this.btnZoomPolygonLayer = new System.Windows.Forms.Button();
             this.btnZoomSampleLayerGroup1 = new System.Windows.Forms.Button();
+            this.btnZoomBerlin = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnClearCache
@@ -236,11 +237,22 @@ namespace DemoApp
             this.btnZoomSampleLayerGroup1.UseVisualStyleBackColor = true;
             this.btnZoomSampleLayerGroup1.Click += new System.EventHandler(this.btnZoomSampleLayerGroup1_Click);
             // 
+            // btnZoomBerlin
+            // 
+            this.btnZoomBerlin.Location = new System.Drawing.Point(410, 67);
+            this.btnZoomBerlin.Name = "btnZoomBerlin";
+            this.btnZoomBerlin.Size = new System.Drawing.Size(115, 23);
+            this.btnZoomBerlin.TabIndex = 15;
+            this.btnZoomBerlin.Text = "Zoom Berlin";
+            this.btnZoomBerlin.UseVisualStyleBackColor = true;
+            this.btnZoomBerlin.Click += new System.EventHandler(this.btnZoomBerlin_Click);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(718, 362);
+            this.Controls.Add(this.btnZoomBerlin);
             this.Controls.Add(this.btnZoomSampleLayerGroup1);
             this.Controls.Add(this.btnZoomPolygonLayer);
             this.Controls.Add(this.btnZoomEllipseLayer);
@@ -281,6 +293,7 @@ namespace DemoApp
         private Button btnZoomEllipseLayer;
         private Button btnZoomPolygonLayer;
         private Button btnZoomSampleLayerGroup1;
+        private Button btnZoomBerlin;
     }
 }
 

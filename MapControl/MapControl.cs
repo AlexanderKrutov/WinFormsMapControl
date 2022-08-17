@@ -73,6 +73,11 @@ namespace System.Windows.Forms
         private Point _LastMouse = new Point();
 
         /// <summary>
+        /// Last known center point before resizing.
+        /// </summary>
+        private GeoPoint _LastCenter = new GeoPoint();
+
+        /// <summary>
         /// Cache used to store tile images in memory.
         /// </summary>
         private ConcurrentBag<Tile> _Cache = new ConcurrentBag<Tile>();
@@ -266,6 +271,8 @@ namespace System.Windows.Forms
             }
             set
             {
+                _LastCenter = value;
+
                 var center = WorldToTilePos(value);
                 _Offset.X = -(int)(center.X * TILE_SIZE) + Width / 2;
                 _Offset.Y = -(int)(center.Y * TILE_SIZE) + Height / 2;
@@ -363,27 +370,6 @@ namespace System.Windows.Forms
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ICollection<Marker> Markers { get; } = new List<Marker>();
-
-        /// <summary>
-        /// Gets collection of tracks to be displayed on the map.
-        /// </summary>
-        /*[Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public ICollection<Track> Tracks { get; } = new List<Track>();
-
-        /// <summary>
-        /// Gets collection of polygons to be displayed on the map.
-        /// </summary>
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public ICollection<Polygon> Polygons { get; } = new List<Polygon>();
-
-        /// <summary>
-        /// Gets collection of ellipses to be displayed on the map.
-        /// </summary>
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public ICollection<Ellipse> Ellipses { get; } = new List<Ellipse>();*/
 
         /// <summary>
         /// Backing field for <see cref="FitToBounds"/> property.
@@ -748,10 +734,6 @@ namespace System.Windows.Forms
                 pe.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
                 DrawLayers(pe.Graphics);
-                /*DrawPolygons(pe.Graphics);
-                DrawTracks(pe.Graphics);
-                DrawMarkers(pe.Graphics);
-                DrawEllipses(pe.Graphics);*/
             }
 
             base.OnPaint(pe);
@@ -767,10 +749,12 @@ namespace System.Windows.Forms
 
             _LinkLabel.Left = Width - _LinkLabel.Width;
             _LinkLabel.Top = Height - _LinkLabel.Height;
-           
+
+            Center = _LastCenter;
+
             AdjustMapBounds();
             Invalidate();
-            CenterChanged?.Invoke(this, EventArgs.Empty);
+            //CenterChanged?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>
@@ -835,6 +819,8 @@ namespace System.Windows.Forms
 
                 if (_Offset.Y > Height)
                     _Offset.Y = Height;
+
+                _LastCenter = Center;
 
                 AdjustMapBounds();
                 Invalidate();

@@ -301,6 +301,12 @@ namespace DemoApp
             mapControl.ZoomTo(sample1LayerGroup);
         }
 
+        private void btnZoomBerlin_Click(object sender, EventArgs e)
+        { 
+            mapControl.ZoomLevel = 10;
+            mapControl.Center = new GeoPoint(13.376935f, 52.516181f);
+        }
+
         private void mapControl_DrawMarker(object sender, DrawMarkerEventArgs e)
         {
             e.Handled = true;
