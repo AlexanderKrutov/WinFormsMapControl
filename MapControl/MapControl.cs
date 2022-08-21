@@ -365,13 +365,6 @@ namespace System.Windows.Forms
         public ICollection<Layer> Layers { get; } = new List<Layer>();
 
         /// <summary>
-        /// Gets collection of markers to be displayed on the map.
-        /// </summary>
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public ICollection<Marker> Markers { get; } = new List<Marker>();
-
-        /// <summary>
         /// Backing field for <see cref="FitToBounds"/> property.
         /// </summary>
         private bool _FitToBounds = true;
@@ -782,7 +775,7 @@ namespace System.Windows.Forms
             {
                 foreach (Layer layer in Layers.OrderByDescending(l => l.Level))
                 {
-                    if (_LastLayer != null && _LastLayer.Equals(layer))
+                    if (_LastLayer != null && _LastLayer.Equals(layer) && layer.Clickable)
                     {
                         ElementClick?.Invoke(this, new MapControlElementEventArgs()
                         {
@@ -832,19 +825,22 @@ namespace System.Windows.Forms
 
             foreach(Layer layer in Layers.OrderByDescending(l => l.Level))
             {
-                if (layer.Visible && layer.Hoverable)
+                if (layer.Visible && (layer.Hoverable || layer.Clickable))
                 {
                     IElement touchedElement = FindTouchedElement(layer, e.X, e.Y);
 
                     if (touchedElement != null && _LastElement == null)
                     {
-                        ElementEnter?.Invoke(this, new MapControlElementEventArgs()
+                        if (layer.Hoverable)
                         {
-                            X = e.X,
-                            Y = e.Y,
-                            Layer = layer,
-                            Element = touchedElement
-                        });
+                            ElementEnter?.Invoke(this, new MapControlElementEventArgs()
+                            {
+                                X = e.X,
+                                Y = e.Y,
+                                Layer = layer,
+                                Element = touchedElement
+                            });
+                        }
 
                         _LastElement = touchedElement;
                         _LastLayer = layer;
@@ -853,13 +849,16 @@ namespace System.Windows.Forms
                     }
                     else if (touchedElement == null && _LastElement != null && _LastLayer.Equals(layer))
                     {
-                        ElementLeave?.Invoke(this, new MapControlElementEventArgs()
+                        if (layer.Hoverable)
                         {
-                            X = e.X,
-                            Y = e.Y,
-                            Layer = _LastLayer,
-                            Element = _LastElement
-                        });
+                            ElementLeave?.Invoke(this, new MapControlElementEventArgs()
+                            {
+                                X = e.X,
+                                Y = e.Y,
+                                Layer = _LastLayer,
+                                Element = _LastElement
+                            });
+                        }
 
                         _LastElement = null;
                         _LastLayer = null;
@@ -1055,18 +1054,6 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
-        /// Draws markers on the map
-        /// </summary>
-        /// <param name="gr">Graphics instance to draw on.</param>
-        private void DrawMarkers(Graphics gr)
-        {
-            foreach (Marker m in Markers)
-            {
-                DrawSingleMarker(m, gr);
-            }
-        }
-
-        /// <summary>
         /// Draw a single marker
         /// </summary>
         /// <param name="marker">Marker to draw.</param>
@@ -1104,18 +1091,6 @@ namespace System.Windows.Forms
                 }
             });
         }
-
-        /// <summary>
-        /// Draws tracks on the map
-        /// </summary>
-        /// <param name="gr">Graphics instance to draw on.</param>
-        /* private void DrawTracks(Graphics gr)
-        {
-            foreach (var track in Tracks)
-            {
-                DrawSingleTrack(track, gr);
-            }
-        } */
 
         /// <summary>
         /// Draw a single track
@@ -1160,18 +1135,6 @@ namespace System.Windows.Forms
                 }
             }
         }
-
-        /// <summary>
-        /// Draws polygons on the map
-        /// </summary>
-        /// <param name="gr">Graphics instance to draw on.</param>
-        /* private void DrawPolygons(Graphics gr)
-        {
-            foreach (var polygon in Polygons)
-            {
-                DrawSinglePolygon(polygon, gr);
-            }
-        } */
 
         /// <summary>
         /// Draw a single polygon.
@@ -1230,18 +1193,6 @@ namespace System.Windows.Forms
                 }
             }
         }
-
-        /// <summary>
-        /// Draws ellipses on the map.
-        /// </summary>
-        /// <param name="gr">Graphics instance to draw on.</param>
-        /* private void DrawEllipses(Graphics gr)
-        {
-            foreach (var ellipse in Ellipses)
-            {
-                DrawSingleEllipse(ellipse, gr);
-            }
-        }*/
 
         /// <summary>
         /// Draw a single ellipse.
