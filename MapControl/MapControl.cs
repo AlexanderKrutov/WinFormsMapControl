@@ -1055,18 +1055,6 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
-        /// Draws markers on the map
-        /// </summary>
-        /// <param name="gr">Graphics instance to draw on.</param>
-        private void DrawMarkers(Graphics gr)
-        {
-            foreach (Marker m in Markers)
-            {
-                DrawSingleMarker(m, gr);
-            }
-        }
-
-        /// <summary>
         /// Draw a single marker
         /// </summary>
         /// <param name="marker">Marker to draw.</param>
@@ -1074,9 +1062,9 @@ namespace System.Windows.Forms
         private void DrawSingleMarker(Marker marker, Graphics gr)
         {
             var p = Project(marker.Point);
-            Draw(gr, () =>
+            if (p.X > -marker.Style.MarkerWidth && p.X < this.ClientSize.Width + marker.Style.MarkerWidth && p.Y > -marker.Style.MarkerWidth && p.Y < this.ClientSize.Height + marker.Style.MarkerWidth)
             {
-                if (gr.IsVisible(p))
+                Draw(gr, () =>
                 {
                     var eventArgs = new DrawMarkerEventArgs()
                     {
@@ -1088,34 +1076,29 @@ namespace System.Windows.Forms
                     DrawMarker?.Invoke(this, eventArgs);
                     if (!eventArgs.Handled)
                     {
-                        if (marker.Style.MarkerBrush != null)
+                        if (marker.Style.MarkerImage != null)
                         {
-                            gr.FillEllipse(marker.Style.MarkerBrush, p.X - marker.Style.MarkerWidth / 2, p.Y - marker.Style.MarkerWidth / 2, marker.Style.MarkerWidth, marker.Style.MarkerWidth);
+                            gr.DrawImage(marker.Style.MarkerImage, new Rectangle((int)p.X - marker.Style.MarkerImage.Width / 2, (int)p.Y - marker.Style.MarkerImage.Height / 2, marker.Style.MarkerImage.Width, marker.Style.MarkerImage.Height));
                         }
-                        if (marker.Style.MarkerPen != null)
+                        else
                         {
-                            gr.DrawEllipse(marker.Style.MarkerPen, p.X - marker.Style.MarkerWidth / 2, p.Y - marker.Style.MarkerWidth / 2, marker.Style.MarkerWidth, marker.Style.MarkerWidth);
-                        }
-                        if (marker.Style.LabelFont != null && marker.Style.LabelBrush != null && marker.Style.LabelFormat != null)
-                        {
-                            gr.DrawString(marker.Label, marker.Style.LabelFont, marker.Style.LabelBrush, new PointF(p.X + marker.Style.MarkerWidth * 0.35f, p.Y + marker.Style.MarkerWidth * 0.35f), marker.Style.LabelFormat);
+                            if (marker.Style.MarkerBrush != null)
+                            {
+                                gr.FillEllipse(marker.Style.MarkerBrush, p.X - marker.Style.MarkerWidth / 2, p.Y - marker.Style.MarkerWidth / 2, marker.Style.MarkerWidth, marker.Style.MarkerWidth);
+                            }
+                            if (marker.Style.MarkerPen != null)
+                            {
+                                gr.DrawEllipse(marker.Style.MarkerPen, p.X - marker.Style.MarkerWidth / 2, p.Y - marker.Style.MarkerWidth / 2, marker.Style.MarkerWidth, marker.Style.MarkerWidth);
+                            }
+                            if (marker.Style.LabelFont != null && marker.Style.LabelBrush != null && marker.Style.LabelFormat != null)
+                            {
+                                gr.DrawString(marker.Label, marker.Style.LabelFont, marker.Style.LabelBrush, new PointF(p.X + marker.Style.MarkerWidth * 0.35f, p.Y + marker.Style.MarkerWidth * 0.35f), marker.Style.LabelFormat);
+                            }
                         }
                     }
-                }
-            });
+                });
+            } 
         }
-
-        /// <summary>
-        /// Draws tracks on the map
-        /// </summary>
-        /// <param name="gr">Graphics instance to draw on.</param>
-        /* private void DrawTracks(Graphics gr)
-        {
-            foreach (var track in Tracks)
-            {
-                DrawSingleTrack(track, gr);
-            }
-        } */
 
         /// <summary>
         /// Draw a single track
@@ -1125,53 +1108,52 @@ namespace System.Windows.Forms
         private void DrawSingleTrack(Track track, Graphics gr)
         {
             PointF[] points = new PointF[track.Count];
+            bool atLeastOnePointVisible = false;
 
             for (int i = 0; i < track.Count; i++)
             {
                 GeoPoint g = track.ElementAt(i);
                 PointF p = Project(g);
+
+                if (atLeastOnePointVisible || (p.X > 0 && p.X < this.ClientSize.Width && p.Y > 0 && p.Y < this.ClientSize.Height))
+                {
+                    atLeastOnePointVisible = true;
+                }
+
                 if (i > 0)
                 {
                     p = points[i - 1].Nearest(p, new PointF(p.X - FullMapSizeInPixels, p.Y), new PointF(p.X + FullMapSizeInPixels, p.Y));
                 }
+
                 points[i] = p;
             }
 
-            var eventArgs = new DrawTrackEventArgs()
+            if (atLeastOnePointVisible)
             {
-                Graphics = gr,
-                Track = track,
-                Points = points
-            };
-
-            DrawTrack?.Invoke(this, eventArgs);
-            if (!eventArgs.Handled)
-            {
-                if (ZoomLevel < 3)
+                var eventArgs = new DrawTrackEventArgs()
                 {
-                    if (track.Style.Pen != null)
+                    Graphics = gr,
+                    Track = track,
+                    Points = points
+                };
+
+                DrawTrack?.Invoke(this, eventArgs);
+                if (!eventArgs.Handled)
+                {
+                    if (ZoomLevel < 3)
                     {
-                        Draw(gr, () => gr.DrawLines(track.Style.Pen, points));
+                        if (track.Style.Pen != null)
+                        {
+                            Draw(gr, () => gr.DrawLines(track.Style.Pen, points));
+                        }
+                    }
+                    else
+                    {
+                        Draw(gr, () => gr.DrawPolyline(track.Style.Pen, points));
                     }
                 }
-                else
-                {
-                    Draw(gr, () => gr.DrawPolyline(track.Style.Pen, points));
-                }
-            }
+            } 
         }
-
-        /// <summary>
-        /// Draws polygons on the map
-        /// </summary>
-        /// <param name="gr">Graphics instance to draw on.</param>
-        /* private void DrawPolygons(Graphics gr)
-        {
-            foreach (var polygon in Polygons)
-            {
-                DrawSinglePolygon(polygon, gr);
-            }
-        } */
 
         /// <summary>
         /// Draw a single polygon.
@@ -1183,11 +1165,19 @@ namespace System.Windows.Forms
             PointF p0 = PointF.Empty;
             using (GraphicsPath gp = new GraphicsPath())
             {
+                bool atLeastOnePointVisible = false;
+                
                 gp.StartFigure();
                 for (int i = 0; i < polygon.Count; i++)
                 {
                     GeoPoint g = polygon.ElementAt(i);
                     PointF p = Project(g);
+
+                    if (atLeastOnePointVisible || (p.X > 0 && p.X < this.ClientSize.Width && p.Y > 0 && p.Y < this.ClientSize.Height))
+                    {
+                        atLeastOnePointVisible = true;
+                    }
+
                     if (i > 0)
                     {
                         p = p0.Nearest(p, new PointF(p.X - FullMapSizeInPixels, p.Y), new PointF(p.X + FullMapSizeInPixels, p.Y));
@@ -1196,52 +1186,42 @@ namespace System.Windows.Forms
 
                     p0 = p;
                 }
-
                 gp.CloseFigure();
 
-                var eventArgs = new DrawPolygonEventArgs()
+                if (atLeastOnePointVisible)
                 {
-                    Graphics = gr,
-                    Polygon = polygon,
-                    Path = gp
-                };
+                    var eventArgs = new DrawPolygonEventArgs()
+                    {
+                        Graphics = gr,
+                        Polygon = polygon,
+                        Path = gp
+                    };
 
-                DrawPolygon?.Invoke(this, eventArgs);
-                if (!eventArgs.Handled)
-                {
-                    if (ZoomLevel < 3)
+                    DrawPolygon?.Invoke(this, eventArgs);
+                    if (!eventArgs.Handled)
                     {
-                        Draw(gr, () =>
+                        if (ZoomLevel < 3)
                         {
-                            if (polygon.Style.Brush != null)
+                            Draw(gr, () =>
                             {
-                                gr.FillPath(polygon.Style.Brush, gp);
-                            }
-                            if (polygon.Style.Pen != null)
-                            {
-                                gr.DrawPath(polygon.Style.Pen, gp);
-                            }
-                        });
-                    }
-                    else
-                    {
-                        Draw(gr, () => gr.DrawGraphicsPath(gp, polygon.Style.Brush, polygon.Style.Pen));
+                                if (polygon.Style.Brush != null)
+                                {
+                                    gr.FillPath(polygon.Style.Brush, gp);
+                                }
+                                if (polygon.Style.Pen != null)
+                                {
+                                    gr.DrawPath(polygon.Style.Pen, gp);
+                                }
+                            });
+                        }
+                        else
+                        {
+                            Draw(gr, () => gr.DrawGraphicsPath(gp, polygon.Style.Brush, polygon.Style.Pen));
+                        }
                     }
                 }
             }
         }
-
-        /// <summary>
-        /// Draws ellipses on the map.
-        /// </summary>
-        /// <param name="gr">Graphics instance to draw on.</param>
-        /* private void DrawEllipses(Graphics gr)
-        {
-            foreach (var ellipse in Ellipses)
-            {
-                DrawSingleEllipse(ellipse, gr);
-            }
-        }*/
 
         /// <summary>
         /// Draw a single ellipse.
@@ -1251,9 +1231,35 @@ namespace System.Windows.Forms
         private void DrawSingleEllipse(Ellipse ellipse, Graphics gr)
         {
             var p = Project(ellipse.Point);
-            Draw(gr, () =>
+
+            float ellipseWidth = 0.0f;
+            float ellipseHeight = 0.0f;
+
+            if (ellipse.Style.EllipseUnit == EllipseStyle.Unit.PIXELS)
             {
-                if (gr.IsVisible(p))
+                ellipseWidth = ellipse.Style.EllipseWidth;
+                ellipseHeight = ellipse.Style.EllipseHeight;
+            }
+            else if (ellipse.Style.EllipseUnit == EllipseStyle.Unit.METERS)
+            {
+                double pixelPerMeter = MetersToPixels(ellipse.Point.Latitude, ZoomLevel);
+
+                ellipseWidth = (float)(ellipse.Style.EllipseWidth / pixelPerMeter);
+                ellipseHeight = (float)(ellipse.Style.EllipseHeight / pixelPerMeter);
+            }
+            else if (ellipse.Style.EllipseUnit == EllipseStyle.Unit.YARDS)
+            {
+                double pixelPerYard = YardsToPixels(ellipse.Point.Latitude, ZoomLevel);
+
+                ellipseWidth = (float)(ellipse.Style.EllipseWidth / pixelPerYard);
+                ellipseHeight = (float)(ellipse.Style.EllipseHeight / pixelPerYard);
+            }
+
+            if (p.X > -ellipseWidth && p.X < this.ClientSize.Width + ellipseWidth && p.Y > -ellipseHeight && p.Y < this.ClientSize.Height + ellipseHeight)
+            {
+                Debug.WriteLine("Point " + p.X + " " + p.Y + "Ellipse Width: " + ellipseWidth);
+
+                Draw(gr, () =>
                 {
                     var eventArgs = new DrawEllipseEventArgs()
                     {
@@ -1265,29 +1271,6 @@ namespace System.Windows.Forms
                     DrawEllipse?.Invoke(this, eventArgs);
                     if (!eventArgs.Handled)
                     {
-                        float ellipseWidth = 0.0f;
-                        float ellipseHeight = 0.0f;
-
-                        if (ellipse.Style.EllipseUnit == EllipseStyle.Unit.PIXELS)
-                        {
-                            ellipseWidth = ellipse.Style.EllipseWidth;
-                            ellipseHeight = ellipse.Style.EllipseHeight;
-                        }
-                        else if (ellipse.Style.EllipseUnit == EllipseStyle.Unit.METERS)
-                        {
-                            double pixelPerMeter = MetersToPixels(ellipse.Point.Latitude, ZoomLevel);
-
-                            ellipseWidth = (float)(ellipse.Style.EllipseWidth / pixelPerMeter);
-                            ellipseHeight = (float)(ellipse.Style.EllipseHeight / pixelPerMeter);
-                        }
-                        else if (ellipse.Style.EllipseUnit == EllipseStyle.Unit.YARDS)
-                        {
-                            double pixelPerYard = YardsToPixels(ellipse.Point.Latitude, ZoomLevel);
-
-                            ellipseWidth = (float)(ellipse.Style.EllipseWidth / pixelPerYard);
-                            ellipseHeight = (float)(ellipse.Style.EllipseHeight / pixelPerYard);
-                        }
-
                         if (ellipse.Style.EllipseBrush != null)
                         {
                             gr.FillEllipse(ellipse.Style.EllipseBrush, p.X - ellipseWidth / 2, p.Y - ellipseHeight / 2, ellipseWidth, ellipseHeight);
@@ -1297,8 +1280,8 @@ namespace System.Windows.Forms
                             gr.DrawEllipse(ellipse.Style.EllipsePen, p.X - ellipseWidth / 2, p.Y - ellipseHeight / 2, ellipseWidth, ellipseHeight);
                         }
                     }
-                }
-            });
+                });
+            }
         }
 
         /// <summary>

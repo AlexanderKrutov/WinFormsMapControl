@@ -196,7 +196,7 @@ namespace DemoApp
                     float lon = float.Parse(sp[1], CultureInfo.InvariantCulture);
                     float lat = float.Parse(sp[2], CultureInfo.InvariantCulture);
                     long population = long.Parse(sp[3]);
-                    markers.Add(new Marker(new GeoPoint(lon, lat), MarkerStyle.Default, name) { Data = population });                    
+                    markers.Add(new Marker(new GeoPoint(lon, lat), new MarkerStyle(imageMarker), name) { Data = population });                    
                 }
 
                 return markers;
@@ -309,12 +309,7 @@ namespace DemoApp
 
         private void mapControl_DrawMarker(object sender, DrawMarkerEventArgs e)
         {
-            e.Handled = true;
-            e.Graphics.DrawImage(imageMarker, new Rectangle( (int)e.Point.X - 12, (int)e.Point.Y - 24, 24, 24 ));
-            if (mapControl.ZoomLevel >= 5)
-            {
-                e.Graphics.DrawString(e.Marker.Label, SystemFonts.DefaultFont, Brushes.Red, new PointF(e.Point.X, e.Point.Y + 5), new StringFormat() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Near });
-            }
+            //e.Handled = true;
         }
 
         private void mapControl_DoubleClick(object sender, EventArgs e)

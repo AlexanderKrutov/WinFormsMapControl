@@ -48,9 +48,6 @@ var point = new GeoPoint(44.0, 56.3333);
 var marker = new Marker(point, MarkerStyle.Default, "Some label");
 
 // Add marker to the map
-mapControl.Markers.Add(marker);
-
-// ... or
 mapControl.AddMarker(marker);
 ```
 
@@ -64,28 +61,15 @@ var style = new MarkerStyle(3, Brushes.Red, Pens.Blue, Brushes.Black, SystemFont
 var marker = new Marker(point, style, "Some label");
 ```
 
-Also you can override drawing the marker with handling `DrawMarker` event.
-For example, to draw a 24x24 image instead of marker circle, do the following:
+To draw an image instead of a point for a marker, use the image in marker style:
 
 ```csharp
-// Subscribe to DrawMarker event
-mapControl.DrawMarker += new EventHandler<DrawMarkerEventArgs>(mapControl_DrawMarker);
-
 // Create marker image
 Image imageMarker = Image.FromFile("Path/to/image.png");
 
-// Event handler
-private void mapControl_DrawMarker(object sender, DrawMarkerEventArgs e)
-{
-    // Important: set flag to override drawing
-    e.Handled = true;
+var style = new MarkerStyle(imageMarker);
 
-    // Draw image
-    e.Graphics.DrawImage(imageMarker, new Rectangle((int)e.Point.X - 12, (int)e.Point.Y - 24, 24, 24));
-    
-    // And label
-    e.Graphics.DrawString(e.Marker.Label, SystemFonts.DefaultFont, Brushes.Red, new PointF(e.Point.X, e.Point.Y + 5), new StringFormat() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Near });
-}
+var marker = new Marker(point, style, "Some label");
 
 ```
 You can use different images for markers. To distinguish markers, use `Data` property of the `Marker` class. It can be any object you want, for example, marker unique identifier.
@@ -105,9 +89,6 @@ var track = new Track(TrackStyle.Default);
 track.AddRange(points);
 
 // Add track to the map
-mapControl.Tracks.Add(track);
-
-// ... or
 mapControl.AddTrack(track);
 ```
 
@@ -132,9 +113,6 @@ var polygon = new Polygon(PolygonStyle.Default);
 polygon.AddRange(points);
 
 // Add it to the map
-mapControl.Polygons.Add(polygon);
-
-// ... or
 mapControl.AddPolygon(polygon);
 ```
 
@@ -164,9 +142,6 @@ var point = new GeoPoint(44.0, 56.3333);
 var ellipse = new Ellipse(point, EllipseStyle.Default);
 
 // Add marker to the map
-mapControl.Ellipses.Add(marker);
-
-// ... or
 mapControl.AddEllipse(ellipse);
 ```
 
