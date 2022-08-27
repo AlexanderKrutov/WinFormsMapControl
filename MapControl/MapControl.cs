@@ -1256,8 +1256,6 @@ namespace System.Windows.Forms
 
             if (p.X > -ellipseWidth && p.X < this.ClientSize.Width + ellipseWidth && p.Y > -ellipseHeight && p.Y < this.ClientSize.Height + ellipseHeight)
             {
-                Debug.WriteLine("Point " + p.X + " " + p.Y + "Ellipse Width: " + ellipseWidth);
-
                 Draw(gr, () =>
                 {
                     var eventArgs = new DrawEllipseEventArgs()
@@ -1854,7 +1852,7 @@ namespace System.Windows.Forms
                     PointF point = Project(marker.Point);
                     double distance = Math.Sqrt(Math.Pow(point.X - screenPoint.X, 2) + Math.Pow(point.Y - screenPoint.Y, 2));
 
-                    if (distance <= marker.Style.MarkerWidth + 5)
+                    if (distance <= marker.Style.MarkerWidth / 2)
                     {
                         return marker;
                     }
