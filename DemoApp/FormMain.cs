@@ -196,7 +196,7 @@ namespace DemoApp
                     float lon = float.Parse(sp[1], CultureInfo.InvariantCulture);
                     float lat = float.Parse(sp[2], CultureInfo.InvariantCulture);
                     long population = long.Parse(sp[3]);
-                    markers.Add(new Marker(new GeoPoint(lon, lat), new MarkerStyle(imageMarker), name) { Data = population });                    
+                    markers.Add(new Marker(new GeoPoint(lon, lat), MarkerStyle.Default, name) { Data = population });                    
                 }
 
                 return markers;

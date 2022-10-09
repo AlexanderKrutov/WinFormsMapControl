@@ -1091,7 +1091,7 @@ namespace System.Windows.Forms
                             }
                             if (marker.Style.LabelFont != null && marker.Style.LabelBrush != null && marker.Style.LabelFormat != null)
                             {
-                                gr.DrawString(marker.Label, marker.Style.LabelFont, marker.Style.LabelBrush, new PointF(p.X + marker.Style.MarkerWidth * 0.35f, p.Y + marker.Style.MarkerWidth * 0.35f), marker.Style.LabelFormat);
+                                gr.DrawString(marker.Label, marker.Style.LabelFont, marker.Style.LabelBrush, new PointF(p.X, p.Y + 5), new StringFormat() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Near });
                             }
                         }
                     }
