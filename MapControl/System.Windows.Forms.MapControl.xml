@@ -1546,41 +1546,6 @@
             See about tile indexing schema here: <see href="https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames" />
             </remarks>
         </member>
-        <member name="T:System.Windows.Forms.OfflineTileServer">
-            <summary>
-            Tile server for offline maps.
-            Uses embedded tiles from <see href="https://www.maptiler.com/copyright/">MapTiler</see>.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.OfflineTileServer.Name">
-            <summary>
-            Displayable name of the tile server
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.OfflineTileServer.AttributionText">
-            <summary>
-            Attribution text that will be displayed in bottom-right corner of the map.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.OfflineTileServer.MinZoomLevel">
-            <summary>
-            Gets minimal zoom level allowed for the tile server.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.OfflineTileServer.MaxZoomLevel">
-            <summary>
-            Gets maximal zoom level allowed for the tile server.
-            </summary>
-        </member>
-        <member name="M:System.Windows.Forms.OfflineTileServer.GetTile(System.Int32,System.Int32,System.Int32)">
-            <summary>
-            Gets tile image by X and Y indices of the tile and zoom level Z.
-            </summary>
-            <param name="x">X-index of the tile.</param>
-            <param name="y">Y-index of the tile.</param>
-            <param name="z">Zoom level.</param>
-            <returns>Tile image.</returns>
-        </member>
         <member name="T:System.Windows.Forms.OpenStreetMapTileServer">
             <summary>
             Represents <see href="https://www.openstreetmap.org/">OpenStreetMap</see> web tile server.

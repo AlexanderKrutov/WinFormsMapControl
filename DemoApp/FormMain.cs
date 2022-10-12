@@ -172,7 +172,6 @@ namespace DemoApp
                 new OpenStreetMapTileServer(userAgent: "DemoApp for WinFormsMapControl 1.0 contact example@example.com"),
                 new StamenTerrainTileServer(),
                 new OpenTopoMapServer(),
-                new OfflineTileServer(),
                 new BingMapsAerialTileServer(),
                 new BingMapsRoadsTileServer(),
                 new BingMapsHybridTileServer(),

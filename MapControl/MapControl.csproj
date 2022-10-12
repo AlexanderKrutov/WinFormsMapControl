@@ -24,10 +24,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net451|AnyCPU'">
     <DocumentationFile>System.Windows.Forms.MapControl.xml</DocumentationFile>
-  </PropertyGroup>  
-  <ItemGroup>
-    <EmbeddedResource Include="OfflineMaps\**\*.jpg" />
-  </ItemGroup>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System.Windows" />
     <Reference Include="System.Windows.Forms" />

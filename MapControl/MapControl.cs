@@ -711,14 +711,6 @@ namespace System.Windows.Forms
                     DrawErrorString(pe.Graphics, $"{nameof(TileServer)} property value is not set.\nPlease specify tile server instance to obtain map images before using the map control.");
                 }
             }
-            // use offline maps in design mode
-            else
-            {
-                if (TileServer == null)
-                {
-                    TileServer = new OfflineTileServer();
-                }
-            }
 
             if (drawContent)
             {
