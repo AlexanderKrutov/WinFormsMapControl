@@ -29,6 +29,11 @@ namespace System.Windows.Forms
         public abstract string UserAgent { get; set; }
 
         /// <summary>
+        /// Authorization string to authenticate a request on the tile server.
+        /// </summary>
+        public string Authorization { get; set; }
+
+        /// <summary>
         /// Tile expiration period.
         /// </summary>
         /// <remarks>
@@ -73,6 +78,12 @@ namespace System.Windows.Forms
                 Uri uri = GetTileUri(x, y, z);
                 var request = (HttpWebRequest)WebRequest.Create(uri);
                 request.UserAgent = UserAgent;
+
+                if (this.Authorization != null)
+                {
+                    request.Headers.Add("Authorization", this.Authorization);
+                }
+
                 using (var response = request.GetResponse())
                 using (Stream stream = response.GetResponseStream())
                 {

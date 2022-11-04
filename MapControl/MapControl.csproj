@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net451;net461;net472;net48</TargetFrameworks>
-    <Version>1.2.0.2</Version>
+    <TargetFrameworks>net48</TargetFrameworks>
+    <Version>1.2.1.0</Version>
     <Product>System.Windows.Forms.MapControl</Product>
     <Description></Description>
     <Copyright></Copyright>
@@ -19,8 +19,8 @@
     <AssemblyName>System.Windows.Forms.MapControl</AssemblyName>
     <RootNamespace>System.Windows.Forms</RootNamespace>
     <Deterministic>true</Deterministic>
-    <AssemblyVersion>1.2.0.2</AssemblyVersion>
-    <FileVersion>1.2.0.2</FileVersion>
+    <AssemblyVersion>1.2.1.0</AssemblyVersion>
+    <FileVersion>1.2.1.0</FileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net451|AnyCPU'">
     <DocumentationFile>System.Windows.Forms.MapControl.xml</DocumentationFile>

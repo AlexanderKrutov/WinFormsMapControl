@@ -167,6 +167,8 @@ namespace DemoApp
                 new Sample("Center Marker directly in map", Sample5),
             });
 
+            //CustomTileServer customTileServer = new CustomTileServer("[ServerAddress]", "[YourUsername]", "[YourPassword]");
+
             ITileServer[] tileServers = new ITileServer[]
             {               
                 new OpenStreetMapTileServer(userAgent: "DemoApp for WinFormsMapControl 1.0 contact example@example.com"),
@@ -174,7 +176,8 @@ namespace DemoApp
                 new OpenTopoMapServer(),
                 new BingMapsAerialTileServer(),
                 new BingMapsRoadsTileServer(),
-                new BingMapsHybridTileServer(),
+                new BingMapsHybridTileServer()/*,
+                customTileServer*/
             };
 
             cmbTileServers.Items.AddRange(tileServers);
