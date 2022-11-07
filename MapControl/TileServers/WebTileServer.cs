@@ -90,8 +90,14 @@ namespace System.Windows.Forms
 
                 if (this.Credentials != null)
                 {
-                    request.PreAuthenticate = true;
-                    request.Credentials = this.Credentials;
+                    // PreAuthenticate is only a caching mechanism, there're many requests with 401 status left
+                    // use second approach instead, which adds the auth header with each request
+
+                    //request.PreAuthenticate = true;
+                    //request.Credentials = this.Credentials;
+                    
+                    string authorizationHeader = "Basic " + Convert.ToBase64String(Text.Encoding.Default.GetBytes(this.Credentials.UserName + ":" + this.Credentials.Password));
+                    request.Headers.Add("Authorization", authorizationHeader);
                 }
 
                 if (this.Proxy != null)

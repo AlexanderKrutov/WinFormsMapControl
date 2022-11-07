@@ -173,6 +173,8 @@ namespace DemoApp
                 Properties.Secrets.MapServerPassword
             );
 
+            customTileServer.UserAgent = "WinFormsMapControl - DemoApp";
+
             ITileServer[] tileServers = new ITileServer[]
             {               
                 new OpenStreetMapTileServer(userAgent: "DemoApp for WinFormsMapControl 1.0 contact example@example.com"),
