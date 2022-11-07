@@ -29,9 +29,14 @@ namespace System.Windows.Forms
         public abstract string UserAgent { get; set; }
 
         /// <summary>
-        /// Authorization string to authenticate a request on the tile server.
+        /// Credentials to authenticate a request on the tile server.
         /// </summary>
-        public string Authorization { get; set; }
+        public NetworkCredential Credentials { get; set; }
+
+        /// <summary>
+        /// Proxy instance to use for network connection.
+        /// </summary>
+        public IWebProxy Proxy { get; set; }
 
         /// <summary>
         /// Tile expiration period.
@@ -77,11 +82,21 @@ namespace System.Windows.Forms
             {
                 Uri uri = GetTileUri(x, y, z);
                 var request = (HttpWebRequest)WebRequest.Create(uri);
-                request.UserAgent = UserAgent;
 
-                if (this.Authorization != null)
+                if (this.UserAgent != null)
                 {
-                    request.Headers.Add("Authorization", this.Authorization);
+                    request.UserAgent = this.UserAgent;
+                }
+
+                if (this.Credentials != null)
+                {
+                    request.PreAuthenticate = true;
+                    request.Credentials = this.Credentials;
+                }
+
+                if (this.Proxy != null)
+                {
+                    request.Proxy = this.Proxy;
                 }
 
                 using (var response = request.GetResponse())
@@ -100,7 +115,7 @@ namespace System.Windows.Forms
                     }
                 }
 
-                throw new Exception($"Unable to download tile.\n{ex.Message}");
+                throw new Exception($"{ex.Message}");
             }
         }
 
@@ -109,8 +124,8 @@ namespace System.Windows.Forms
         /// </summary>
         protected WebTileServer()
         {
-            ServicePointManager.ServerCertificateValidationCallback = new Net.Security.RemoteCertificateValidationCallback(AcceptAllCertificates);
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            // ServicePointManager.ServerCertificateValidationCallback = new Net.Security.RemoteCertificateValidationCallback(AcceptAllCertificates);
+            // ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
         }
 
         /// <summary>

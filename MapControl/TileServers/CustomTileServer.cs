@@ -1,4 +1,4 @@
-﻿using System.Text;
+﻿using System.Net;
 
 namespace System.Windows.Forms
 {
@@ -66,12 +66,37 @@ namespace System.Windows.Forms
         /// Constructs a new instance of custom tile server.
         /// </summary>
         /// <param name="serverAddress">The server's address where to load tiles from in ZXY format</param>
+        /// <param name="username">Username for authentication at the server</param>
+        /// <param name="password">Password for authentication at the server</param>
         public CustomTileServer(string serverAddress, string username, string password)
         {
             this.ServerAddress = serverAddress;
+            this.Credentials = new NetworkCredential(username, password);
+        }
 
-            string authorizationString = Convert.ToBase64String(Encoding.GetEncoding("ISO-8859-1").GetBytes(username + ":" + password));
-            this.Authorization = string.Format("Basic {0}", authorizationString);
+        /// <summary>
+        /// Constructs a new instance of custom tile server.
+        /// </summary>
+        /// <param name="serverAddress">The server's address where to load tiles from in ZXY format</param>
+        /// <param name="proxy">Proxy to use for network connection</param>
+        public CustomTileServer(string serverAddress, IWebProxy proxy)
+        {
+            this.ServerAddress = serverAddress;
+            this.Proxy = proxy;
+        }
+
+        /// <summary>
+        /// Constructs a new instance of custom tile server.
+        /// </summary>
+        /// <param name="serverAddress">The server's address where to load tiles from in ZXY format</param>
+        /// <param name="username">Username for authentication at the server</param>
+        /// <param name="password">Password for authentication at the server</param>
+        /// <param name="proxy">Proxy to use for network connection</param>
+        public CustomTileServer(string serverAddress, string username, string password, IWebProxy proxy)
+        {
+            this.ServerAddress = serverAddress;
+            this.Credentials = new NetworkCredential(username, password);
+            this.Proxy = proxy;
         }
     }
 }

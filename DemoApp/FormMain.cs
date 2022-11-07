@@ -167,7 +167,11 @@ namespace DemoApp
                 new Sample("Center Marker directly in map", Sample5),
             });
 
-            //CustomTileServer customTileServer = new CustomTileServer("[ServerAddress]", "[YourUsername]", "[YourPassword]");
+            CustomTileServer customTileServer = new CustomTileServer(
+                Properties.Secrets.MapServerURL,
+                Properties.Secrets.MapServerUsername,
+                Properties.Secrets.MapServerPassword
+            );
 
             ITileServer[] tileServers = new ITileServer[]
             {               
@@ -176,8 +180,8 @@ namespace DemoApp
                 new OpenTopoMapServer(),
                 new BingMapsAerialTileServer(),
                 new BingMapsRoadsTileServer(),
-                new BingMapsHybridTileServer()/*,
-                customTileServer*/
+                new BingMapsHybridTileServer(),
+                customTileServer
             };
 
             cmbTileServers.Items.AddRange(tileServers);
