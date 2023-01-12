@@ -175,6 +175,8 @@ namespace DemoApp
 
             customTileServer.UserAgent = "WinFormsMapControl - DemoApp";
 
+            ZipTileServer zipTileServer = new ZipTileServer("default.zip");
+
             ITileServer[] tileServers = new ITileServer[]
             {               
                 new OpenStreetMapTileServer(userAgent: "DemoApp for WinFormsMapControl 1.0 contact example@example.com"),
@@ -183,7 +185,8 @@ namespace DemoApp
                 new BingMapsAerialTileServer(),
                 new BingMapsRoadsTileServer(),
                 new BingMapsHybridTileServer(),
-                customTileServer
+                customTileServer,
+                zipTileServer
             };
 
             cmbTileServers.Items.AddRange(tileServers);

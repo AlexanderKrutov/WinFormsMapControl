@@ -61,4 +61,4 @@ Other properties are also available, see documenation comments.
 [See how](/Docs/Event.md) to react to basic events on elements.
 
 ## Custom tile servers
-[Instruction](/Docs/TileServer.md) how to create own tile server.
+[Instruction](/Docs/TileServer.md) how to create own tile server or how to use offline map sources [offline map sources](/Docs/OfflineMaps.md)

@@ -26,6 +26,7 @@
     <DocumentationFile>System.Windows.Forms.MapControl.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Windows" />
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>  
