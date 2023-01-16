@@ -29,6 +29,16 @@ namespace System.Windows.Forms
         public abstract string UserAgent { get; set; }
 
         /// <summary>
+        /// Credentials to authenticate a request on the tile server.
+        /// </summary>
+        public NetworkCredential Credentials { get; set; }
+
+        /// <summary>
+        /// Proxy instance to use for network connection.
+        /// </summary>
+        public IWebProxy Proxy { get; set; }
+
+        /// <summary>
         /// Tile expiration period.
         /// </summary>
         /// <remarks>
@@ -72,7 +82,29 @@ namespace System.Windows.Forms
             {
                 Uri uri = GetTileUri(x, y, z);
                 var request = (HttpWebRequest)WebRequest.Create(uri);
-                request.UserAgent = UserAgent;
+
+                if (this.UserAgent != null)
+                {
+                    request.UserAgent = this.UserAgent;
+                }
+
+                if (this.Credentials != null)
+                {
+                    // PreAuthenticate is only a caching mechanism, there're many requests with 401 status left
+                    // use second approach instead, which adds the auth header with each request
+
+                    //request.PreAuthenticate = true;
+                    //request.Credentials = this.Credentials;
+                    
+                    string authorizationHeader = "Basic " + Convert.ToBase64String(Text.Encoding.Default.GetBytes(this.Credentials.UserName + ":" + this.Credentials.Password));
+                    request.Headers.Add("Authorization", authorizationHeader);
+                }
+
+                if (this.Proxy != null)
+                {
+                    request.Proxy = this.Proxy;
+                }
+
                 using (var response = request.GetResponse())
                 using (Stream stream = response.GetResponseStream())
                 {
@@ -89,7 +121,7 @@ namespace System.Windows.Forms
                     }
                 }
 
-                throw new Exception($"Unable to download tile.\n{ex.Message}");
+                throw new Exception($"{ex.Message}");
             }
         }
 
@@ -98,8 +130,8 @@ namespace System.Windows.Forms
         /// </summary>
         protected WebTileServer()
         {
-            ServicePointManager.ServerCertificateValidationCallback = new Net.Security.RemoteCertificateValidationCallback(AcceptAllCertificates);
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            // ServicePointManager.ServerCertificateValidationCallback = new Net.Security.RemoteCertificateValidationCallback(AcceptAllCertificates);
+            // ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
         }
 
         /// <summary>

@@ -23,7 +23,7 @@
         /// <summary>
         /// Gets attribution text.
         /// </summary>
-        public override string AttributionText => "© <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors";
+        public override string AttributionText => "© <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> Contributors";
 
         /// <summary>
         /// User-Agent string used to dowload tile images from the tile server.

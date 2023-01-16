@@ -1,21 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Forms.Maps.Common;
+using System.Windows.Forms.Maps.Elements;
+using System.Windows.Forms.Maps.Layers;
 
 namespace DemoApp
 {
     public partial class FormMain : Form
     {
         private Image imageMarker = Image.FromStream(System.Reflection.Assembly.GetEntryAssembly().GetManifestResourceStream($"DemoApp.Marker.png"));
+
+        private MarkerLayer markerLayer = new MarkerLayer(3);
+        private TrackLayer trackLayer = new TrackLayer(2);
+        private PolygonLayer polygonLayer = new PolygonLayer(1);
+        private EllipseLayer ellipseLayer = new EllipseLayer(4);
+        private EllipseLayer dynamicEllipseLayer = new EllipseLayer(0);
+
+        private LayerGroup sample1LayerGroup = new LayerGroup();
+        private LayerGroup sample2LayerGroup = new LayerGroup();
+        private LayerGroup sample3LayerGroup = new LayerGroup();
+        private LayerGroup sample4LayerGroup = new LayerGroup();
 
         public class Sample
         {
@@ -31,7 +44,12 @@ namespace DemoApp
 
         private void Sample0()
         {
+            trackLayer.Clear();
+            markerLayer.Clear();
+            polygonLayer.Clear();
+            ellipseLayer.Clear();
 
+            dynamicEllipseLayer.Clear();
         }
 
         private void Sample1()
@@ -48,26 +66,72 @@ namespace DemoApp
             var shadowPath = new Polygon(new PolygonStyle(new SolidBrush(Color.FromArgb(100, Color.Black)), Pens.Black));
             shadowPath.AddRange(ReadPointsFromResource("ShadowPath.txt"));
 
-            mapControl.Tracks.Add(centralLine);
-            mapControl.Tracks.Add(riseSetCurves);
-            mapControl.Tracks.Add(penumbraLimit);
-            mapControl.Polygons.Add(shadowPath);
+            trackLayer.Clear();
+            trackLayer.AddTrack(centralLine);
+            trackLayer.AddTrack(riseSetCurves);
+            trackLayer.AddTrack(penumbraLimit);
+
+            polygonLayer.Clear();
+            polygonLayer.AddPolygon(shadowPath);
+
+            sample1LayerGroup.Visible = true;
+            sample2LayerGroup.Visible = false;
+            sample3LayerGroup.Visible = false;
+            sample4LayerGroup.Visible = false;
         }
 
         private void Sample2()
         {
             var magellanTraveling = new Track(TrackStyle.Default);
             magellanTraveling.AddRange(ReadPointsFromResource("MagellanExpedition.txt"));
-            mapControl.Tracks.Add(magellanTraveling);
+
+            trackLayer.Clear();
+            trackLayer.AddTrack(magellanTraveling);
+
+            sample1LayerGroup.Visible = false;
+            sample2LayerGroup.Visible = true;
+            sample3LayerGroup.Visible = false;
+            sample4LayerGroup.Visible = false;
         }
 
         private void Sample3()
         {
             var cities = ReadCities();
+
+            markerLayer.Clear();
             foreach (var city in cities)
             {
-                mapControl.Markers.Add(city);
+                markerLayer.AddMarker(city);
             }
+
+            sample1LayerGroup.Visible = false;
+            sample2LayerGroup.Visible = false;
+            sample3LayerGroup.Visible = true;
+            sample4LayerGroup.Visible = false;
+        }
+
+        private void Sample4()
+        {
+            ellipseLayer.Clear();
+
+            ellipseLayer.AddEllipse(new Ellipse(new GeoPoint(13.376935f, 52.516181f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
+            ellipseLayer.AddEllipse(new Ellipse(new GeoPoint(8.702953f, 48.890885f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
+            ellipseLayer.AddEllipse(new Ellipse(new GeoPoint(8.682092f, 50.110644f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
+            ellipseLayer.AddEllipse(new Ellipse(new GeoPoint(8.043878f, 52.846134f), new EllipseStyle(50, 50, new SolidBrush(Color.FromArgb(80, Color.Blue)), Pens.Blue, EllipseStyle.Unit.METERS)));
+
+            sample1LayerGroup.Visible = false;
+            sample2LayerGroup.Visible = false;
+            sample3LayerGroup.Visible = false;
+            sample4LayerGroup.Visible = true;
+        }
+
+        private void Sample5()
+        {
+            mapControl.ClearElements();
+            mapControl.AddMarker(new Marker(new GeoPoint(0, 0)));
+
+            mapControl.Center = new GeoPoint(0, 0);
+            mapControl.ZoomLevel = 15;
         }
 
         public FormMain()
@@ -75,24 +139,54 @@ namespace DemoApp
             InitializeComponent();
            
             mapControl.CacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MapControl");
+
+            // group layers together
+            sample1LayerGroup.AddLayer(trackLayer);
+            sample1LayerGroup.AddLayer(polygonLayer);
+
+            sample2LayerGroup.AddLayer(trackLayer);
+
+            sample3LayerGroup.AddLayer(markerLayer);
+
+            sample4LayerGroup.AddLayer(ellipseLayer);
+
+            // add layers to map
+            mapControl.AddLayer(sample1LayerGroup);
+            mapControl.AddLayer(sample2LayerGroup);
+            mapControl.AddLayer(sample3LayerGroup);
+            mapControl.AddLayer(sample4LayerGroup);
+            mapControl.AddLayer(dynamicEllipseLayer);
             
             cmbExample.Items.AddRange(new Sample[]
             {
                 new Sample("Empty Map", Sample0),
                 new Sample("Map of Solar Eclipse 11 Aug 1999", Sample1),
                 new Sample("Magellan's Circumnavigation Map", Sample2),
-                new Sample("World Greatest Cities", Sample3)
+                new Sample("World Greatest Cities", Sample3),
+                new Sample("Some Ellipses with 50m Diameter", Sample4),
+                new Sample("Center Marker directly in map", Sample5),
             });
+
+            CustomTileServer customTileServer = new CustomTileServer(
+                Properties.Secrets.MapServerURL,
+                Properties.Secrets.MapServerUsername,
+                Properties.Secrets.MapServerPassword
+            );
+
+            customTileServer.UserAgent = "WinFormsMapControl - DemoApp";
+
+            ZipTileServer zipTileServer = new ZipTileServer("default.zip");
 
             ITileServer[] tileServers = new ITileServer[]
             {               
                 new OpenStreetMapTileServer(userAgent: "DemoApp for WinFormsMapControl 1.0 contact example@example.com"),
                 new StamenTerrainTileServer(),
                 new OpenTopoMapServer(),
-                new OfflineTileServer(),
                 new BingMapsAerialTileServer(),
                 new BingMapsRoadsTileServer(),
                 new BingMapsHybridTileServer(),
+                customTileServer,
+                zipTileServer
             };
 
             cmbTileServers.Items.AddRange(tileServers);
@@ -168,19 +262,65 @@ namespace DemoApp
         private void cmbExample_SelectedIndexChanged(object sender, EventArgs e)
         {
             ActiveControl = mapControl;
-            mapControl.ClearAll();
+            mapControl.ClearElements();
             var sample = cmbExample.SelectedItem as Sample;
             sample.InitAction();
         }
 
+        private void cbxMarkerLayer_CheckedChanged(object sender, EventArgs e)
+        {
+            markerLayer.Visible = cbxMarkerLayer.Checked;
+        }
+
+        private void cbxTrackLayer_CheckedChanged(object sender, EventArgs e)
+        {
+            trackLayer.Visible = cbxTrackLayer.Checked;
+        }
+
+        private void cbxPolygonLayer_CheckedChanged(object sender, EventArgs e)
+        {
+            polygonLayer.Visible = cbxPolygonLayer.Checked;
+        }
+
+        private void cbxEllipseLayer_CheckedChanged(object sender, EventArgs e)
+        {
+            ellipseLayer.Visible = cbxEllipseLayer.Checked;
+        }
+
+        private void cbxDynamicEllipseLayer_CheckedChanged(object sender, EventArgs e)
+        {
+            dynamicEllipseLayer.Visible = cbxDynamicEllipseLayer.Checked;
+        }
+
+        private void btnAddDynamicEllipse_Click(object sender, EventArgs e)
+        {
+            dynamicEllipseLayer.AddEllipse(new Ellipse(new GeoPoint(13.376935f, 52.516181f), new EllipseStyle(500, 300, new SolidBrush(Color.FromArgb(80, Color.Red)), Pens.Red, EllipseStyle.Unit.METERS)));
+        }
+
+        private void btnZoomPolygonLayer_Click(object sender, EventArgs e)
+        {
+            mapControl.ZoomTo(polygonLayer);
+        }
+
+        private void btnZoomEllipseLayer_Click(object sender, EventArgs e)
+        {
+            mapControl.ZoomTo(ellipseLayer);
+        }
+
+        private void btnZoomSampleLayerGroup1_Click(object sender, EventArgs e)
+        {
+            mapControl.ZoomTo(sample1LayerGroup);
+        }
+
+        private void btnZoomBerlin_Click(object sender, EventArgs e)
+        { 
+            mapControl.ZoomLevel = 10;
+            mapControl.Center = new GeoPoint(13.376935f, 52.516181f);
+        }
+
         private void mapControl_DrawMarker(object sender, DrawMarkerEventArgs e)
         {
-            e.Handled = true;
-            e.Graphics.DrawImage(imageMarker, new Rectangle( (int)e.Point.X - 12, (int)e.Point.Y - 24, 24, 24 ));
-            if (mapControl.ZoomLevel >= 5)
-            {
-                e.Graphics.DrawString(e.Marker.Label, SystemFonts.DefaultFont, Brushes.Red, new PointF(e.Point.X, e.Point.Y + 5), new StringFormat() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Near });
-            }
+            //e.Handled = true;
         }
 
         private void mapControl_DoubleClick(object sender, EventArgs e)
@@ -189,6 +329,21 @@ namespace DemoApp
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"Location: {coord}");
             MessageBox.Show(sb.ToString(), "Info");
+        }
+
+        private void mapControl_ElementClick(object sender, MapControlElementEventArgs e)
+        {
+            Debug.WriteLine(e.Element.GetType().Name + " clicked!");
+        }
+
+        private void mapControl_ElementEnter(object sender, MapControlElementEventArgs e)
+        {
+            Debug.WriteLine(e.Element.GetType().Name + " entered!");
+        }
+
+        private void mapControl_ElementLeave(object sender, MapControlElementEventArgs e)
+        {
+            Debug.WriteLine(e.Element.GetType().Name + " leaved!");
         }
     }
 }

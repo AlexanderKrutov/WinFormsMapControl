@@ -328,3 +328,7 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+
+# Secret
+/DemoApp/Properties/Secrets.resx
+/DemoApp/Properties/Secrets.Designer.cs

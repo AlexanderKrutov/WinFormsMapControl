@@ -4,6 +4,729 @@
         <name>System.Windows.Forms.MapControl</name>
     </assembly>
     <members>
+        <member name="T:System.Windows.Forms.Maps.Common.GeoPoint">
+            <summary>
+            Represents point on the Earth surface with geographical coordinates
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Common.GeoPoint.Longitude">
+            <summary>
+            Longitude of the point, in degrees, from 0 to ±180, positive East, negative West. 0 is a point on prime meridian.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Common.GeoPoint.Latitude">
+            <summary>
+            Latitude of the point, in degrees, from +90 (North pole) to -90 (South Pole). 0 is a point on equator.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Common.GeoPoint.#ctor(System.Single,System.Single)">
+            <summary>
+            Creates new instance of <see cref="T:System.Windows.Forms.Maps.Common.GeoPoint"/> and initializes it with longitude and latitude values.
+            </summary>
+            <param name="longitude">Longitude of the point, in degrees, from 0 to ±180, positive East, negative West. 0 is a point on prime meridian.</param>
+            <param name="latitude">Latitude of the point, in degrees, from +90 (North pole) to -90 (South Pole). 0 is a point on equator.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Common.GeoPoint.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Common.GeoPoint.GetDistanceTo(System.Windows.Forms.Maps.Common.GeoPoint)">
+            <summary>
+            Calculates the distance in meters to a reference <see cref="T:System.Windows.Forms.Maps.Common.GeoPoint" />
+            </summary>
+            <param name="reference">Reference geo point</param>
+            <returns></returns>
+        </member>
+        <member name="T:System.Windows.Forms.Maps.Common.GraphicsExtensions">
+            <summary>
+            Set of useful graphics extensions
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Common.GraphicsExtensions.DrawPolyline(System.Drawing.Graphics,System.Drawing.Pen,System.Drawing.PointF[],System.Boolean)">
+            <summary>
+            Draws polyline. This method is more optimized than default <see cref="M:System.Drawing.Graphics.DrawLines(System.Drawing.Pen,System.Drawing.PointF[])"/> 
+            because it draws only visible segments of the line.
+            </summary>
+            <param name="gr">Graphics object</param>
+            <param name="pen">Pen object</param>
+            <param name="points">Array of points defining the polyline</param>
+            <param name="isClosedLine">Flag indicating the line is closed one (last point should be connected with first point)</param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Common.GraphicsExtensions.DrawGraphicsPath(System.Drawing.Graphics,System.Drawing.Drawing2D.GraphicsPath,System.Drawing.Brush,System.Drawing.Pen)">
+            <summary>
+            Draws graphics path, optionally with fill and/or outline
+            </summary>
+            <param name="gr">Graphics object</param>
+            <param name="path">Path to be drawn</param>
+            <param name="brush">Fill brush</param>
+            <param name="pen">Outline pen</param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Common.GraphicsExtensions.Nearest(System.Drawing.PointF,System.Drawing.PointF[])">
+            <summary>
+            Finds nearest points for a point with specified coordinates
+            </summary>
+            <param name="point">Point to find nearest point for.</param>
+            <param name="points">Array of points to select nearest one.</param>
+            <returns>Nearest point from the array closest to the specified one.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Common.GraphicsExtensions.FindVisiblePartOfSegment(System.Drawing.Graphics,System.Drawing.PointF,System.Drawing.PointF)">
+            <summary>
+            Finds visible part of segment
+            </summary>
+            <param name="g">Graphics object</param>
+            <param name="p1">First point of a segment</param>
+            <param name="p2">Last point of a segment</param>
+            <returns>Visible part of segment, i.e. first and last points</returns>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Common.GraphicsExtensions.FindClipBoundsIntersections(System.Drawing.Graphics,System.Drawing.PointF,System.Drawing.PointF)">
+            <summary>
+            Finds intersections of a line segment with clip bounds
+            </summary>
+            <param name="g">Graphics object</param>
+            <param name="p1">First point of a segment</param>
+            <param name="p2">Last point of a segment</param>
+            <returns>Intersection points. Count can be from 0 to 2.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Common.GraphicsExtensions.SegmentsIntersection(System.Drawing.PointF,System.Drawing.PointF,System.Drawing.PointF,System.Drawing.PointF)">
+            <summary>
+            Finds point of intersection of two segments
+            </summary>
+            <param name="p1">First point of first segment</param>
+            <param name="p2">Last point of first segment</param>
+            <param name="p3">First point of second segment</param>
+            <param name="p4">Last point of second segment</param>
+            <returns>Point of intersection of two segments, or null if no intersection</returns>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Common.GraphicsExtensions.VectorMult(System.Single,System.Single,System.Single,System.Single)">
+            <summary>
+            Multiplies two vectors defined by coordinates
+            </summary>
+            <param name="ax"></param>
+            <param name="ay"></param>
+            <param name="bx"></param>
+            <param name="by"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Common.GraphicsExtensions.LineEquation(System.Drawing.PointF,System.Drawing.PointF,System.Single@,System.Single@,System.Single@)">
+            <summary>
+            Calculates constants of a line equation by two points lie on that line.
+            </summary>
+            <param name="p1">First point lies on the line</param>
+            <param name="p2">Second point lies on the line</param>
+            <param name="A">A-constant</param>
+            <param name="B">B-constant</param>
+            <param name="C">C-constant</param>
+        </member>
+        <member name="T:System.Windows.Forms.Maps.Common.HtmlLinkLabel">
+            <summary>
+            Extended <see cref="T:System.Windows.Forms.LinkLabel"/> control with auto-parsing of HTML links in the <see cref="P:System.Windows.Forms.Maps.Common.HtmlLinkLabel.Text"/> property.
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.Maps.Common.Tile">
+            <summary>
+            Used to store tile image in memory 
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Common.Tile.X">
+            <summary>
+            X-index of the tile image
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Common.Tile.Y">
+            <summary>
+            Y-index of the tile image
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Common.Tile.Z">
+            <summary>
+            Zoom level of the tile image
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Common.Tile.TileServer">
+            <summary>
+            Tile server name
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Common.Tile.Image">
+            <summary>
+            Tile image
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Common.Tile.ErrorMessage">
+            <summary>
+            Error message that should be displayed if tile does not exist by some reason (incorrect X/Y indices, zoom level, server unavailable etc.).
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Common.Tile.Used">
+            <summary>
+            Flag indicating image recently used (requested to be drawn on the map).
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Common.Tile.#ctor(System.Int32,System.Int32,System.Int32,System.String)">
+            <summary>
+            Creates new tile with X/Y indices, zoom level, and tileServer name.
+            </summary>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="z">Zoom level.</param>
+            <param name="tileServer">Tile server name.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Common.Tile.#ctor(System.Drawing.Image,System.Int32,System.Int32,System.Int32,System.String)">
+            <summary>
+            Creates new tile with image, X/Y indices, zoom level, and tileServer name.
+            </summary>
+            <param name="image">Tile image</param>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="z">Zoom level.</param>
+            <param name="tileServer">Tile server name.</param>
+        </member>
+        <member name="T:System.Windows.Forms.Maps.Elements.Ellipse">
+            <summary>
+            Represents ellipse on the map.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.Ellipse.Point">
+            <summary>
+            Ellipse coordinates.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.Ellipse.Style">
+            <summary>
+            Style to draw the ellipse.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.Ellipse.Data">
+            <summary>
+            Custom data associated with the ellipse.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.Ellipse.#ctor(System.Windows.Forms.Maps.Common.GeoPoint)">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.Maps.Elements.Ellipse"/> object with specified coordinates.
+            </summary>
+            <param name="point">Coordinates of the ellipse.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.Ellipse.#ctor(System.Windows.Forms.Maps.Common.GeoPoint,System.Windows.Forms.Maps.Elements.EllipseStyle)">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.Maps.Elements.Ellipse"/> object with specified coordinates and style.
+            </summary>
+            <param name="point">Coordinates of the ellipse.</param>
+            <param name="style">Ellipse style.</param>
+        </member>
+        <member name="T:System.Windows.Forms.Maps.Elements.EllipseStyle">
+            <summary>
+            Defines visual style of the <see cref="T:System.Windows.Forms.Maps.Elements.Ellipse"/>.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.EllipseStyle.EllipsePen">
+            <summary>
+            Pen to draw ellipse outline.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.EllipseStyle.EllipseBrush">
+            <summary>
+            Brush to fill ellipse interior.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.EllipseStyle.EllipseWidth">
+            <summary>
+            Width of the ellipse circle in specified unit.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.EllipseStyle.EllipseHeight">
+            <summary>
+            Height of the ellipse circle in specified unit.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.EllipseStyle.EllipseUnit">
+            <summary>
+            Unit for width and height. Default is PIXELS.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.EllipseStyle.#ctor">
+            <summary>
+            Creates new ellipse style.
+            </summary>        
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.EllipseStyle.#ctor(System.Single)">
+            <summary>
+            Creates new ellipse style.
+            </summary>
+            <param name="ellipseCircleWidth">Width of the ellipse circle.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.EllipseStyle.#ctor(System.Single,System.Single)">
+            <summary>
+            Creates new ellipse style.
+            </summary>
+            <param name="ellipseWidth">Width of the ellipse circle.</param>
+            <param name="ellipseHeight">Height of the ellipse circle.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.EllipseStyle.#ctor(System.Single,System.Single,System.Drawing.Brush)">
+            <summary>
+            Creates new ellipse style.
+            </summary>
+            <param name="ellipseWidth">Width of the ellipse circle.</param>
+            <param name="ellipseHeight">Height of the ellipse circle.</param>
+            <param name="ellipseBrush">Brush to fill ellipse interior.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.EllipseStyle.#ctor(System.Single,System.Single,System.Drawing.Brush,System.Drawing.Pen,System.Windows.Forms.Maps.Elements.EllipseStyle.Unit)">
+            <summary>
+            Creates new ellipse style.
+            </summary>
+            <param name="ellipseWidth">Width of the ellipse circle.</param>
+            <param name="ellipseHeight">Height of the ellipse circle.</param>
+            <param name="ellipseBrush">Brush to fill ellipse interior.</param>
+            <param name="ellipsePen">Pen to draw ellipse outline.</param>
+            <param name="ellipseUnit">Unit to measure ellipse outline.</param>
+        </member>
+        <member name="F:System.Windows.Forms.Maps.Elements.EllipseStyle.Default">
+            <summary>
+            Default ellipse style.
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.Maps.Elements.EllipseStyle.Unit">
+            <summary>
+            Unit enumeration defining units for width and height.
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.Maps.Elements.IElement">
+            <summary>
+            Iterface for map elements.
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.Maps.Elements.Marker">
+            <summary>
+            Represents marker point on the map.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.Marker.Point">
+            <summary>
+            Marker coordinates.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.Marker.Style">
+            <summary>
+            Style to draw the marker.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.Marker.Label">
+            <summary>
+            Marker label.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.Marker.Data">
+            <summary>
+            Custom data associated with the marker.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.Marker.#ctor(System.Windows.Forms.Maps.Common.GeoPoint)">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.Maps.Elements.Marker"/> object with specified coordinates.
+            </summary>
+            <param name="point">Coordinates of the marker.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.Marker.#ctor(System.Windows.Forms.Maps.Common.GeoPoint,System.Windows.Forms.Maps.Elements.MarkerStyle)">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.Maps.Elements.Marker"/> object with specified coordinates and style.
+            </summary>
+            <param name="point">Coordinates of the marker.</param>
+            <param name="style">Marker style.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.Marker.#ctor(System.Windows.Forms.Maps.Common.GeoPoint,System.String)">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.Maps.Elements.Marker"/> object with specified coordinates and label.
+            </summary>
+            <param name="point">Coordinates of the marker.</param>
+            <param name="label">Marker label.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.Marker.#ctor(System.Windows.Forms.Maps.Common.GeoPoint,System.Windows.Forms.Maps.Elements.MarkerStyle,System.String)">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.Maps.Elements.Marker"/> object with specified coordinates, style and label.
+            </summary>
+            <param name="point">Coordinates of the marker.</param>
+            <param name="style">Marker style.</param>
+            <param name="label">Marker label.</param>
+        </member>
+        <member name="T:System.Windows.Forms.Maps.Elements.MarkerStyle">
+            <summary>
+            Defines visual style of the <see cref="T:System.Windows.Forms.Maps.Elements.Marker"/>.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.MarkerStyle.MarkerPen">
+            <summary>
+            Pen to draw marker outline.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.MarkerStyle.MarkerBrush">
+            <summary>
+            Brush to fill marker interior.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.MarkerStyle.MarkerImage">
+            <summary>
+            Image to draw the marker alternatively.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.MarkerStyle.MarkerWidth">
+            <summary>
+            Width of the marker circle, in pixels.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.MarkerStyle.LabelBrush">
+            <summary>
+            Brush to draw marker label.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.MarkerStyle.LabelFont">
+            <summary>
+            Font used to draw marker label.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.MarkerStyle.LabelFormat">
+            <summary>
+            String format used to draw marker label.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.MarkerStyle.#ctor">
+            <summary>
+            Creates new marker style.
+            </summary>        
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.MarkerStyle.#ctor(System.Single)">
+            <summary>
+            Creates new marker style.
+            </summary>
+            <param name="markerWidth">Width of the marker circle, in pixels.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.MarkerStyle.#ctor(System.Single,System.Drawing.Brush)">
+            <summary>
+            Creates new marker style.
+            </summary>
+            <param name="markerWidth">Width of the marker circle, in pixels.</param>
+            /// <param name="markerBrush">Brush to fill marker interior.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.MarkerStyle.#ctor(System.Drawing.Image)">
+            <summary>
+            Creates a new marker style from image.
+            </summary>
+            <param name="markerImage">Image to be drawn as marker.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.MarkerStyle.#ctor(System.Drawing.Image,System.Single,System.Drawing.Brush,System.Drawing.Pen,System.Drawing.Brush,System.Drawing.Font,System.Drawing.StringFormat)">
+            <summary>
+            Creates new marker style.
+            </summary>
+            <param name="markerWidth">Width of the marker circle, in pixels.</param>
+            <param name="markerBrush">Brush to fill marker interior.</param>
+            <param name="markerPen">Pen to draw marker outline.</param>
+            <param name="labelBrush">Brush to draw marker label.</param>
+            <param name="labelFont">Font used to draw marker label.</param>
+            <param name="labelFormat">String format used to draw marker label.</param>
+        </member>
+        <member name="F:System.Windows.Forms.Maps.Elements.MarkerStyle.Default">
+            <summary>
+            Default marker style.
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.Maps.Elements.Polygon">
+            <summary>
+             Represents filled closed area on the map.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.Polygon.Style">
+            <summary>
+            Gets or sets polygon style.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.Polygon.#ctor">
+            <summary>
+            Creates new polygon without assigned style
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.Polygon.#ctor(System.Windows.Forms.Maps.Elements.PolygonStyle)">
+            <summary>
+            Creates new polygon with specified style.
+            </summary>
+            <param name="style"></param>
+        </member>
+        <member name="T:System.Windows.Forms.Maps.Elements.PolygonStyle">
+            <summary>
+            Defines drawing style for <see cref="T:System.Windows.Forms.Maps.Elements.Polygon" /> object.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.PolygonStyle.Brush">
+            <summary>
+            Fill brush
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.PolygonStyle.Pen">
+            <summary>
+            Outline pen.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.PolygonStyle.#ctor(System.Drawing.Brush)">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.Maps.Elements.PolygonStyle"/> with fill brush and without outline.
+            </summary>
+            <param name="brush">Fill brush.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.PolygonStyle.#ctor(System.Drawing.Pen)">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.Maps.Elements.PolygonStyle"/> with outline and without fill.
+            </summary>
+            <param name="pen">Outline pen.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.PolygonStyle.#ctor(System.Drawing.Brush,System.Drawing.Pen)">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.Maps.Elements.PolygonStyle"/> with fill brush and outline pen.
+            </summary>
+            <param name="brush">Fill brush.</param>
+            <param name="pen">Outline pen.</param>
+        </member>
+        <member name="F:System.Windows.Forms.Maps.Elements.PolygonStyle.Default">
+            <summary>
+            Default polygon style.
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.Maps.Elements.Track">
+            <summary>
+            Represents track (collection of connected points).
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.Track.Style">
+            <summary>
+            Style to draw the track
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.Track.Data">
+            <summary>
+            Custom data associated with the marker
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.Track.#ctor(System.Windows.Forms.Maps.Elements.TrackStyle)">
+            <summary>
+            Creates a track with specified style
+            </summary>
+            <param name="style"></param>
+        </member>
+        <member name="T:System.Windows.Forms.Maps.Elements.TrackStyle">
+            <summary>
+            Defines visual style of the <see cref="T:System.Windows.Forms.Maps.Elements.Track"/>.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Elements.TrackStyle.Pen">
+            <summary>
+            Pen used to draw track path.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.TrackStyle.#ctor">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.Maps.Elements.TrackStyle"/>.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Elements.TrackStyle.#ctor(System.Drawing.Pen)">
+            <summary>
+            Creates new <see cref="T:System.Windows.Forms.Maps.Elements.TrackStyle"/>.
+            </summary>
+            <param name="pen"> Pen used to draw track path.</param>
+        </member>
+        <member name="F:System.Windows.Forms.Maps.Elements.TrackStyle.Default">
+            <summary>
+            Default track style.
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.Maps.Layers.EllipseLayer">
+            <summary>
+            Represents a collection of ellipses grouped together into a layer.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Layers.EllipseLayer.Ellipses">
+            <summary>
+            List of ellipses
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Layers.EllipseLayer.#ctor(System.Int32)">
+            <summary>
+            Creates an ellipse layer with specified level
+            </summary>
+            <param name="level"></param>
+        </member>
+        <member name="T:System.Windows.Forms.Maps.Layers.Layer">
+            <summary>
+            Represents an abstract base class for layers of each type.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.Maps.Layers.Layer._id">
+            <summary>
+            Internal GUID to uniquely identify an layer.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Layers.Layer.Name">
+            <summary>
+            Informational name of the layer.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.Maps.Layers.Layer._Level">
+            <summary>
+            Backing field for <see cref="P:System.Windows.Forms.Maps.Layers.Layer.Level"/> property.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Layers.Layer.Level">
+            <summary>
+            Level of the layer, decides whether a layer is displayed above / below another one
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.Maps.Layers.Layer._Visible">
+            <summary>
+            Backing field for <see cref="P:System.Windows.Forms.Maps.Layers.Layer.Visible"/> property.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Layers.Layer.Visible">
+            <summary>
+            Enables visibility of an layer
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Layers.Layer.Hoverable">
+            <summary>
+            Returns or sets whether the elements of the layer are hoverable or not.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Layers.Layer.Clickable">
+            <summary>
+            Returns or sets whether the elements of the layer are clickable or not.
+            </summary>
+        </member>
+        <member name="E:System.Windows.Forms.Maps.Layers.Layer.LayerPropertyChanged">
+            <summary>
+            Raised when <see cref="T:System.Windows.Forms.Maps.Layers.Layer"/> property value is changed.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Layers.Layer.#ctor(System.Int32)">
+            <summary>
+            Creates a layer with specified level
+            </summary>
+            <param name="level"></param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Layers.Layer.RaiseLayerPropertyChangedEvent(System.Object,System.EventArgs)">
+            <summary>
+            Raises <see cref="E:System.Windows.Forms.Maps.Layers.Layer.LayerPropertyChanged"/> in base class.
+            </summary>
+            <param name="sender">Sender object which raised the event.</param>
+            <param name="args">Event arguments.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Layers.Layer.Equals(System.Windows.Forms.Maps.Layers.Layer)">
+            <summary>
+            Compares two layers.
+            </summary>
+            <param name="other">Layer to compare</param>
+            <returns>Whether the layers are equal</returns>
+        </member>
+        <member name="T:System.Windows.Forms.Maps.Layers.LayerGroup">
+            <summary>
+            Represents a layer grouping other layers together.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Layers.LayerGroup.Layers">
+            <summary>
+            List of layers
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Layers.LayerGroup.#ctor">
+            <summary>
+            Creates a layer group with level 0
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Layers.LayerGroup.#ctor(System.Int32)">
+            <summary>
+            Creates a layer group with specified level
+            </summary>
+            <param name="level"></param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Layers.LayerGroup.AddLayer(System.Windows.Forms.Maps.Layers.Layer)">
+            <summary>
+            Adds a layer into layer group.
+            </summary>
+            <param name="layer">Layer to add into group.</param>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Layers.LayerGroup.Clear">
+            <summary>
+            Cleas all subsequent layers.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Layers.LayerGroup.HandleLayerPropertyChanged(System.Object,System.EventArgs)">
+            <summary>
+            Handles <see cref="!:LayerPropertyChanged" /> event from subsequent layers.
+            </summary>
+            <param name="sender">The layer which raised the event.</param>
+            <param name="args">Event arguments.</param>
+        </member>
+        <member name="T:System.Windows.Forms.Maps.Layers.MarkerLayer">
+            <summary>
+            Represents a collection of markers grouped together into a layer.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Layers.MarkerLayer.Markers">
+            <summary>
+            List of markers
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Layers.MarkerLayer.#ctor(System.Int32)">
+            <summary>
+            Creates a marker layer with specified level
+            </summary>
+            <param name="level"></param>
+        </member>
+        <member name="T:System.Windows.Forms.Maps.Layers.PolygonLayer">
+            <summary>
+            Represents a collection of polygons grouped together into a layer.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Layers.PolygonLayer.Polygons">
+            <summary>
+            List of polygons
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Layers.PolygonLayer.#ctor(System.Int32)">
+            <summary>
+            Creates a polygon layer with specified level
+            </summary>
+            <param name="level"></param>
+        </member>
+        <member name="T:System.Windows.Forms.Maps.Layers.TrackLayer">
+            <summary>
+            Represents a collection of tracks grouped together into a layer.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.Maps.Layers.TrackLayer.Tracks">
+            <summary>
+            List of tracks
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.Maps.Layers.TrackLayer.#ctor(System.Int32)">
+            <summary>
+            Creates a track layer with specified level
+            </summary>
+            <param name="level"></param>
+        </member>
+        <member name="T:System.Windows.Forms.DrawEllipseEventArgs">
+            <summary>
+            Provides data for <see cref="E:System.Windows.Forms.MapControl.DrawEllipse"/> event.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.DrawEllipseEventArgs.Ellipse">
+            <summary>
+            <see cref="!:System.Windows.Forms.Ellipse"/> instance to be drawn.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.DrawEllipseEventArgs.Point">
+            <summary>
+            Coordinates of the marker on the map.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.DrawEllipseEventArgs.#ctor">
+            <summary>
+            Creates new instance of <see cref="T:System.Windows.Forms.DrawEllipseEventArgs"/>.
+            </summary>
+        </member>
         <member name="T:System.Windows.Forms.DrawMarkerEventArgs">
             <summary>
             Provides data for <see cref="E:System.Windows.Forms.MapControl.DrawMarker"/> event.
@@ -11,7 +734,7 @@
         </member>
         <member name="P:System.Windows.Forms.DrawMarkerEventArgs.Marker">
             <summary>
-            <see cref="T:System.Windows.Forms.Marker"/> instance to be drawn.
+            <see cref="!:System.Windows.Forms.Marker"/> instance to be drawn.
             </summary>
         </member>
         <member name="P:System.Windows.Forms.DrawMarkerEventArgs.Point">
@@ -31,7 +754,7 @@
         </member>
         <member name="P:System.Windows.Forms.DrawPolygonEventArgs.Polygon">
             <summary>
-            <see cref="T:System.Windows.Forms.Polygon"/> instance to be drawn.
+            <see cref="!:Forms.Polygon"/> instance to be drawn.
             </summary>
         </member>
         <member name="P:System.Windows.Forms.DrawPolygonEventArgs.Path">
@@ -51,7 +774,7 @@
         </member>
         <member name="P:System.Windows.Forms.DrawTrackEventArgs.Track">
             <summary>
-            <see cref="T:System.Windows.Forms.Track"/> instance to be drawn.
+            <see cref="!:System.Windows.Forms.Track"/> instance to be drawn.
             </summary>
         </member>
         <member name="P:System.Windows.Forms.DrawTrackEventArgs.Points">
@@ -74,114 +797,29 @@
             <see cref="T:System.Drawing.Graphics"/> instance to draw on.
             </summary>
         </member>
-        <member name="T:System.Windows.Forms.GeoPoint">
+        <member name="T:System.Windows.Forms.MapControlElementEventArgs">
             <summary>
-            Represents point on the Earth surface with geographical coordinates
+            Represents class for  <see cref="T:System.Windows.Forms.MapControl"/> map element events.
             </summary>
         </member>
-        <member name="P:System.Windows.Forms.GeoPoint.Longitude">
+        <member name="P:System.Windows.Forms.MapControlElementEventArgs.X">
             <summary>
-            Longitude of the point, in degrees, from 0 to ±180, positive East, negative West. 0 is a point on prime meridian.
+            Cursor X position.
             </summary>
         </member>
-        <member name="P:System.Windows.Forms.GeoPoint.Latitude">
+        <member name="P:System.Windows.Forms.MapControlElementEventArgs.Y">
             <summary>
-            Latitude of the point, in degrees, from +90 (North pole) to -90 (South Pole). 0 is a point on equator.
+            Cursor Y position.
             </summary>
         </member>
-        <member name="M:System.Windows.Forms.GeoPoint.#ctor(System.Single,System.Single)">
+        <member name="P:System.Windows.Forms.MapControlElementEventArgs.Layer">
             <summary>
-            Creates new instance of <see cref="T:System.Windows.Forms.GeoPoint"/> and initializes it with longitude and latitude values.
-            </summary>
-            <param name="longitude">Longitude of the point, in degrees, from 0 to ±180, positive East, negative West. 0 is a point on prime meridian.</param>
-            <param name="latitude">Latitude of the point, in degrees, from +90 (North pole) to -90 (South Pole). 0 is a point on equator.</param>
-        </member>
-        <member name="M:System.Windows.Forms.GeoPoint.ToString">
-            <inheritdoc/>
-        </member>
-        <member name="T:System.Windows.Forms.GraphicsExtensions">
-            <summary>
-            Set of useful graphics extensions
+            <see cref="P:System.Windows.Forms.MapControlElementEventArgs.Layer" /> insance containing the element.
             </summary>
         </member>
-        <member name="M:System.Windows.Forms.GraphicsExtensions.DrawPolyline(System.Drawing.Graphics,System.Drawing.Pen,System.Drawing.PointF[],System.Boolean)">
+        <member name="P:System.Windows.Forms.MapControlElementEventArgs.Element">
             <summary>
-            Draws polyline. This method is more optimized than default <see cref="M:System.Drawing.Graphics.DrawLines(System.Drawing.Pen,System.Drawing.PointF[])"/> 
-            because it draws only visible segments of the line.
-            </summary>
-            <param name="gr">Graphics object</param>
-            <param name="pen">Pen object</param>
-            <param name="points">Array of points defining the polyline</param>
-            <param name="isClosedLine">Flag indicating the line is closed one (last point should be connected with first point)</param>
-        </member>
-        <member name="M:System.Windows.Forms.GraphicsExtensions.DrawGraphicsPath(System.Drawing.Graphics,System.Drawing.Drawing2D.GraphicsPath,System.Drawing.Brush,System.Drawing.Pen)">
-            <summary>
-            Draws graphics path, optionally with fill and/or outline
-            </summary>
-            <param name="gr">Graphics object</param>
-            <param name="path">Path to be drawn</param>
-            <param name="brush">Fill brush</param>
-            <param name="pen">Outline pen</param>
-        </member>
-        <member name="M:System.Windows.Forms.GraphicsExtensions.Nearest(System.Drawing.PointF,System.Drawing.PointF[])">
-            <summary>
-            Finds nearest points for a point with specified coordinates
-            </summary>
-            <param name="point">Point to find nearest point for.</param>
-            <param name="points">Array of points to select nearest one.</param>
-            <returns>Nearest point from the array closest to the specified one.</returns>
-        </member>
-        <member name="M:System.Windows.Forms.GraphicsExtensions.FindVisiblePartOfSegment(System.Drawing.Graphics,System.Drawing.PointF,System.Drawing.PointF)">
-            <summary>
-            Finds visible part of segment
-            </summary>
-            <param name="g">Graphics object</param>
-            <param name="p1">First point of a segment</param>
-            <param name="p2">Last point of a segment</param>
-            <returns>Visible part of segment, i.e. first and last points</returns>
-        </member>
-        <member name="M:System.Windows.Forms.GraphicsExtensions.FindClipBoundsIntersections(System.Drawing.Graphics,System.Drawing.PointF,System.Drawing.PointF)">
-            <summary>
-            Finds intersections of a line segment with clip bounds
-            </summary>
-            <param name="g">Graphics object</param>
-            <param name="p1">First point of a segment</param>
-            <param name="p2">Last point of a segment</param>
-            <returns>Intersection points. Count can be from 0 to 2.</returns>
-        </member>
-        <member name="M:System.Windows.Forms.GraphicsExtensions.SegmentsIntersection(System.Drawing.PointF,System.Drawing.PointF,System.Drawing.PointF,System.Drawing.PointF)">
-            <summary>
-            Finds point of intersection of two segments
-            </summary>
-            <param name="p1">First point of first segment</param>
-            <param name="p2">Last point of first segment</param>
-            <param name="p3">First point of second segment</param>
-            <param name="p4">Last point of second segment</param>
-            <returns>Point of intersection of two segments, or null if no intersection</returns>
-        </member>
-        <member name="M:System.Windows.Forms.GraphicsExtensions.VectorMult(System.Single,System.Single,System.Single,System.Single)">
-            <summary>
-            Multiplies two vectors defined by coordinates
-            </summary>
-            <param name="ax"></param>
-            <param name="ay"></param>
-            <param name="bx"></param>
-            <param name="by"></param>
-            <returns></returns>
-        </member>
-        <member name="M:System.Windows.Forms.GraphicsExtensions.LineEquation(System.Drawing.PointF,System.Drawing.PointF,System.Single@,System.Single@,System.Single@)">
-            <summary>
-            Calculates constants of a line equation by two points lie on that line.
-            </summary>
-            <param name="p1">First point lies on the line</param>
-            <param name="p2">Second point lies on the line</param>
-            <param name="A">A-constant</param>
-            <param name="B">B-constant</param>
-            <param name="C">C-constant</param>
-        </member>
-        <member name="T:System.Windows.Forms.HtmlLinkLabel">
-            <summary>
-            Extended <see cref="T:System.Windows.Forms.LinkLabel"/> control with auto-parsing of HTML links in the <see cref="P:System.Windows.Forms.HtmlLinkLabel.Text"/> property.
+            <see cref="T:System.Windows.Forms.Maps.Elements.IElement"/> instance which has been clicked.
             </summary>
         </member>
         <member name="T:System.Windows.Forms.MapControl">
@@ -194,6 +832,26 @@
             Tile size, in pixels.
             </summary>
         </member>
+        <member name="F:System.Windows.Forms.MapControl._BaseMarkerLayer">
+            <summary>
+            Layer for markers added directly to the map.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._BaseTrackLayer">
+            <summary>
+            Layer for tracks added directly to the map.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._BasePolygonLayer">
+            <summary>
+            Layer for polgons added directly to the map.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._BaseEllipseLayer">
+            <summary>
+            Layer for ellipses added directly to the map.
+            </summary>
+        </member>
         <member name="F:System.Windows.Forms.MapControl._Offset">
             <summary>
             First tile offset.
@@ -204,9 +862,24 @@
             Flag indicating thar mouse is captured.
             </summary>
         </member>
+        <member name="F:System.Windows.Forms.MapControl._LastElement">
+            <summary>
+            Last element used to send an enter, leave or click event.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._LastLayer">
+            <summary>
+            Last layer in which an element for enter, leave or click event has been found.
+            </summary>
+        </member>
         <member name="F:System.Windows.Forms.MapControl._LastMouse">
             <summary>
             Last known mouse position.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.MapControl._LastCenter">
+            <summary>
+            Last known center point before resizing.
             </summary>
         </member>
         <member name="F:System.Windows.Forms.MapControl._Cache">
@@ -329,19 +1002,9 @@
             Gets geographical coordinates of the bottom right point of the map
             </summary>
         </member>
-        <member name="P:System.Windows.Forms.MapControl.Markers">
+        <member name="P:System.Windows.Forms.MapControl.Layers">
             <summary>
-            Gets collection of markers to be displayed on the map.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.MapControl.Tracks">
-            <summary>
-            Gets collection of tracks to be displayed on the map.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.MapControl.Polygons">
-            <summary>
-            Gets collection of polygons to be displayed on the map.
+            Gets collection of layers to be displayed on the map.
             </summary>
         </member>
         <member name="F:System.Windows.Forms.MapControl._FitToBounds">
@@ -404,6 +1067,26 @@
             Raised when polygon is drawn on the map.
             </summary>
         </member>
+        <member name="E:System.Windows.Forms.MapControl.DrawEllipse">
+            <summary>
+            Raised when ellipse is drawn on the map.
+            </summary>
+        </member>
+        <member name="E:System.Windows.Forms.MapControl.ElementClick">
+            <summary>
+            Raised when <see cref="T:System.Windows.Forms.Maps.Elements.IElement"/> of an layer has been clicked.
+            </summary>
+        </member>
+        <member name="E:System.Windows.Forms.MapControl.ElementEnter">
+            <summary>
+            Raised when <see cref="T:System.Windows.Forms.Maps.Elements.IElement"/> of an layer is entered.
+            </summary>
+        </member>
+        <member name="E:System.Windows.Forms.MapControl.ElementLeave">
+            <summary>
+            Raised when <see cref="T:System.Windows.Forms.Maps.Elements.IElement"/> of an layer is leaved.
+            </summary>
+        </member>
         <member name="E:System.Windows.Forms.MapControl.CenterChanged">
             <summary>
             Raised when <see cref="P:System.Windows.Forms.MapControl.Center"/> property value is changed.
@@ -424,14 +1107,62 @@
             Creates new <see cref="T:System.Windows.Forms.MapControl"/> control.
             </summary>
         </member>
+        <member name="M:System.Windows.Forms.MapControl.AddLayer(System.Windows.Forms.Maps.Layers.Layer)">
+            <summary>
+            Adds a layer to the map control and invalidates map.
+            </summary>
+            <param name="layer">Layer to add to the map.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.AddMarker(System.Windows.Forms.Maps.Elements.Marker)">
+            <summary>
+            Adds a marker to the map control and invalidates map.
+            </summary>
+            <param name="marker">Marker to add to the map.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.AddTrack(System.Windows.Forms.Maps.Elements.Track)">
+            <summary>
+            Adds a track to the map control and invalidates map.
+            </summary>
+            <param name="track">Track to add to the map.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.AddPolygon(System.Windows.Forms.Maps.Elements.Polygon)">
+            <summary>
+            Adds a polygon to the map control and invalidates map.
+            </summary>
+            <param name="polygon">Polygon to add to the map.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.AddEllipse(System.Windows.Forms.Maps.Elements.Ellipse)">
+            <summary>
+            Adds an ellipse to the map control and invalidates map.
+            </summary>
+            <param name="ellipse">Ellipse to add to the map.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.ClearLayers">
+            <summary>
+            Removes all layers from the map.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.ClearElements">
+            <summary>
+            Removes all markers, tracks, polygons and ellipses from the map.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.ClearCache(System.Boolean)">
+            <summary>
+            Clears map cache. If <paramref name="allTileServers"/> flag is set to true, cache for all tile servers will be cleared.
+            If no, only current tile server cache will be cleared.
+            </summary>
+            <param name="allTileServers">If flag is set to true, cache for all tile servers will be cleared.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.ZoomTo(System.Windows.Forms.Maps.Layers.Layer)">
+            <summary>
+            Zooms map control to a certain layer.
+            </summary>
+            <param name="layer">Layer to zoom to.</param>
+        </member>
         <member name="M:System.Windows.Forms.MapControl.OnCreateControl">
             <summary>
             Called on creating control.
-            </summary>
-        </member>
-        <member name="M:System.Windows.Forms.MapControl._LinkLabel_LinkClicked(System.Object,System.Windows.Forms.LinkLabelLinkClickedEventArgs)">
-            <summary>
-            Handles clicks on LinkLabel links
             </summary>
         </member>
         <member name="M:System.Windows.Forms.MapControl.OnPaint(System.Windows.Forms.PaintEventArgs)">
@@ -470,18 +1201,6 @@
             </summary>
             <param name="e">Event args.</param>
         </member>
-        <member name="M:System.Windows.Forms.MapControl.AdjustMapBounds">
-            <summary>
-            Adjusts map bounds if required.
-            </summary>
-        </member>
-        <member name="M:System.Windows.Forms.MapControl.NormalizeTileNumber(System.Single)">
-            <summary>
-            Normalizes tile number to fit value from 0 to FullMapSizeInTiles.
-            </summary>
-            <param name="n">Tile number, with fractions.</param>
-            <returns>Tile number in range from 0 to FullMapSizeInTiles.</returns>
-        </member>
         <member name="M:System.Windows.Forms.MapControl.DrawErrorString(System.Drawing.Graphics,System.String)">
             <summary>
             Draws error string on the map.
@@ -495,22 +1214,45 @@
             </summary>
             <param name="g">Graphics instance to draw on.</param>
         </member>
-        <member name="M:System.Windows.Forms.MapControl.DrawMarkers(System.Drawing.Graphics)">
+        <member name="M:System.Windows.Forms.MapControl.DrawLayers(System.Drawing.Graphics)">
             <summary>
-            Draws markers on the map
+            Draw layers
             </summary>
             <param name="gr">Graphics instance to draw on.</param>
         </member>
-        <member name="M:System.Windows.Forms.MapControl.DrawTracks(System.Drawing.Graphics)">
+        <member name="M:System.Windows.Forms.MapControl.DrawSingleLayer(System.Windows.Forms.Maps.Layers.Layer,System.Drawing.Graphics)">
             <summary>
-            Draws tracks on the map
+            Draw a single layer
             </summary>
+            <param name="layer">Layer to draw.</param>
             <param name="gr">Graphics instance to draw on.</param>
         </member>
-        <member name="M:System.Windows.Forms.MapControl.DrawPolygons(System.Drawing.Graphics)">
+        <member name="M:System.Windows.Forms.MapControl.DrawSingleMarker(System.Windows.Forms.Maps.Elements.Marker,System.Drawing.Graphics)">
             <summary>
-            Draws polygons on the map
+            Draw a single marker
             </summary>
+            <param name="marker">Marker to draw.</param>
+            <param name="gr">Graphics instance to draw on.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.DrawSingleTrack(System.Windows.Forms.Maps.Elements.Track,System.Drawing.Graphics)">
+            <summary>
+            Draw a single track
+            </summary>
+            <param name="track">Track to draw.</param>
+            <param name="gr">Graphics instance to draw on.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.DrawSinglePolygon(System.Windows.Forms.Maps.Elements.Polygon,System.Drawing.Graphics)">
+            <summary>
+            Draw a single polygon.
+            </summary>
+            <param name="polygon">Polygon to draw.</param>
+            <param name="gr">Graphics instance to draw on.</param>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.DrawSingleEllipse(System.Windows.Forms.Maps.Elements.Ellipse,System.Drawing.Graphics)">
+            <summary>
+            Draw a single ellipse.
+            </summary>
+            <param name="ellipse">Ellipse to draw.</param>
             <param name="gr">Graphics instance to draw on.</param>
         </member>
         <member name="M:System.Windows.Forms.MapControl.DrawTilePart(System.Drawing.Graphics,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Drawing.Image)">
@@ -553,6 +1295,56 @@
             <param name="gr">Graphics instance to draw on.</param>
             <param name="draw">Draw action to perform several times for all visible width of the map.</param>
         </member>
+        <member name="M:System.Windows.Forms.MapControl.NormalizeTileNumber(System.Single)">
+            <summary>
+            Normalizes tile number to fit value from 0 to FullMapSizeInTiles.
+            </summary>
+            <param name="n">Tile number, with fractions.</param>
+            <returns>Tile number in range from 0 to FullMapSizeInTiles.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.MetersToPixels(System.Double,System.Int32)">
+            <summary>
+            Returns the number of pixels per meter according to the reference latitude and zoom level.
+            </summary>
+            <param name="latitude">Latitude for which the distance should be calculated</param>
+            <param name="zoomLevel">Current zoomlevel</param>
+            <returns>Number of pixels representing one meter.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.YardsToPixels(System.Double,System.Int32)">
+            <summary>
+            Returns the number of pixels per yard according to the reference latitude and zoom level.
+            </summary>
+            <param name="latitude">Latitude for which the distance should be calculated</param>
+            <param name="zoomLevel">Current zoomlevel</param>
+            <returns>Number of pixels representing one yard.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.Project(System.Windows.Forms.Maps.Common.GeoPoint)">
+            <summary>
+            Gets projection of geographical coordinates onto the map.
+            </summary>
+            <param name="g">Point with geographical coordinates.</param>
+            <returns><see cref="T:System.Drawing.PointF"/> object representing projection of the specified geographical coordinates on the map.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.WorldToTilePos(System.Windows.Forms.Maps.Common.GeoPoint)">
+            <summary>
+            Converts geographical coordinates to tile indices with fractions.
+            </summary>
+            <param name="g">Point with geographical coordinates.</param>
+            <returns>Point representing X/Y indices of the specified geographical coordinates in Slippy map scheme.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.TileToWorldPos(System.Double,System.Double)">
+            <summary>
+            Converts tile indices to geographical coordinates.
+            </summary>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <returns>Point representing geographical coordinates.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.MapControl.AdjustMapBounds">
+            <summary>
+            Adjusts map bounds if required.
+            </summary>
+        </member>
         <member name="M:System.Windows.Forms.MapControl.SetZoomLevel(System.Int32,System.Drawing.Point)">
             <summary>
             Sets zoom level with specifying central point to zoom in/out.
@@ -568,7 +1360,7 @@
             <param name="y">Y-index of the tile.</param>
             <param name="z">Zoom level.</param>
             <param name="fromCacheOnly">Flag indicating the tile can be fetched from cache only (server request is not allowed).</param>
-            <returns><see cref="T:System.Windows.Forms.Tile"/> instance.</returns>
+            <returns><see cref="T:System.Windows.Forms.Maps.Common.Tile"/> instance.</returns>
         </member>
         <member name="M:System.Windows.Forms.MapControl.RequestTile(System.Int32,System.Int32,System.Int32)">
             <summary>
@@ -586,38 +1378,30 @@
             Breaks execution on disposing.
             </summary>
         </member>
-        <member name="M:System.Windows.Forms.MapControl.Project(System.Windows.Forms.GeoPoint)">
+        <member name="M:System.Windows.Forms.MapControl.MeasureLayer(System.Windows.Forms.Maps.Layers.Layer)">
             <summary>
-            Gets projection of geographical coordinates onto the map.
+            Returns the bounds of a layer.
             </summary>
-            <param name="g">Point with geographical coordinates.</param>
-            <returns><see cref="T:System.Drawing.PointF"/> object representing projection of the specified geographical coordinates on the map.</returns>
+            <param name="layer">Layer to measure.</param>
+            <returns>Bounds of a layer, null if layer doesn't contain objects.</returns>
         </member>
-        <member name="M:System.Windows.Forms.MapControl.WorldToTilePos(System.Windows.Forms.GeoPoint)">
+        <member name="M:System.Windows.Forms.MapControl.FindTouchedElement(System.Windows.Forms.Maps.Layers.Layer,System.Double,System.Double)">
             <summary>
-            Converts geographical coordinates to tile indices with fractions.
+            Iterates over all elements in layers and returns the first matching element of the top most layer.
             </summary>
-            <param name="g">Point with geographical coordinates.</param>
-            <returns>Point representing X/Y indices of the specified geographical coordinates in Slippy map scheme.</returns>
+            <param name="position">Cursor positon</param>
+            <returns>The first matching element, null if there was no element found</returns>
         </member>
-        <member name="M:System.Windows.Forms.MapControl.TileToWorldPos(System.Double,System.Double)">
+        <member name="M:System.Windows.Forms.MapControl.LayerPropertyChanged(System.Object,System.EventArgs)">
             <summary>
-            Converts tile indices to geographical coordinates.
+            Handles event when a property of a layer is changed.
             </summary>
-            <param name="x">X-index of the tile.</param>
-            <param name="y">Y-index of the tile.</param>
-            <returns>Point representing geographical coordinates.</returns>
+            <param name="sender">Layer which raised the event.</param>
+            <param name="args">Event arguments.</param>
         </member>
-        <member name="M:System.Windows.Forms.MapControl.ClearCache(System.Boolean)">
+        <member name="M:System.Windows.Forms.MapControl._LinkLabel_LinkClicked(System.Object,System.Windows.Forms.LinkLabelLinkClickedEventArgs)">
             <summary>
-            Clears map cache. If <paramref name="allTileServers"/> flag is set to true, cache for all tile servers will be cleared.
-            If no, only current tile server cache will be cleared.
-            </summary>
-            <param name="allTileServers">If flag is set to true, cache for all tile servers will be cleared.</param>
-        </member>
-        <member name="M:System.Windows.Forms.MapControl.ClearAll">
-            <summary>
-            Removes all markers, tracks and polygons from the map.
+            Handles clicks on LinkLabel links
             </summary>
         </member>
         <member name="F:System.Windows.Forms.MapControl.components">
@@ -636,247 +1420,6 @@
             Required method for Designer support - do not modify 
             the contents of this method with the code editor.
             </summary>
-        </member>
-        <member name="T:System.Windows.Forms.Marker">
-            <summary>
-            Represents marker point on the map.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.Marker.Point">
-            <summary>
-            Marker coordinates.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.Marker.Style">
-            <summary>
-            Style to draw the marker.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.Marker.Label">
-            <summary>
-            Marker label.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.Marker.Data">
-            <summary>
-            Custom data associated with the marker.
-            </summary>
-        </member>
-        <member name="M:System.Windows.Forms.Marker.#ctor(System.Windows.Forms.GeoPoint)">
-            <summary>
-            Creates new <see cref="T:System.Windows.Forms.Marker"/> object with specified coordinates.
-            </summary>
-            <param name="point">Coordinates of the marker.</param>
-        </member>
-        <member name="M:System.Windows.Forms.Marker.#ctor(System.Windows.Forms.GeoPoint,System.Windows.Forms.MarkerStyle)">
-            <summary>
-            Creates new <see cref="T:System.Windows.Forms.Marker"/> object with specified coordinates and style.
-            </summary>
-            <param name="point">Coordinates of the marker.</param>
-            <param name="style">Marker style.</param>
-        </member>
-        <member name="M:System.Windows.Forms.Marker.#ctor(System.Windows.Forms.GeoPoint,System.String)">
-            <summary>
-            Creates new <see cref="T:System.Windows.Forms.Marker"/> object with specified coordinates and label.
-            </summary>
-            <param name="point">Coordinates of the marker.</param>
-            <param name="label">Marker label.</param>
-        </member>
-        <member name="M:System.Windows.Forms.Marker.#ctor(System.Windows.Forms.GeoPoint,System.Windows.Forms.MarkerStyle,System.String)">
-            <summary>
-            Creates new <see cref="T:System.Windows.Forms.Marker"/> object with specified coordinates, style and label.
-            </summary>
-            <param name="point">Coordinates of the marker.</param>
-            <param name="style">Marker style.</param>
-            <param name="label">Marker label.</param>
-        </member>
-        <member name="T:System.Windows.Forms.MarkerStyle">
-            <summary>
-            Defines visual style of the <see cref="T:System.Windows.Forms.Marker"/>.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.MarkerStyle.MarkerPen">
-            <summary>
-            Pen to draw marker outline.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.MarkerStyle.MarkerBrush">
-            <summary>
-            Brush to fill marker interior.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.MarkerStyle.MarkerWidth">
-            <summary>
-            Width of the marker circle, in pixels.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.MarkerStyle.LabelBrush">
-            <summary>
-            Brush to draw marker label.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.MarkerStyle.LabelFont">
-            <summary>
-            Font used to draw marker label.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.MarkerStyle.LabelFormat">
-            <summary>
-            String format used to draw marker label.
-            </summary>
-        </member>
-        <member name="M:System.Windows.Forms.MarkerStyle.#ctor">
-            <summary>
-            Creates new marker style.
-            </summary>        
-        </member>
-        <member name="M:System.Windows.Forms.MarkerStyle.#ctor(System.Single)">
-            <summary>
-            Creates new marker style.
-            </summary>
-            <param name="markerWidth">Width of the marker circle, in pixels.</param>
-        </member>
-        <member name="M:System.Windows.Forms.MarkerStyle.#ctor(System.Single,System.Drawing.Brush)">
-            <summary>
-            Creates new marker style.
-            </summary>
-            <param name="markerWidth">Width of the marker circle, in pixels.</param>
-            /// <param name="markerBrush">Brush to fill marker interior.</param>
-        </member>
-        <member name="M:System.Windows.Forms.MarkerStyle.#ctor(System.Single,System.Drawing.Brush,System.Drawing.Pen,System.Drawing.Brush,System.Drawing.Font,System.Drawing.StringFormat)">
-            <summary>
-            Creates new marker style.
-            </summary>
-            <param name="markerWidth">Width of the marker circle, in pixels.</param>
-            <param name="markerBrush">Brush to fill marker interior.</param>
-            <param name="markerPen">Pen to draw marker outline.</param>
-            <param name="labelBrush">Brush to draw marker label.</param>
-            <param name="labelFont">Font used to draw marker label.</param>
-            <param name="labelFormat">String format used to draw marker label.</param>
-        </member>
-        <member name="F:System.Windows.Forms.MarkerStyle.Default">
-            <summary>
-            Default marker style.
-            </summary>
-        </member>
-        <member name="T:System.Windows.Forms.Polygon">
-            <summary>
-             Represents filled closed area on the map.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.Polygon.Style">
-            <summary>
-            Gets or sets polygon style.
-            </summary>
-        </member>
-        <member name="M:System.Windows.Forms.Polygon.#ctor">
-            <summary>
-            Creates new polygon without assigned style
-            </summary>
-        </member>
-        <member name="M:System.Windows.Forms.Polygon.#ctor(System.Windows.Forms.PolygonStyle)">
-            <summary>
-            Creates new polygon with specified style.
-            </summary>
-            <param name="style"></param>
-        </member>
-        <member name="T:System.Windows.Forms.PolygonStyle">
-            <summary>
-            Defines drawing style for <see cref="T:System.Windows.Forms.Polygon" /> object.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.PolygonStyle.Brush">
-            <summary>
-            Fill brush
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.PolygonStyle.Pen">
-            <summary>
-            Outline pen.
-            </summary>
-        </member>
-        <member name="M:System.Windows.Forms.PolygonStyle.#ctor(System.Drawing.Brush)">
-            <summary>
-            Creates new <see cref="T:System.Windows.Forms.PolygonStyle"/> with fill brush and without outline.
-            </summary>
-            <param name="brush">Fill brush.</param>
-        </member>
-        <member name="M:System.Windows.Forms.PolygonStyle.#ctor(System.Drawing.Pen)">
-            <summary>
-            Creates new <see cref="T:System.Windows.Forms.PolygonStyle"/> with outline and without fill.
-            </summary>
-            <param name="pen">Outline pen.</param>
-        </member>
-        <member name="M:System.Windows.Forms.PolygonStyle.#ctor(System.Drawing.Brush,System.Drawing.Pen)">
-            <summary>
-            Creates new <see cref="T:System.Windows.Forms.PolygonStyle"/> with fill brush and outline pen.
-            </summary>
-            <param name="brush">Fill brush.</param>
-            <param name="pen">Outline pen.</param>
-        </member>
-        <member name="F:System.Windows.Forms.PolygonStyle.Default">
-            <summary>
-            Default polygon style.
-            </summary>
-        </member>
-        <member name="T:System.Windows.Forms.Tile">
-            <summary>
-            Used to store tile image in memory 
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.Tile.X">
-            <summary>
-            X-index of the tile image
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.Tile.Y">
-            <summary>
-            Y-index of the tile image
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.Tile.Z">
-            <summary>
-            Zoom level of the tile image
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.Tile.TileServer">
-            <summary>
-            Tile server name
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.Tile.Image">
-            <summary>
-            Tile image
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.Tile.ErrorMessage">
-            <summary>
-            Error message that should be displayed if tile does not exist by some reason (incorrect X/Y indices, zoom level, server unavailable etc.).
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.Tile.Used">
-            <summary>
-            Flag indicating image recently used (requested to be drawn on the map).
-            </summary>
-        </member>
-        <member name="M:System.Windows.Forms.Tile.#ctor(System.Int32,System.Int32,System.Int32,System.String)">
-            <summary>
-            Creates new tile with X/Y indices, zoom level, and tileServer name.
-            </summary>
-            <param name="x">X-index of the tile.</param>
-            <param name="y">Y-index of the tile.</param>
-            <param name="z">Zoom level.</param>
-            <param name="tileServer">Tile server name.</param>
-        </member>
-        <member name="M:System.Windows.Forms.Tile.#ctor(System.Drawing.Image,System.Int32,System.Int32,System.Int32,System.String)">
-            <summary>
-            Creates new tile with image, X/Y indices, zoom level, and tileServer name.
-            </summary>
-            <param name="image">Tile image</param>
-            <param name="x">X-index of the tile.</param>
-            <param name="y">Y-index of the tile.</param>
-            <param name="z">Zoom level.</param>
-            <param name="tileServer">Tile server name.</param>
         </member>
         <member name="T:System.Windows.Forms.BingMapsTileServer">
             <summary>
@@ -1002,41 +1545,6 @@
             <remarks>
             See about tile indexing schema here: <see href="https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames" />
             </remarks>
-        </member>
-        <member name="T:System.Windows.Forms.OfflineTileServer">
-            <summary>
-            Tile server for offline maps.
-            Uses embedded tiles from <see href="https://www.maptiler.com/copyright/">MapTiler</see>.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.OfflineTileServer.Name">
-            <summary>
-            Displayable name of the tile server
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.OfflineTileServer.AttributionText">
-            <summary>
-            Attribution text that will be displayed in bottom-right corner of the map.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.OfflineTileServer.MinZoomLevel">
-            <summary>
-            Gets minimal zoom level allowed for the tile server.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.OfflineTileServer.MaxZoomLevel">
-            <summary>
-            Gets maximal zoom level allowed for the tile server.
-            </summary>
-        </member>
-        <member name="M:System.Windows.Forms.OfflineTileServer.GetTile(System.Int32,System.Int32,System.Int32)">
-            <summary>
-            Gets tile image by X and Y indices of the tile and zoom level Z.
-            </summary>
-            <param name="x">X-index of the tile.</param>
-            <param name="y">Y-index of the tile.</param>
-            <param name="z">Zoom level.</param>
-            <returns>Tile image.</returns>
         </member>
         <member name="T:System.Windows.Forms.OpenStreetMapTileServer">
             <summary>
@@ -1257,53 +1765,6 @@
         <member name="M:System.Windows.Forms.WebTileServer.AcceptAllCertificates(System.Object,System.Security.Cryptography.X509Certificates.X509Certificate,System.Security.Cryptography.X509Certificates.X509Chain,System.Net.Security.SslPolicyErrors)">
             <summary>
             Function to handle accepting HTTPs certificates 
-            </summary>
-        </member>
-        <member name="T:System.Windows.Forms.Track">
-            <summary>
-            Represents track (collection of connected points).
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.Track.Style">
-            <summary>
-            Style to draw the track
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.Track.Data">
-            <summary>
-            Custom data associated with the marker
-            </summary>
-        </member>
-        <member name="M:System.Windows.Forms.Track.#ctor(System.Windows.Forms.TrackStyle)">
-            <summary>
-            Creates a track with specified style
-            </summary>
-            <param name="style"></param>
-        </member>
-        <member name="T:System.Windows.Forms.TrackStyle">
-            <summary>
-            Defines visual style of the <see cref="T:System.Windows.Forms.Track"/>.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.TrackStyle.Pen">
-            <summary>
-            Pen used to draw track path.
-            </summary>
-        </member>
-        <member name="M:System.Windows.Forms.TrackStyle.#ctor">
-            <summary>
-            Creates new <see cref="T:System.Windows.Forms.TrackStyle"/>.
-            </summary>
-        </member>
-        <member name="M:System.Windows.Forms.TrackStyle.#ctor(System.Drawing.Pen)">
-            <summary>
-            Creates new <see cref="T:System.Windows.Forms.TrackStyle"/>.
-            </summary>
-            <param name="pen"> Pen used to draw track path.</param>
-        </member>
-        <member name="F:System.Windows.Forms.TrackStyle.Default">
-            <summary>
-            Default track style.
             </summary>
         </member>
     </members>

@@ -52,7 +52,13 @@ You may also need to change values of following properties to customize the map 
 Other properties are also available, see documenation comments.
 
 ## Custom data
-[See here](/Docs/CustomData.md) how to add markers, tracks and polygons on the map.
+[See here](/Docs/CustomData.md) how to add markers, tracks, polygons and ellipses on the map.
+
+## Layers
+[See here](/Docs/Layer.md) how to use layers in the map.
+
+## Events
+[See how](/Docs/Event.md) to react to basic events on elements.
 
 ## Custom tile servers
-[Instruction](/Docs/TileServer.md) how to create own tile server.
+[Instruction](/Docs/TileServer.md) how to create own tile server or how to use offline map sources [offline map sources](/Docs/OfflineMaps.md)
