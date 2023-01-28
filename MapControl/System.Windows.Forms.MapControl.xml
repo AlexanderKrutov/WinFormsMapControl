@@ -194,11 +194,6 @@
             Tile size, in pixels.
             </summary>
         </member>
-        <member name="F:System.Windows.Forms.MapControl._Offset">
-            <summary>
-            First tile offset.
-            </summary>
-        </member>
         <member name="F:System.Windows.Forms.MapControl._MouseCaptured">
             <summary>
             Flag indicating thar mouse is captured.
@@ -219,9 +214,9 @@
             Pool of tiles to be requested from the server.
             </summary>
         </member>
-        <member name="F:System.Windows.Forms.MapControl._Worker">
+        <member name="F:System.Windows.Forms.MapControl._Workers">
             <summary>
-            Worker thread to process tile requests to the server.
+            Worker threads to process tile requests to the server.
             </summary>
         </member>
         <member name="F:System.Windows.Forms.MapControl._WorkerWaitHandle">
@@ -287,16 +282,6 @@
         <member name="P:System.Windows.Forms.MapControl.MaxZoomLevel">
             <summary>
             Gets or sets maximal zoom level.
-            </summary>
-        </member>
-        <member name="F:System.Windows.Forms.MapControl._TileServer">
-            <summary>
-            Backing field for <see cref="P:System.Windows.Forms.MapControl.TileServer"/> property.
-            </summary>
-        </member>
-        <member name="P:System.Windows.Forms.MapControl.TileServer">
-            <summary>
-            Gets or sets tile server instance used to obtain map tiles.
             </summary>
         </member>
         <member name="P:System.Windows.Forms.MapControl.Center">
@@ -414,11 +399,6 @@
             Raised when <see cref="P:System.Windows.Forms.MapControl.Mouse"/> property value is changed.
             </summary>
         </member>
-        <member name="E:System.Windows.Forms.MapControl.TileServerChanged">
-            <summary>
-            Raised when <see cref="P:System.Windows.Forms.MapControl.TileServer"/> property value is changed.
-            </summary>
-        </member>
         <member name="M:System.Windows.Forms.MapControl.#ctor">
             <summary>
             Creates new <see cref="T:System.Windows.Forms.MapControl"/> control.
@@ -513,7 +493,7 @@
             </summary>
             <param name="gr">Graphics instance to draw on.</param>
         </member>
-        <member name="M:System.Windows.Forms.MapControl.DrawTilePart(System.Drawing.Graphics,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Drawing.Image)">
+        <member name="M:System.Windows.Forms.MapControl.DrawTilePart(System.Drawing.Graphics,System.Windows.Forms.Layer,System.Int32,System.Int32,System.Int32,System.Int32,System.Int32,System.Drawing.Image)">
             <summary>
             Draws part of a tile.
             This method is needed to draw portion of a tile with highest zoom level if a tile with smallest zoom is not ready yet.
@@ -526,7 +506,7 @@
             <param name="frac">Portion of a tile to be drawn, 2 means 1/2, 4 means 1/4 etc.</param>
             <param name="image">Full tile image.</param>
         </member>
-        <member name="M:System.Windows.Forms.MapControl.DrawTile(System.Drawing.Graphics,System.Int32,System.Int32,System.Drawing.Image)">
+        <member name="M:System.Windows.Forms.MapControl.DrawTile(System.Drawing.Graphics,System.Windows.Forms.Layer,System.Int32,System.Int32,System.Drawing.Image)">
             <summary>
             Draws a tile on the map.
             </summary>
@@ -535,7 +515,7 @@
             <param name="y">Y-index of the tile.</param>
             <param name="image">Tile image.</param>
         </member>
-        <member name="M:System.Windows.Forms.MapControl.DrawThumbnail(System.Drawing.Graphics,System.Int32,System.Int32,System.String,System.Boolean)">
+        <member name="M:System.Windows.Forms.MapControl.DrawThumbnail(System.Drawing.Graphics,System.Windows.Forms.Layer,System.Int32,System.Int32,System.String,System.Boolean)">
             <summary>
             Draws thumbnail frame and text instead of a tile.
             </summary>
@@ -560,7 +540,7 @@
             <param name="z">Zoom level to be set.</param>
             <param name="p">Central point to zoom in/out.</param>
         </member>
-        <member name="M:System.Windows.Forms.MapControl.GetTile(System.Int32,System.Int32,System.Int32,System.Boolean)">
+        <member name="M:System.Windows.Forms.MapControl.GetTile(System.Windows.Forms.Layer,System.Int32,System.Int32,System.Int32,System.Boolean)">
             <summary>
             Gets tile image by X and Y indices and zoom level.
             </summary>
@@ -570,7 +550,7 @@
             <param name="fromCacheOnly">Flag indicating the tile can be fetched from cache only (server request is not allowed).</param>
             <returns><see cref="T:System.Windows.Forms.Tile"/> instance.</returns>
         </member>
-        <member name="M:System.Windows.Forms.MapControl.RequestTile(System.Int32,System.Int32,System.Int32)">
+        <member name="M:System.Windows.Forms.MapControl.RequestTile(System.Windows.Forms.Layer,System.Int32,System.Int32,System.Int32)">
             <summary>
             Does a tile request to the tile server
             </summary>
@@ -592,21 +572,6 @@
             </summary>
             <param name="g">Point with geographical coordinates.</param>
             <returns><see cref="T:System.Drawing.PointF"/> object representing projection of the specified geographical coordinates on the map.</returns>
-        </member>
-        <member name="M:System.Windows.Forms.MapControl.WorldToTilePos(System.Windows.Forms.GeoPoint)">
-            <summary>
-            Converts geographical coordinates to tile indices with fractions.
-            </summary>
-            <param name="g">Point with geographical coordinates.</param>
-            <returns>Point representing X/Y indices of the specified geographical coordinates in Slippy map scheme.</returns>
-        </member>
-        <member name="M:System.Windows.Forms.MapControl.TileToWorldPos(System.Double,System.Double)">
-            <summary>
-            Converts tile indices to geographical coordinates.
-            </summary>
-            <param name="x">X-index of the tile.</param>
-            <param name="y">Y-index of the tile.</param>
-            <returns>Point representing geographical coordinates.</returns>
         </member>
         <member name="M:System.Windows.Forms.MapControl.ClearCache(System.Boolean)">
             <summary>
@@ -819,6 +784,71 @@
             Default polygon style.
             </summary>
         </member>
+        <member name="T:System.Windows.Forms.IProjection">
+            <summary>
+            Defines cartographical projection
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.IProjection.TileToWorldPos(System.Double,System.Double,System.Int32)">
+            <summary>
+            Converts tile indices to geographical coordinates.
+            </summary>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="z">Zoom level.</param>
+            <returns>Point representing geographical coordinates.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.IProjection.WorldToTilePos(System.Windows.Forms.GeoPoint,System.Int32)">
+            <summary>
+            Converts geographical coordinates to tile indices with fractions.
+            </summary>
+            <param name="g">Point with geographical coordinates.</param>
+            <param name="z">Zoom level.</param>
+            <returns>Point representing X/Y indices of the specified geographical coordinates in Slippy map scheme.</returns>
+        </member>
+        <member name="T:System.Windows.Forms.SphericalMercatorProjection">
+            <summary>
+            Defines spherical Mercator projection used by most maps, like OpenStreetMap, Bing, Google
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.SphericalMercatorProjection.instance">
+            <summary>
+            Lazy initializer for singleton projection instance.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.SphericalMercatorProjection.Instance">
+            <summary>
+            Gets singleton instance of the projection.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.SphericalMercatorProjection.TileToWorldPos(System.Double,System.Double,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:System.Windows.Forms.SphericalMercatorProjection.WorldToTilePos(System.Windows.Forms.GeoPoint,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="T:System.Windows.Forms.WGS84MercatorProjection">
+            <summary>
+            Defines Mercator map projection onto referenced onto the referenced ellipsoid WGS84.
+            Used by some maps, like Yandex maps.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.WGS84MercatorProjection.instance">
+            <summary>
+            Lazy initializer for singleton projection instance.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.WGS84MercatorProjection.Instance">
+            <summary>
+            Gets singleton instance of the projection.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.WGS84MercatorProjection.TileToWorldPos(System.Double,System.Double,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:System.Windows.Forms.WGS84MercatorProjection.WorldToTilePos(System.Windows.Forms.GeoPoint,System.Int32)">
+            <inheritdoc />
+        </member>
         <member name="T:System.Windows.Forms.Tile">
             <summary>
             Used to store tile image in memory 
@@ -950,6 +980,80 @@
         <member name="P:System.Windows.Forms.BingMapsHybridTileServer.Layer">
             <inheritdoc />
         </member>
+        <member name="T:System.Windows.Forms.DoubleGisTileServer">
+            <summary>
+            Represents <see href="https://maps.2gis.com/">2GIS</see> web tile server.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.DoubleGisTileServer._Random">
+            <summary>
+            Used to access random tile subdomains.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.DoubleGisTileServer.Name">
+            <summary>
+            Gets displayable name of the Tile server.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.DoubleGisTileServer.AttributionText">
+            <summary>
+            Gets attribution text.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.DoubleGisTileServer.MinZoomLevel">
+            <summary>
+            Minimal zoom level.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.DoubleGisTileServer.MaxZoomLevel">
+            <summary>
+            Maximal zoom level.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.DoubleGisTileServer.UserAgent">
+            <summary>
+            User-Agent string used to dowload tile images from the tile server.
+            </summary>
+            <remarks>
+            </remarks>
+        </member>
+        <member name="M:System.Windows.Forms.DoubleGisTileServer.GetTileUri(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Gets tile URI by X and Y indices of the tile and zoom level Z.
+            </summary>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="z">Zoom level.</param>
+            <returns><see cref="T:System.Uri"/> instance.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.DoubleGisTileServer.#ctor(System.String)">
+            <summary>
+            Creates new instance of <see cref="T:System.Windows.Forms.DoubleGisTileServer"/>.
+            </summary>
+            <param name="userAgent">User-Agent string used to dowload tile images from 2GIS tile servers.</param>
+        </member>
+        <member name="P:System.Windows.Forms.EsriSatelliteMapsTileServer.UserAgent">
+            <inheritdoc />
+        </member>
+        <member name="F:System.Windows.Forms.GoogleMapsTileServer._Random">
+            <summary>
+            Used to access random tile subdomains.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.GoogleMapsTileServer.UserAgent">
+            <inheritdoc />
+        </member>
+        <member name="P:System.Windows.Forms.GoogleMapsTileServer.LayerType">
+            <summary>
+            Type of map layer (roads, satellite, hybrid).
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.GoogleMapsTileServer.AttributionText">
+            <inheritdoc />
+        </member>
+        <member name="M:System.Windows.Forms.GoogleMapsTileServer.GetTileUri(System.Int32,System.Int32,System.Int32)">
+            <inheritdoc />
+        </member>
         <member name="T:System.Windows.Forms.IFileCacheTileServer">
             <summary>
             Defines interface for a tile server that supports file system caching of tiles.
@@ -987,6 +1091,11 @@
         <member name="P:System.Windows.Forms.ITileServer.MaxZoomLevel">
             <summary>
             Gets maximal zoom level allowed for the tile server
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.ITileServer.Projection">
+            <summary>
+            Gets projection used by the tile server
             </summary>
         </member>
         <member name="M:System.Windows.Forms.ITileServer.GetTile(System.Int32,System.Int32,System.Int32)">
@@ -1027,6 +1136,11 @@
         <member name="P:System.Windows.Forms.OfflineTileServer.MaxZoomLevel">
             <summary>
             Gets maximal zoom level allowed for the tile server.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.OfflineTileServer.Projection">
+            <summary>
+            Gets projection used by the tile server
             </summary>
         </member>
         <member name="M:System.Windows.Forms.OfflineTileServer.GetTile(System.Int32,System.Int32,System.Int32)">
@@ -1218,6 +1332,11 @@
             For example, for OpenStretMap tile expiration period should not be smaller than 7 days: <see href="https://operations.osmfoundation.org/policies/tiles/"/>
             </remarks>
         </member>
+        <member name="P:System.Windows.Forms.WebTileServer.Projection">
+            <summary>
+            Gets projection used by the tile server
+            </summary>
+        </member>
         <member name="P:System.Windows.Forms.WebTileServer.Name">
             <summary>
             Displayable name of the tile server, i.e. human-readable map name, for example, "Open Street Map".
@@ -1258,6 +1377,109 @@
             <summary>
             Function to handle accepting HTTPs certificates 
             </summary>
+        </member>
+        <member name="T:System.Windows.Forms.WikimapiaTileServer">
+            <summary>
+            Represents <see href="https://wikimapia.org/">Wikimapia</see> web tile server.
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.WikimapiaTileServer._Random">
+            <summary>
+            Used to access random tile subdomains.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.WikimapiaTileServer.Name">
+            <summary>
+            Gets displayable name of the Tile server.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.WikimapiaTileServer.AttributionText">
+            <summary>
+            Gets attribution text.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.WikimapiaTileServer.MinZoomLevel">
+            <summary>
+            Minimal zoom level.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.WikimapiaTileServer.MaxZoomLevel">
+            <summary>
+            Maximal zoom level.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.WikimapiaTileServer.UserAgent">
+            <summary>
+            User-Agent string used to dowload tile images from the tile server.
+            </summary>
+            <remarks>
+            </remarks>
+        </member>
+        <member name="M:System.Windows.Forms.WikimapiaTileServer.GetTileUri(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Gets tile URI by X and Y indices of the tile and zoom level Z.
+            </summary>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="z">Zoom level.</param>
+            <returns><see cref="T:System.Uri"/> instance.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.WikimapiaTileServer.#ctor(System.String)">
+            <summary>
+            Creates new instance of <see cref="T:System.Windows.Forms.WikimapiaTileServer"/>.
+            </summary>
+            <param name="userAgent">User-Agent string used to dowload tile images from Wikimapia tile servers.</param>
+        </member>
+        <member name="P:System.Windows.Forms.YandexMapsTileServer.AttributionText">
+            <summary>
+            Gets attribution text.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.YandexMapsTileServer.UserAgent">
+            <summary>
+            User-Agent string used to dowload tile images from the tile server.
+            </summary>
+            <remarks>
+            OpenStreetMap requires valid HTTP User-Agent identifying application.
+            Faking app's User-Agent may get you blocked.
+            </remarks>
+        </member>
+        <member name="P:System.Windows.Forms.YandexMapsTileServer.Projection">
+            <summary>
+            Gets projection used by tile server.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.YandexMapsTileServer.#ctor(System.String)">
+            <summary>
+            Creates new instance of <see cref="T:System.Windows.Forms.YandexMapsTileServer"/>.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.YandexSatelliteMapsTileServer.GetTileUri(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Gets tile URI by X and Y indices of the tile and zoom level Z.
+            </summary>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="z">Zoom level.</param>
+            <returns><see cref="T:System.Uri"/> instance.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.YandexRoadMapsTileServer.GetTileUri(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Gets tile URI by X and Y indices of the tile and zoom level Z.
+            </summary>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="z">Zoom level.</param>
+            <returns><see cref="T:System.Uri"/> instance.</returns>
+        </member>
+        <member name="M:System.Windows.Forms.YandexRoadsOverlayTileServer.GetTileUri(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Gets tile URI by X and Y indices of the tile and zoom level Z.
+            </summary>
+            <param name="x">X-index of the tile.</param>
+            <param name="y">Y-index of the tile.</param>
+            <param name="z">Zoom level.</param>
+            <returns><see cref="T:System.Uri"/> instance.</returns>
         </member>
         <member name="T:System.Windows.Forms.Track">
             <summary>

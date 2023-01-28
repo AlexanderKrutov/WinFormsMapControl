@@ -38,6 +38,11 @@ namespace System.Windows.Forms
         public virtual TimeSpan TileExpirationPeriod { get; set; } = TimeSpan.FromDays(30);
 
         /// <summary>
+        /// Gets projection used by the tile server
+        /// </summary>
+        public virtual IProjection Projection => SphericalMercatorProjection.Instance;
+
+        /// <summary>
         /// Displayable name of the tile server, i.e. human-readable map name, for example, "Open Street Map".
         /// </summary>
         public abstract string Name { get; }
@@ -73,6 +78,8 @@ namespace System.Windows.Forms
                 Uri uri = GetTileUri(x, y, z);
                 var request = (HttpWebRequest)WebRequest.Create(uri);
                 request.UserAgent = UserAgent;
+                // TODO: make customizable
+                //request.Timeout = 5 * 1000;
                 using (var response = request.GetResponse())
                 using (Stream stream = response.GetResponseStream())
                 {
@@ -81,14 +88,6 @@ namespace System.Windows.Forms
             }
             catch (Exception ex)
             {
-                if (ex is WebException wex)
-                {
-                    if (wex.Response == null)
-                    {
-                        Thread.Sleep(1000);
-                    }
-                }
-
                 throw new Exception($"Unable to download tile.\n{ex.Message}");
             }
         }
@@ -98,8 +97,9 @@ namespace System.Windows.Forms
         /// </summary>
         protected WebTileServer()
         {
+            ServicePointManager.DefaultConnectionLimit = 10;
             ServicePointManager.ServerCertificateValidationCallback = new Net.Security.RemoteCertificateValidationCallback(AcceptAllCertificates);
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            ServicePointManager.SecurityProtocol = (SecurityProtocolType)12288 | SecurityProtocolType.Tls12;
         }
 
         /// <summary>

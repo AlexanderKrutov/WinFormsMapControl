@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
@@ -23,11 +24,6 @@ namespace System.Windows.Forms
         private const int TILE_SIZE = 256;
 
         /// <summary>
-        /// First tile offset.
-        /// </summary>
-        private Point _Offset = new Point();
-
-        /// <summary>
         /// Flag indicating thar mouse is captured.
         /// </summary>
         private bool _MouseCaptured = false;
@@ -47,15 +43,22 @@ namespace System.Windows.Forms
         /// </summary>
         private ConcurrentBag<Tile> _RequestPool = new ConcurrentBag<Tile>();
 
+       
+
         /// <summary>
-        /// Worker thread to process tile requests to the server.
+        /// Worker threads to process tile requests to the server.
         /// </summary>
-        private Thread _Worker = null;
+        private Thread[] _Workers = new Thread[10];
+
+        //private Thread _RepaintWorker = null;
 
         /// <summary>
         /// Event handle to stop/resume requests processing.
         /// </summary>
-        private EventWaitHandle _WorkerWaitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
+        private EventWaitHandle _WorkerWaitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
+
+
+        //private EventWaitHandle _RepaingWaitHandle = new EventWaitHandle(true, EventResetMode.AutoReset);
 
         /// <summary>
         /// String format to draw text aligned to center.
@@ -171,46 +174,117 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
-        /// Backing field for <see cref="TileServer"/> property.
+        /// Backing field for <see cref="Layers" />
         /// </summary>
-        private ITileServer _TileServer;
+        List<Layer> _Layers = new List<Layer>();
 
         /// <summary>
-        /// Gets or sets tile server instance used to obtain map tiles.
+        /// Gets collection of Layers of the map control.
+        /// Each layer can have own tile server, opacity, and Z-index.
         /// </summary>
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public ITileServer TileServer
+        public IReadOnlyCollection<Layer> Layers => _Layers.AsReadOnly();
+
+        public void AddLayer(Layer layer)
         {
-            get => _TileServer;
-            set
+            _Layers.Add(layer);
+            UpdateLayers();
+        }
+
+        public void ReplaceLayer(uint atIndex, Layer layer)
+        {
+            if (atIndex < _Layers.Count)
             {
-                _TileServer = value;
-                _LinkLabel.Links.Clear();
-                _LinkLabel.Visible = false;
-
-                if (value != null)
-                {
-                    _Cache = new ConcurrentBag<Tile>();
-
-                    if (_TileServer.AttributionText != null)
-                    {
-                        _LinkLabel.Text = _TileServer.AttributionText;
-                        _LinkLabel.Visible = true;
-                        OnSizeChanged(new EventArgs());
-                    }
-
-                    if (ZoomLevel > TileServer.MaxZoomLevel)
-                        ZoomLevel = TileServer.MaxZoomLevel;
-
-                    if (ZoomLevel < TileServer.MinZoomLevel)
-                        ZoomLevel = TileServer.MinZoomLevel;
-                }
-
-                Invalidate();
-                TileServerChanged?.Invoke(this, EventArgs.Empty);
+                _Layers[(int)atIndex] = layer;
+                UpdateLayers();
+            }
+            else
+            {
+                throw new ArgumentException($"There are no layer at index {atIndex}", nameof(atIndex));
             }
         }
+
+        public void RemoveLayer(uint atIndex)
+        {
+            if (atIndex < _Layers.Count)
+            {
+                _Layers.RemoveAt((int)atIndex);
+                UpdateLayers();
+            }
+            else
+            {
+                throw new ArgumentException($"There are no layer at index {atIndex}", nameof(atIndex));
+            }
+        }
+
+        private void UpdateLayers()
+        {
+            Interlocked.Exchange(ref _Cache, new ConcurrentBag<Tile>());
+
+            // TODO: change attrubution text
+            //if (_TileServer.AttributionText != null)
+            //{
+            //    _LinkLabel.Text = _TileServer.AttributionText;
+            //    _LinkLabel.Visible = true;
+            //    OnSizeChanged(new EventArgs());
+            //}
+
+            int min = _Layers.Max(lay => lay.TileServer.MinZoomLevel);
+            int max = _Layers.Min(lay => lay.TileServer.MaxZoomLevel);
+
+            MaxZoomLevel = max;
+            MinZoomLevel = min;
+
+            if (ZoomLevel > max)
+                ZoomLevel = max;
+
+            if (ZoomLevel < min)
+                ZoomLevel = min;
+
+            // TODO: update layer's offets
+
+            Invalidate();
+            
+            // TODO: notify layers changed
+            //TileServerChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        ///// <summary>
+        ///// Gets or sets tile server instance used to obtain map tiles.
+        ///// </summary>
+        //[Browsable(false)]
+        //[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        //public ITileServer TileServer
+        //{
+        //    get => _TileServer;
+        //    set
+        //    {
+        //        _TileServer = value;
+        //        _LinkLabel.Links.Clear();
+        //        _LinkLabel.Visible = false;
+
+        //        if (value != null)
+        //        {
+        //            _Cache = new ConcurrentBag<Tile>();
+
+        //            if (_TileServer.AttributionText != null)
+        //            {
+        //                _LinkLabel.Text = _TileServer.AttributionText;
+        //                _LinkLabel.Visible = true;
+        //                OnSizeChanged(new EventArgs());
+        //            }
+
+        //            if (ZoomLevel > TileServer.MaxZoomLevel)
+        //                ZoomLevel = TileServer.MaxZoomLevel;
+
+        //            if (ZoomLevel < TileServer.MinZoomLevel)
+        //                ZoomLevel = TileServer.MinZoomLevel;
+        //        }
+
+        //        Invalidate();
+        //        TileServerChanged?.Invoke(this, EventArgs.Empty);
+        //    }
+        //}
+
 
         /// <summary>
         /// Gets or sets geographical coordinates of the map center.
@@ -221,16 +295,19 @@ namespace System.Windows.Forms
         {
             get
             {
-                float x = NormalizeTileNumber(-(float)(_Offset.X - Width / 2) / TILE_SIZE);
-                float y = -(float)(_Offset.Y - Height / 2) / TILE_SIZE;
-                return TileToWorldPos(x, y);
+                float x = NormalizeTileNumber(-(float)(_Layers.ElementAt(0).Offset.X - Width / 2) / TILE_SIZE);
+                float y = -(float)(_Layers.ElementAt(0).Offset.Y - Height / 2) / TILE_SIZE;
+                return _Layers.ElementAt(0).TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
             }
             set
             {
-                var center = WorldToTilePos(value);
-                _Offset.X = -(int)(center.X * TILE_SIZE) + Width / 2;
-                _Offset.Y = -(int)(center.Y * TILE_SIZE) + Height / 2;
-                _Offset.X = (int)(_Offset.X % FullMapSizeInPixels);
+                foreach (var layer in _Layers)
+                {
+                    var center = layer.TileServer.Projection.WorldToTilePos(value, ZoomLevel);
+                    layer.Offset.X = -(int)(center.X * TILE_SIZE) + Width / 2;
+                    layer.Offset.Y = -(int)(center.Y * TILE_SIZE) + Height / 2;
+                    layer.Offset.X = (int)(layer.Offset.X % FullMapSizeInPixels);
+                }
                 Invalidate();
                 CenterChanged?.Invoke(this, EventArgs.Empty);
             }
@@ -245,9 +322,9 @@ namespace System.Windows.Forms
         {
             get
             {
-                float x = NormalizeTileNumber(-(float)(_Offset.X - _LastMouse.X) / TILE_SIZE);
-                float y = -(float)(_Offset.Y - _LastMouse.Y) / TILE_SIZE;
-                return TileToWorldPos(x, y);
+                float x = NormalizeTileNumber(-(float)(_Layers.ElementAt(0).Offset.X - _LastMouse.X) / TILE_SIZE);
+                float y = -(float)(_Layers.ElementAt(0).Offset.Y - _LastMouse.Y) / TILE_SIZE;
+                return _Layers.ElementAt(0).TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
             }
         }
 
@@ -260,9 +337,9 @@ namespace System.Windows.Forms
         {
             get
             {
-                float x = NormalizeTileNumber(-(float)(_Offset.X) / TILE_SIZE);
-                float y = -(float)(_Offset.Y) / TILE_SIZE;
-                return TileToWorldPos(x, y);
+                float x = NormalizeTileNumber(-(float)(_Layers.ElementAt(0).Offset.X) / TILE_SIZE);
+                float y = -(float)(_Layers.ElementAt(0).Offset.Y) / TILE_SIZE;
+                return _Layers.ElementAt(0).TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
             }
         }
 
@@ -275,9 +352,9 @@ namespace System.Windows.Forms
         {
             get
             {
-                float x = NormalizeTileNumber(-(float)(_Offset.X - Width) / TILE_SIZE);
-                float y = -(float)(_Offset.Y) / TILE_SIZE;
-                return TileToWorldPos(x, y);
+                float x = NormalizeTileNumber(-(float)(_Layers.ElementAt(0).Offset.X - Width) / TILE_SIZE);
+                float y = -(float)(_Layers.ElementAt(0).Offset.Y) / TILE_SIZE;
+                return _Layers.ElementAt(0).TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
             }
         }
 
@@ -290,9 +367,9 @@ namespace System.Windows.Forms
         {
             get
             {
-                float x = NormalizeTileNumber(-(float)(_Offset.X) / TILE_SIZE);
-                float y = -(float)(_Offset.Y - Height) / TILE_SIZE;
-                return TileToWorldPos(x, y);
+                float x = NormalizeTileNumber(-(float)(_Layers.ElementAt(0).Offset.X) / TILE_SIZE);
+                float y = -(float)(_Layers.ElementAt(0).Offset.Y - Height) / TILE_SIZE;
+                return _Layers.ElementAt(0).TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
             }
         }
 
@@ -305,9 +382,9 @@ namespace System.Windows.Forms
         {
             get
             {
-                float x = NormalizeTileNumber(-(float)(_Offset.X - Width) / TILE_SIZE);
-                float y = -(float)(_Offset.Y - Height) / TILE_SIZE;
-                return TileToWorldPos(x, y);
+                float x = NormalizeTileNumber(-(float)(_Layers.ElementAt(0).Offset.X - Width) / TILE_SIZE);
+                float y = -(float)(_Layers.ElementAt(0).Offset.Y - Height) / TILE_SIZE;
+                return _Layers.ElementAt(0).TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
             }
         }
 
@@ -427,11 +504,6 @@ namespace System.Windows.Forms
         public event EventHandler<EventArgs> MouseChanged;
 
         /// <summary>
-        /// Raised when <see cref="TileServer"/> property value is changed.
-        /// </summary>
-        public event EventHandler<EventArgs> TileServerChanged;
-
-        /// <summary>
         /// Creates new <see cref="MapControl"/> control.
         /// </summary>
         public MapControl()
@@ -448,7 +520,33 @@ namespace System.Windows.Forms
             _LinkLabel.LinkClicked += _LinkLabel_LinkClicked;
 
             Controls.Add(_LinkLabel);
+
+            // Intialize worker, if not yet initialized
+            for (int w = 0; w < _Workers.Length; w++)
+            {
+                _Workers[w] = new Thread(new ThreadStart(ProcessRequests));
+                _Workers[w].Name = $"Request worker #{w + 1}";
+                _Workers[w].IsBackground = true;
+                _Workers[w].Priority = ThreadPriority.Highest;
+                _Workers[w].Start();
+            }
+
+            //_RepaintWorker = new Thread(RepaintLoop);
+            //_RepaintWorker.IsBackground = true;
+            //_RepaintWorker.Start();
         }
+
+        //private void RepaintLoop()
+        //{
+        //    while (!IsDisposed)
+        //    {
+        //        lock (paintLocker)
+        //        {
+        //            Invalidate();
+        //        }
+        //        _RepaingWaitHandle.WaitOne();
+        //    }
+        //}
 
         /// <summary>
         /// Called on creating control.
@@ -477,24 +575,21 @@ namespace System.Windows.Forms
 
             if (!DesignMode)
             {
-                if (CacheFolder == null && TileServer is IFileCacheTileServer)
+                if (CacheFolder == null && _Layers.Any(lay => lay.TileServer is IFileCacheTileServer))
                 {
                     drawContent = false;
                     DrawErrorString(pe.Graphics, $"{nameof(CacheFolder)} property value is not set.\nIt should be specified if you are using tile server which supports file system cache.");
                 }
-                else if (TileServer == null)
+                else if (!_Layers.Any())
                 {
                     drawContent = false;
-                    DrawErrorString(pe.Graphics, $"{nameof(TileServer)} property value is not set.\nPlease specify tile server instance to obtain map images before using the map control.");
+                    DrawErrorString(pe.Graphics, $"{nameof(_Layers)} collection value is empty.\nPlease add at least one layer to the map control and set {nameof(Layer.TileServer)} property of the layer to obtain map images before using the map control.");
                 }
             }
-            // use offline maps in design mode
             else
             {
-                if (TileServer == null)
-                {
-                    TileServer = new OfflineTileServer();
-                }
+                drawContent = false;
+                pe.Graphics.DrawString("Map is unavailable in design mode.", Font, new SolidBrush(ForeColor), new Point(Width / 2, Height / 2), _AlignCenterStringFormat);
             }
 
             if (drawContent)
@@ -507,8 +602,6 @@ namespace System.Windows.Forms
                 DrawTracks(pe.Graphics);
                 DrawMarkers(pe.Graphics);
             }
-
-            base.OnPaint(pe);
         }
 
         /// <summary>
@@ -560,19 +653,23 @@ namespace System.Windows.Forms
         {
             if (_MouseCaptured)
             {
-                _Offset.X += (e.X - _LastMouse.X);
-                _Offset.Y += (e.Y - _LastMouse.Y);
+                foreach (var layer in _Layers)
+                {
+                    layer.Offset.X += (e.X - _LastMouse.X);
+                    layer.Offset.Y += (e.Y - _LastMouse.Y);
 
-                _Offset.X = (int)(_Offset.X % FullMapSizeInPixels);
+                    layer.Offset.X = (int)(layer.Offset.X % FullMapSizeInPixels);
 
-                if (_Offset.Y < -(int)FullMapSizeInPixels)
-                    _Offset.Y = -(int)FullMapSizeInPixels;
+                    if (layer.Offset.Y < -(int)FullMapSizeInPixels)
+                        layer.Offset.Y = -(int)FullMapSizeInPixels;
 
-                if (_Offset.Y > Height)
-                    _Offset.Y = Height;
+                    if (layer.Offset.Y > Height)
+                        layer.Offset.Y = Height;
+                }
 
                 AdjustMapBounds();
                 Invalidate();
+
                 CenterChanged?.Invoke(this, EventArgs.Empty);
             }
 
@@ -611,15 +708,18 @@ namespace System.Windows.Forms
         {
             if (FitToBounds)
             {
-                if (FullMapSizeInPixels > Height)
+                foreach (var layer in _Layers)
                 {
-                    if (_Offset.Y > 0) _Offset.Y = 0;
-                    if (_Offset.Y + FullMapSizeInPixels < Height) _Offset.Y = Height - FullMapSizeInPixels;
-                }
-                else
-                {
-                    if (_Offset.Y > Height - FullMapSizeInPixels) _Offset.Y = Height - FullMapSizeInPixels;
-                    if (_Offset.Y < 0) _Offset.Y = 0;
+                    if (FullMapSizeInPixels > Height)
+                    {
+                        if (layer.Offset.Y > 0) layer.Offset.Y = 0;
+                        if (layer.Offset.Y + FullMapSizeInPixels < Height) layer.Offset.Y = Height - FullMapSizeInPixels;
+                    }
+                    else
+                    {
+                        if (layer.Offset.Y > Height - FullMapSizeInPixels) layer.Offset.Y = Height - FullMapSizeInPixels;
+                        if (layer.Offset.Y < 0) layer.Offset.Y = 0;
+                    }
                 }
             }
         }
@@ -651,17 +751,9 @@ namespace System.Windows.Forms
         /// <param name="g">Graphics instance to draw on.</param>
         private void DrawTiles(Graphics g)
         {
-            // indices of first visible tile
-            int fromX = (int)Math.Floor(-(float)_Offset.X / TILE_SIZE);
-            int fromY = (int)Math.Floor(-(float)_Offset.Y / TILE_SIZE);
-
             // count of visible tiles (vertically and horizontally)
             int tilesByWidth = (int)Math.Ceiling((float)Width / TILE_SIZE);
             int tilesByHeight = (int)Math.Ceiling((float)Height / TILE_SIZE);
-            
-            // indices of last visible tile
-            int toX = fromX + tilesByWidth;
-            int toY = fromY + tilesByHeight;
 
             // flush used flag for all memory-cached tiles
             foreach (var c in _Cache)
@@ -669,56 +761,67 @@ namespace System.Windows.Forms
                 c.Used = false;
             }
 
-            for (int x = fromX; x <= toX; x++)
+            foreach (var layer in _Layers.OrderBy(lay => lay.ZIndex))
             {
-                for (int y = fromY; y <= toY; y++)
+                // indices of first visible tile
+                int fromX = (int)Math.Floor(-(float)layer.Offset.X / TILE_SIZE);
+                int fromY = (int)Math.Floor(-(float)layer.Offset.Y / TILE_SIZE);
+
+                // indices of last visible tile
+                int toX = fromX + tilesByWidth;
+                int toY = fromY + tilesByHeight;
+
+                for (int x = fromX; x <= toX; x++)
                 {
-                    int x_ = (int)NormalizeTileNumber(x);
-                    if (y >= 0 && y < FullMapSizeInTiles)
+                    for (int y = fromY; y <= toY; y++)
                     {
-                        Tile tile = GetTile(x_, y, ZoomLevel);
-
-                        // tile for current zoom and position found
-                        if (tile != null)
+                        int x_ = (int)NormalizeTileNumber(x);
+                        if (y >= 0 && y < FullMapSizeInTiles)
                         {
-                            if (tile.Image != null)
+                            Tile tile = GetTile(layer, x_, y, ZoomLevel);
+
+                            // tile for current zoom and position found
+                            if (tile != null)
                             {
-                                tile.Used = true;
-                                DrawTile(g, x, y, tile.Image);
-                            }
-                            else
-                            {
-                                tile.Used = true;
-                                DrawThumbnail(g, x, y, tile.ErrorMessage, true);
-                            }
-                        }
-                        // tile not found, do some magic
-                        else
-                        {
-                            // draw thumbnail first
-                            DrawThumbnail(g, x, y, ThumbnailText, false);
-
-                            // try to find out tile with less zoom level, and draw scaled part of that tile
-
-                            int z = 1;
-                            while (ZoomLevel - z >= 0)
-                            {
-                                // fraction of a tile to be drawn (1/2, 1/4 and etc.)
-                                int f = 1 << z;
-
-                                //  try to get tile with less zoom level from cache
-                                tile = GetTile(x_ / f, y / f, ZoomLevel - z, fromCacheOnly: true);
-
-                                // if tile found, draw part of it
-                                if (tile != null && tile.Image != null)
+                                if (tile.Image != null)
                                 {
                                     tile.Used = true;
-                                    DrawTilePart(g, x, y, x_ % f, y % f, f, tile.Image);
-                                    break;
+                                    DrawTile(g, layer, x, y, tile.Image);
                                 }
+                                else
+                                {
+                                    tile.Used = true;
+                                    DrawThumbnail(g, layer, x, y, tile.ErrorMessage, true);
+                                }
+                            }
+                            // tile not found, do some magic
+                            else
+                            {
+                                // draw thumbnail first
+                                DrawThumbnail(g, layer, x, y, ThumbnailText, false);
 
-                                // move up to less zoom level
-                                z++;
+                                // try to find out tile with less zoom level, and draw scaled part of that tile
+
+                                int z = 1;
+                                while (ZoomLevel - z >= 0)
+                                {
+                                    // fraction of a tile to be drawn (1/2, 1/4 and etc.)
+                                    int f = 1 << z;
+
+                                    //  try to get tile with less zoom level from cache
+                                    tile = GetTile(layer, x_ / f, y / f, ZoomLevel - z, fromCacheOnly: true);
+
+                                    // if tile found, draw part of it
+                                    if (tile != null && tile.Image != null)
+                                    {
+                                        tile.Used = true;
+                                        DrawTilePart(g, layer, x, y, x_ % f, y % f, f, tile.Image);
+                                        break;
+                                    }
+
+                                    // move up to less zoom level
+                                    z++;
+                                }
                             }
                         }
                     }
@@ -729,7 +832,10 @@ namespace System.Windows.Forms
             _Cache.Where(c => !c.Used).ToList().ForEach(c => c.Image?.Dispose());
 
             // Update cache, leave only used images
-            _Cache = new ConcurrentBag<Tile>(_Cache.Where(c => c.Used));
+            //_Cache = new ConcurrentBag<Tile>(_Cache.Where(c => c.Used));
+
+            Interlocked.Exchange(ref _Cache, new ConcurrentBag<Tile>(_Cache.Where(c => c.Used)));
+
         }
 
         /// <summary>
@@ -879,6 +985,22 @@ namespace System.Windows.Forms
             }
         }
 
+        private ImageAttributes GetImageAttributes(float opacity)
+        {
+            var attrs = (ImageAttributes)TileImageAttributes?.Clone() ?? new ImageAttributes();
+
+            // create a color matrix object  
+            ColorMatrix matrix = new ColorMatrix();
+
+            // set the opacity  
+            matrix.Matrix33 = opacity;
+
+            // set the color( opacity) of the image  
+            attrs.SetColorMatrix(matrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+
+            return attrs;
+        }
+
         /// <summary>
         /// Draws part of a tile.
         /// This method is needed to draw portion of a tile with highest zoom level if a tile with smallest zoom is not ready yet.
@@ -890,12 +1012,12 @@ namespace System.Windows.Forms
         /// <param name="yRemainder">Y-index of a tile portion to be drawn.</param>
         /// <param name="frac">Portion of a tile to be drawn, 2 means 1/2, 4 means 1/4 etc.</param>
         /// <param name="image">Full tile image.</param>
-        private void DrawTilePart(Graphics gr, int x, int y, int xRemainder, int yRemainder, int frac, Image image)
+        private void DrawTilePart(Graphics gr, Layer layer, int x, int y, int xRemainder, int yRemainder, int frac, Image image)
         {
             // coordinates of a tile on the map
             Point p = new Point();
-            p.X = _Offset.X + x * TILE_SIZE;
-            p.Y = _Offset.Y + y * TILE_SIZE;
+            p.X = layer.Offset.X + x * TILE_SIZE;
+            p.Y = layer.Offset.Y + y * TILE_SIZE;
 
             // Calc source portion of the tile
             Rectangle srcRect = new Rectangle(TILE_SIZE / frac * xRemainder, TILE_SIZE / frac * yRemainder, TILE_SIZE / frac, TILE_SIZE / frac);
@@ -908,7 +1030,7 @@ namespace System.Windows.Forms
             gr.InterpolationMode = InterpolationMode.NearestNeighbor;
             gr.PixelOffsetMode = PixelOffsetMode.HighSpeed;
             gr.CompositingQuality = CompositingQuality.HighSpeed;
-            gr.DrawImage(image, destRect, srcRect.X, srcRect.Y, srcRect.Width, srcRect.Height, GraphicsUnit.Pixel, TileImageAttributes);
+            gr.DrawImage(image, destRect, srcRect.X, srcRect.Y, srcRect.Width, srcRect.Height, GraphicsUnit.Pixel, GetImageAttributes(layer.Opacity));
             gr.Restore(state);
         }
 
@@ -919,13 +1041,13 @@ namespace System.Windows.Forms
         /// <param name="x">X-index of the tile.</param>
         /// <param name="y">Y-index of the tile.</param>
         /// <param name="image">Tile image.</param>
-        private void DrawTile(Graphics gr, int x, int y, Image image)
+        private void DrawTile(Graphics gr, Layer layer, int x, int y, Image image)
         {
             Point p = new Point();
-            p.X = _Offset.X + x * TILE_SIZE;
-            p.Y = _Offset.Y + y * TILE_SIZE;
+            p.X = layer.Offset.X + x * TILE_SIZE;
+            p.Y = layer.Offset.Y + y * TILE_SIZE;
 
-            gr.DrawImage(image, new Rectangle(p, new Drawing.Size(TILE_SIZE, TILE_SIZE)), 0, 0, TILE_SIZE, TILE_SIZE, GraphicsUnit.Pixel, TileImageAttributes);
+            gr.DrawImage(image, new Rectangle(p, new Drawing.Size(TILE_SIZE, TILE_SIZE)), 0, 0, TILE_SIZE, TILE_SIZE, GraphicsUnit.Pixel, GetImageAttributes(layer.Opacity));
         }
 
         /// <summary>
@@ -936,13 +1058,13 @@ namespace System.Windows.Forms
         /// <param name="y">Y-index of the tile.</param>
         /// <param name="message">Message to be displayed instead of the tile.</param>
         /// <param name="isError">Flag indicating the message should be displayed with error color.</param>
-        private void DrawThumbnail(Graphics gr, int x, int y, string message, bool isError)
+        private void DrawThumbnail(Graphics gr, Layer layer, int x, int y, string message, bool isError)
         {
             if (ShowThumbnails || isError)
             {
                 Point p = new Point();
-                p.X = _Offset.X + x * TILE_SIZE;
-                p.Y = _Offset.Y + y * TILE_SIZE;
+                p.X = layer.Offset.X + x * TILE_SIZE;
+                p.Y = layer.Offset.Y + y * TILE_SIZE;
                 Rectangle rectangle = new Rectangle(p.X, p.Y, TILE_SIZE, TILE_SIZE);
                 gr.FillRectangle(new SolidBrush(ThumbnailBackColor), rectangle);
                 gr.DrawRectangle(new Pen(ThumbnailForeColor) { DashStyle = DashStyle.Dot }, rectangle);
@@ -975,23 +1097,37 @@ namespace System.Windows.Forms
         /// <param name="p">Central point to zoom in/out.</param>
         private void SetZoomLevel(int z, Point p)
         {
-            int max = TileServer != null ? Math.Min(MaxZoomLevel, TileServer.MaxZoomLevel) : MaxZoomLevel;
-            int min = TileServer != null ? Math.Max(MinZoomLevel, TileServer.MinZoomLevel) : MinZoomLevel;
+            int max = _Layers.Any() ? Math.Min(MaxZoomLevel, _Layers.Min(lay => lay.TileServer.MaxZoomLevel)) : MaxZoomLevel;
+            int min = _Layers.Any() ? Math.Max(MinZoomLevel, _Layers.Max(lay => lay.TileServer.MinZoomLevel)) : MinZoomLevel;
 
             if (z < min) z = min;
             if (z > max) z = max;
 
-            if (z != ZoomLevel)
+            if (z != _ZoomLevel)
             {
-                double factor = Math.Pow(2, z - ZoomLevel);
-                _Offset.X = (int)((_Offset.X - p.X) * factor) + p.X;
-                _Offset.Y = (int)((_Offset.Y - p.Y) * factor) + p.Y;
-
+                double factor = Math.Pow(2, z - _ZoomLevel);
                 _ZoomLevel = z;
 
-                _Offset.X = (int)(_Offset.X % FullMapSizeInPixels);
+                foreach (var layer in _Layers)
+                {
+                    layer.Offset.X = (int)((layer.Offset.X - p.X) * factor) + p.X;
+                    layer.Offset.Y = (int)((layer.Offset.Y - p.Y) * factor) + p.Y;
+                    layer.Offset.X = (int)(layer.Offset.X % FullMapSizeInPixels);
+                }
+
+                var c = Center;
+                
+                foreach (var layer in _Layers)
+                {
+                    var center = layer.TileServer.Projection.WorldToTilePos(c, ZoomLevel);
+                    layer.Offset.X = -(int)(center.X * TILE_SIZE) + Width / 2;
+                    layer.Offset.Y = -(int)(center.Y * TILE_SIZE) + Height / 2;
+                    layer.Offset.X = (int)(layer.Offset.X % FullMapSizeInPixels);
+                }
 
                 Invalidate();
+
+                //ZoomLevelChaged?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -1003,40 +1139,40 @@ namespace System.Windows.Forms
         /// <param name="z">Zoom level.</param>
         /// <param name="fromCacheOnly">Flag indicating the tile can be fetched from cache only (server request is not allowed).</param>
         /// <returns><see cref="Tile"/> instance.</returns>
-        private Tile GetTile(int x, int y, int z, bool fromCacheOnly = false)
+        private Tile GetTile(Layer layer, int x, int y, int z, bool fromCacheOnly = false)
         {
             try
             {
                 Tile tile;
 
                 // try to get tile from memory cache
-                tile = _Cache.FirstOrDefault(t => t.X == x && t.Y == y && t.Z == z && t.TileServer == TileServer.GetType().Name);
+                tile = _Cache.FirstOrDefault(t => t.TileServer == layer.TileServer.GetType().Name && t.Z == z && t.X == x && t.Y == y);
                 if (tile != null)
                 {
                     return tile;
                 }
 
                 // try to get tile from file system
-                if (TileServer is IFileCacheTileServer fcTileServer)
+                if (layer.TileServer is IFileCacheTileServer fcTileServer)
                 {
-                    string localPath = Path.Combine(CacheFolder, TileServer.GetType().Name, $"{z}", $"{x}", $"{y}.tile");
+                    string localPath = Path.Combine(CacheFolder, layer.TileServer.GetType().Name, $"{z}", $"{x}", $"{y}.tile");
                     if (File.Exists(localPath))
                     {
                         var fileInfo = new FileInfo(localPath);
                         if (fileInfo.Length > 0 && fileInfo.LastWriteTime + fcTileServer.TileExpirationPeriod >= DateTime.Now)
                         {
                             Image image = Image.FromFile(localPath);
-                            tile = new Tile(image, x, y, z, TileServer.GetType().Name);
+                            tile = new Tile(image, x, y, z, layer.TileServer.GetType().Name);
                             _Cache.Add(tile);
                             return tile;
                         }
                     }
                 }
                 
-                // get tile from the server 
+                // request tile from the server 
                 if (!fromCacheOnly)
                 {
-                    RequestTile(x, y, z);
+                    RequestTile(layer, x, y, z);
                 }
 
                 return null;
@@ -1053,20 +1189,13 @@ namespace System.Windows.Forms
         /// <param name="x">X-index of the tile to be requested.</param>
         /// <param name="y">Y-index of the tile to be requested.</param>
         /// <param name="z">Zoom level</param>
-        private void RequestTile(int x, int y, int z)
+        private void RequestTile(Layer layer, int x, int y, int z)
         {
-            // Intialize worker, if not yet initialized
-            if (_Worker == null)
-            {
-                _Worker = new Thread(new ThreadStart(ProcessRequests));
-                _Worker.IsBackground = true;
-                _Worker.Start();
-            }
-
             // Check the tile is already requested
-            if (!_RequestPool.Any(t => t.X == x && t.Y == y && t.Z == z))
+            string tileServer = layer.TileServer.GetType().Name;
+            if (!_RequestPool.Any(t => t.TileServer == tileServer && t.Z == z && t.X == x && t.Y == y))
             {
-                _RequestPool.Add(new Tile(x, y, z, TileServer.GetType().Name));
+                _RequestPool.Add(new Tile(x, y, z, tileServer));
                 _WorkerWaitHandle.Set();
             }
         }
@@ -1081,15 +1210,22 @@ namespace System.Windows.Forms
         {
             while (!IsDisposed)
             {
-                if (_RequestPool.TryPeek(out Tile tile))
+                // try to process all tile requests till pool is not empty
+                while (_RequestPool.TryTake(out Tile tile))
                 {
+                    Console.WriteLine($"{Thread.CurrentThread.Name} processing...");
+
+                    var layer = _Layers.FirstOrDefault(lay => lay.TileServer.GetType().Name == tile.TileServer);
+
                     try
                     {
                         // ignore pooled items with different zoom level and another tile server
-                        if (tile.TileServer == TileServer.GetType().Name && tile.Z == ZoomLevel)
+                        if (layer != null && tile.Z == ZoomLevel)
                         {
-                            tile.Image = TileServer.GetTile(tile.X, tile.Y, tile.Z);
+                            tile.Image = layer.TileServer.GetTile(tile.X, tile.Y, tile.Z);
                             tile.Used = true;
+
+
                         }
                     }
                     catch (Exception ex)
@@ -1100,13 +1236,16 @@ namespace System.Windows.Forms
                     finally
                     {
                         // if we have obtained image from the server, save it in file system (if server supports file system cache)
-                        if (TileServer is IFileCacheTileServer && tile.Image != null)
+                        if (layer != null && layer.TileServer is IFileCacheTileServer && tile.Image != null)
                         {
                             string localPath = Path.Combine(CacheFolder, tile.TileServer, $"{tile.Z}", $"{tile.X}", $"{tile.Y}.tile");
                             try
                             {
                                 Directory.CreateDirectory(Path.GetDirectoryName(localPath));
+
+
                                 tile.Image.Save(localPath);
+                                Debug.WriteLine($"saved {localPath}");
                             }
                             catch (Exception ex)
                             {
@@ -1120,17 +1259,12 @@ namespace System.Windows.Forms
                             _Cache.Add(tile);
                         }
 
-                        // remove the tile from requests pool
-                        _RequestPool.TryTake(out tile);
-                        
-                        // redraw the map
                         Invalidate();
+                        //_RepaingWaitHandle.Set();
                     }
                 }
-                else
-                {
-                    _WorkerWaitHandle.WaitOne();
-                }
+
+                _WorkerWaitHandle.WaitOne();
             };
         }
 
@@ -1139,40 +1273,10 @@ namespace System.Windows.Forms
         /// </summary>
         /// <param name="g">Point with geographical coordinates.</param>
         /// <returns><see cref="PointF"/> object representing projection of the specified geographical coordinates on the map.</returns>
-        public PointF Project(GeoPoint g)
+        private PointF Project(GeoPoint g)
         {
-            var p = WorldToTilePos(g);
-            return new PointF(p.X * TILE_SIZE + _Offset.X, p.Y * TILE_SIZE + _Offset.Y);
-        }
-
-        /// <summary>
-        /// Converts geographical coordinates to tile indices with fractions.
-        /// </summary>
-        /// <param name="g">Point with geographical coordinates.</param>
-        /// <returns>Point representing X/Y indices of the specified geographical coordinates in Slippy map scheme.</returns>
-        public PointF WorldToTilePos(GeoPoint g)
-        {
-            PointF p = new Point();
-            p.X = (float)((g.Longitude + 180.0) / 360.0 * (1 << ZoomLevel));
-            p.Y = (float)((1.0 - Math.Log(Math.Tan(g.Latitude * Math.PI / 180.0) +
-                1.0 / Math.Cos(g.Latitude * Math.PI / 180.0)) / Math.PI) / 2.0 * (1 << ZoomLevel));
-
-            return p;
-        }
-
-        /// <summary>
-        /// Converts tile indices to geographical coordinates.
-        /// </summary>
-        /// <param name="x">X-index of the tile.</param>
-        /// <param name="y">Y-index of the tile.</param>
-        /// <returns>Point representing geographical coordinates.</returns>
-        public GeoPoint TileToWorldPos(double x, double y)
-        {
-            GeoPoint g = new GeoPoint();
-            double n = Math.PI - ((2.0 * Math.PI * y) / Math.Pow(2.0, ZoomLevel));
-            g.Longitude = (float)((x / Math.Pow(2.0, ZoomLevel) * 360.0) - 180.0);
-            g.Latitude = (float)(180.0 / Math.PI * Math.Atan(Math.Sinh(n)));
-            return g;
+            var p = _Layers.ElementAt(0).TileServer.Projection.WorldToTilePos(g, ZoomLevel);
+            return new PointF(p.X * TILE_SIZE + _Layers.ElementAt(0).Offset.X, p.Y * TILE_SIZE + _Layers.ElementAt(0).Offset.Y);
         }
 
         /// <summary>
@@ -1182,12 +1286,12 @@ namespace System.Windows.Forms
         /// <param name="allTileServers">If flag is set to true, cache for all tile servers will be cleared.</param>
         public void ClearCache(bool allTileServers = false)
         {
-            _Cache = new ConcurrentBag<Tile>();
-            _RequestPool = new ConcurrentBag<Tile>();
+            Interlocked.Exchange(ref _Cache, new ConcurrentBag<Tile>());
+            Interlocked.Exchange(ref _RequestPool, new ConcurrentBag<Tile>());
 
-            if (TileServer != null)
-            {
-                string cacheFolder = allTileServers ? CacheFolder : Path.Combine(CacheFolder, TileServer.GetType().Name);
+            foreach (var layer in _Layers)
+            {                
+                string cacheFolder = allTileServers ? CacheFolder : Path.Combine(CacheFolder, layer.TileServer.GetType().Name);
                 if (Directory.Exists(cacheFolder))
                 {
                     if (allTileServers)

@@ -7,6 +7,8 @@ namespace System.Windows.Forms
     /// </summary>
     public struct GeoPoint
     {
+        public static GeoPoint Empty = new GeoPoint();
+
         /// <summary>
         /// Longitude of the point, in degrees, from 0 to ±180, positive East, negative West. 0 is a point on prime meridian.
         /// </summary>

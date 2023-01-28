@@ -73,9 +73,14 @@ namespace DemoApp
         public FormMain()
         {
             InitializeComponent();
-           
+
+            string userAgent = "DemoApp for WinFormsMapControl 1.0 contact example@example.com";
+
+            mapControl.AddLayer(new Layer() { TileServer = new YandexSatelliteMapsTileServer(userAgent), ZIndex = 0, Opacity = 1f });
+            //mapControl.AddLayer(new Layer() { TileServer = new YandexRoadsOverlayTileServer(userAgent), ZIndex = 1, Opacity = 1f });
+
             mapControl.CacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MapControl");
-            
+
             cmbExample.Items.AddRange(new Sample[]
             {
                 new Sample("Empty Map", Sample0),
@@ -85,18 +90,36 @@ namespace DemoApp
             });
 
             ITileServer[] tileServers = new ITileServer[]
-            {               
-                new OpenStreetMapTileServer(userAgent: "DemoApp for WinFormsMapControl 1.0 contact example@example.com"),
-                new StamenTerrainTileServer(),
+            {
                 new OpenTopoMapServer(),
+                new OpenStreetMapTileServer(userAgent),
+                new StamenTerrainTileServer(),
                 new OfflineTileServer(),
                 new BingMapsAerialTileServer(),
                 new BingMapsRoadsTileServer(),
                 new BingMapsHybridTileServer(),
+                new GoogleMapsSatelliteTileServer(userAgent),
+                new GoogleMapsRoadmapTileServer(userAgent),
+                new GoogleMapsHybridTileServer(userAgent),
+                new YandexSatelliteMapsTileServer(userAgent),
+                new YandexRoadMapsTileServer(userAgent),
+                new EsriSatelliteMapsTileServer(userAgent),
+                new DoubleGisTileServer(userAgent),
+                new WikimapiaTileServer(userAgent),
+            };
+
+            object[] overlays = new object[]
+            {
+                "None",
+                new YandexRoadsOverlayTileServer(userAgent)
             };
 
             cmbTileServers.Items.AddRange(tileServers);
             cmbTileServers.SelectedIndex = 0;
+
+            cmbOverlay.Items.AddRange(overlays);
+            cmbOverlay.SelectedIndex = 0;
+
             cmbExample.SelectedIndex = 0;
         }
 
@@ -161,7 +184,36 @@ namespace DemoApp
 
         private void cmbTileServers_SelectedIndexChanged(object sender, EventArgs e)
         {
-            mapControl.TileServer = cmbTileServers.SelectedItem as ITileServer;
+            var layer = mapControl.Layers.ElementAt(0);
+            layer.TileServer = cmbTileServers.SelectedItem as ITileServer;
+            mapControl.ReplaceLayer(0, layer);
+            ActiveControl = mapControl;
+        }
+
+        private void cmbOverlay_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            
+            if (mapControl.Layers.Count == 1)
+            {
+                if (cmbOverlay.SelectedItem is ITileServer)
+                {
+                    mapControl.AddLayer(new Layer() { TileServer = cmbOverlay.SelectedItem as ITileServer, ZIndex = 1, Opacity = 1 });
+                }
+            }
+            else if (mapControl.Layers.Count == 2)
+            {
+                if (cmbOverlay.SelectedItem is string)
+                {
+                    mapControl.RemoveLayer(1);
+                }
+                else
+                {
+                    var layer = mapControl.Layers.ElementAt(1);
+                    layer.TileServer = cmbOverlay.SelectedItem as ITileServer;
+                    mapControl.ReplaceLayer(1, layer);
+                }
+            }
+
             ActiveControl = mapControl;
         }
 
