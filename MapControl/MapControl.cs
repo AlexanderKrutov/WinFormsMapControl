@@ -43,22 +43,15 @@ namespace System.Windows.Forms
         /// </summary>
         private ConcurrentBag<Tile> _RequestPool = new ConcurrentBag<Tile>();
 
-       
-
         /// <summary>
-        /// Worker threads to process tile requests to the server.
+        /// Worker threads for processing tile requests to the server.
         /// </summary>
         private Thread[] _Workers = new Thread[10];
-
-        //private Thread _RepaintWorker = null;
 
         /// <summary>
         /// Event handle to stop/resume requests processing.
         /// </summary>
         private EventWaitHandle _WorkerWaitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
-
-
-        //private EventWaitHandle _RepaingWaitHandle = new EventWaitHandle(true, EventResetMode.AutoReset);
 
         /// <summary>
         /// String format to draw text aligned to center.
@@ -174,45 +167,23 @@ namespace System.Windows.Forms
         }
 
         /// <summary>
-        /// Backing field for <see cref="Layers" />
-        /// </summary>
-        List<Layer> _Layers = new List<Layer>();
-
-        /// <summary>
         /// Gets collection of Layers of the map control.
         /// Each layer can have own tile server, opacity, and Z-index.
         /// </summary>
-        public IReadOnlyCollection<Layer> Layers => _Layers.AsReadOnly();
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public ILayersCollection Layers { get; } = new LayersCollection();
 
-        public void AddLayer(Layer layer)
+        private void UpdateOffsets()
         {
-            _Layers.Add(layer);
-            UpdateLayers();
-        }
+            var c = Center;
 
-        public void ReplaceLayer(uint atIndex, Layer layer)
-        {
-            if (atIndex < _Layers.Count)
+            foreach (var layer in Layers)
             {
-                _Layers[(int)atIndex] = layer;
-                UpdateLayers();
-            }
-            else
-            {
-                throw new ArgumentException($"There are no layer at index {atIndex}", nameof(atIndex));
-            }
-        }
-
-        public void RemoveLayer(uint atIndex)
-        {
-            if (atIndex < _Layers.Count)
-            {
-                _Layers.RemoveAt((int)atIndex);
-                UpdateLayers();
-            }
-            else
-            {
-                throw new ArgumentException($"There are no layer at index {atIndex}", nameof(atIndex));
+                var center = layer.TileServer.Projection.WorldToTilePos(c, ZoomLevel);
+                layer.Offset.X = -(int)(center.X * TILE_SIZE) + Width / 2;
+                layer.Offset.Y = -(int)(center.Y * TILE_SIZE) + Height / 2;
+                layer.Offset.X = (int)(layer.Offset.X % FullMapSizeInPixels);
             }
         }
 
@@ -228,8 +199,8 @@ namespace System.Windows.Forms
             //    OnSizeChanged(new EventArgs());
             //}
 
-            int min = _Layers.Max(lay => lay.TileServer.MinZoomLevel);
-            int max = _Layers.Min(lay => lay.TileServer.MaxZoomLevel);
+            int min = Layers.Max(lay => lay.TileServer.MinZoomLevel);
+            int max = Layers.Min(lay => lay.TileServer.MaxZoomLevel);
 
             MaxZoomLevel = max;
             MinZoomLevel = min;
@@ -242,49 +213,13 @@ namespace System.Windows.Forms
 
             // TODO: update layer's offets
 
+            UpdateOffsets();
+
             Invalidate();
             
             // TODO: notify layers changed
             //TileServerChanged?.Invoke(this, EventArgs.Empty);
         }
-
-        ///// <summary>
-        ///// Gets or sets tile server instance used to obtain map tiles.
-        ///// </summary>
-        //[Browsable(false)]
-        //[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        //public ITileServer TileServer
-        //{
-        //    get => _TileServer;
-        //    set
-        //    {
-        //        _TileServer = value;
-        //        _LinkLabel.Links.Clear();
-        //        _LinkLabel.Visible = false;
-
-        //        if (value != null)
-        //        {
-        //            _Cache = new ConcurrentBag<Tile>();
-
-        //            if (_TileServer.AttributionText != null)
-        //            {
-        //                _LinkLabel.Text = _TileServer.AttributionText;
-        //                _LinkLabel.Visible = true;
-        //                OnSizeChanged(new EventArgs());
-        //            }
-
-        //            if (ZoomLevel > TileServer.MaxZoomLevel)
-        //                ZoomLevel = TileServer.MaxZoomLevel;
-
-        //            if (ZoomLevel < TileServer.MinZoomLevel)
-        //                ZoomLevel = TileServer.MinZoomLevel;
-        //        }
-
-        //        Invalidate();
-        //        TileServerChanged?.Invoke(this, EventArgs.Empty);
-        //    }
-        //}
-
 
         /// <summary>
         /// Gets or sets geographical coordinates of the map center.
@@ -295,13 +230,13 @@ namespace System.Windows.Forms
         {
             get
             {
-                float x = NormalizeTileNumber(-(float)(_Layers.ElementAt(0).Offset.X - Width / 2) / TILE_SIZE);
-                float y = -(float)(_Layers.ElementAt(0).Offset.Y - Height / 2) / TILE_SIZE;
-                return _Layers.ElementAt(0).TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
+                float x = NormalizeTileNumber(-(float)(Layers.ElementAt(0).Offset.X - Width / 2) / TILE_SIZE);
+                float y = -(float)(Layers.ElementAt(0).Offset.Y - Height / 2) / TILE_SIZE;
+                return Layers.ElementAt(0).TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
             }
             set
             {
-                foreach (var layer in _Layers)
+                foreach (var layer in Layers)
                 {
                     var center = layer.TileServer.Projection.WorldToTilePos(value, ZoomLevel);
                     layer.Offset.X = -(int)(center.X * TILE_SIZE) + Width / 2;
@@ -322,9 +257,9 @@ namespace System.Windows.Forms
         {
             get
             {
-                float x = NormalizeTileNumber(-(float)(_Layers.ElementAt(0).Offset.X - _LastMouse.X) / TILE_SIZE);
-                float y = -(float)(_Layers.ElementAt(0).Offset.Y - _LastMouse.Y) / TILE_SIZE;
-                return _Layers.ElementAt(0).TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
+                float x = NormalizeTileNumber(-(float)(Layers.ElementAt(0).Offset.X - _LastMouse.X) / TILE_SIZE);
+                float y = -(float)(Layers.ElementAt(0).Offset.Y - _LastMouse.Y) / TILE_SIZE;
+                return Layers.ElementAt(0).TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
             }
         }
 
@@ -337,9 +272,9 @@ namespace System.Windows.Forms
         {
             get
             {
-                float x = NormalizeTileNumber(-(float)(_Layers.ElementAt(0).Offset.X) / TILE_SIZE);
-                float y = -(float)(_Layers.ElementAt(0).Offset.Y) / TILE_SIZE;
-                return _Layers.ElementAt(0).TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
+                float x = NormalizeTileNumber(-(float)(Layers.ElementAt(0).Offset.X) / TILE_SIZE);
+                float y = -(float)(Layers.ElementAt(0).Offset.Y) / TILE_SIZE;
+                return Layers.ElementAt(0).TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
             }
         }
 
@@ -352,9 +287,9 @@ namespace System.Windows.Forms
         {
             get
             {
-                float x = NormalizeTileNumber(-(float)(_Layers.ElementAt(0).Offset.X - Width) / TILE_SIZE);
-                float y = -(float)(_Layers.ElementAt(0).Offset.Y) / TILE_SIZE;
-                return _Layers.ElementAt(0).TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
+                float x = NormalizeTileNumber(-(float)(Layers.ElementAt(0).Offset.X - Width) / TILE_SIZE);
+                float y = -(float)(Layers.ElementAt(0).Offset.Y) / TILE_SIZE;
+                return Layers.ElementAt(0).TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
             }
         }
 
@@ -367,9 +302,9 @@ namespace System.Windows.Forms
         {
             get
             {
-                float x = NormalizeTileNumber(-(float)(_Layers.ElementAt(0).Offset.X) / TILE_SIZE);
-                float y = -(float)(_Layers.ElementAt(0).Offset.Y - Height) / TILE_SIZE;
-                return _Layers.ElementAt(0).TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
+                float x = NormalizeTileNumber(-(float)(Layers.ElementAt(0).Offset.X) / TILE_SIZE);
+                float y = -(float)(Layers.ElementAt(0).Offset.Y - Height) / TILE_SIZE;
+                return Layers.ElementAt(0).TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
             }
         }
 
@@ -382,9 +317,9 @@ namespace System.Windows.Forms
         {
             get
             {
-                float x = NormalizeTileNumber(-(float)(_Layers.ElementAt(0).Offset.X - Width) / TILE_SIZE);
-                float y = -(float)(_Layers.ElementAt(0).Offset.Y - Height) / TILE_SIZE;
-                return _Layers.ElementAt(0).TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
+                float x = NormalizeTileNumber(-(float)(Layers.ElementAt(0).Offset.X - Width) / TILE_SIZE);
+                float y = -(float)(Layers.ElementAt(0).Offset.Y - Height) / TILE_SIZE;
+                return Layers.ElementAt(0).TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
             }
         }
 
@@ -575,15 +510,15 @@ namespace System.Windows.Forms
 
             if (!DesignMode)
             {
-                if (CacheFolder == null && _Layers.Any(lay => lay.TileServer is IFileCacheTileServer))
+                if (CacheFolder == null && Layers.Any(lay => lay.TileServer is IFileCacheTileServer))
                 {
                     drawContent = false;
                     DrawErrorString(pe.Graphics, $"{nameof(CacheFolder)} property value is not set.\nIt should be specified if you are using tile server which supports file system cache.");
                 }
-                else if (!_Layers.Any())
+                else if (!Layers.Any())
                 {
                     drawContent = false;
-                    DrawErrorString(pe.Graphics, $"{nameof(_Layers)} collection value is empty.\nPlease add at least one layer to the map control and set {nameof(Layer.TileServer)} property of the layer to obtain map images before using the map control.");
+                    DrawErrorString(pe.Graphics, $"{nameof(Layers)} collection value is empty.\nPlease add at least one layer to the map control and set {nameof(Layer.TileServer)} property of the layer to obtain map images before using the map control.");
                 }
             }
             else
@@ -653,7 +588,7 @@ namespace System.Windows.Forms
         {
             if (_MouseCaptured)
             {
-                foreach (var layer in _Layers)
+                foreach (var layer in Layers)
                 {
                     layer.Offset.X += (e.X - _LastMouse.X);
                     layer.Offset.Y += (e.Y - _LastMouse.Y);
@@ -708,7 +643,7 @@ namespace System.Windows.Forms
         {
             if (FitToBounds)
             {
-                foreach (var layer in _Layers)
+                foreach (var layer in Layers)
                 {
                     if (FullMapSizeInPixels > Height)
                     {
@@ -761,7 +696,7 @@ namespace System.Windows.Forms
                 c.Used = false;
             }
 
-            foreach (var layer in _Layers.OrderBy(lay => lay.ZIndex))
+            foreach (var layer in Layers.OrderBy(lay => lay.ZIndex))
             {
                 // indices of first visible tile
                 int fromX = (int)Math.Floor(-(float)layer.Offset.X / TILE_SIZE);
@@ -1097,8 +1032,8 @@ namespace System.Windows.Forms
         /// <param name="p">Central point to zoom in/out.</param>
         private void SetZoomLevel(int z, Point p)
         {
-            int max = _Layers.Any() ? Math.Min(MaxZoomLevel, _Layers.Min(lay => lay.TileServer.MaxZoomLevel)) : MaxZoomLevel;
-            int min = _Layers.Any() ? Math.Max(MinZoomLevel, _Layers.Max(lay => lay.TileServer.MinZoomLevel)) : MinZoomLevel;
+            int max = Layers.Any() ? Math.Min(MaxZoomLevel, Layers.Min(lay => lay.TileServer.MaxZoomLevel)) : MaxZoomLevel;
+            int min = Layers.Any() ? Math.Max(MinZoomLevel, Layers.Max(lay => lay.TileServer.MinZoomLevel)) : MinZoomLevel;
 
             if (z < min) z = min;
             if (z > max) z = max;
@@ -1108,22 +1043,14 @@ namespace System.Windows.Forms
                 double factor = Math.Pow(2, z - _ZoomLevel);
                 _ZoomLevel = z;
 
-                foreach (var layer in _Layers)
+                foreach (var layer in Layers)
                 {
                     layer.Offset.X = (int)((layer.Offset.X - p.X) * factor) + p.X;
                     layer.Offset.Y = (int)((layer.Offset.Y - p.Y) * factor) + p.Y;
                     layer.Offset.X = (int)(layer.Offset.X % FullMapSizeInPixels);
                 }
 
-                var c = Center;
-                
-                foreach (var layer in _Layers)
-                {
-                    var center = layer.TileServer.Projection.WorldToTilePos(c, ZoomLevel);
-                    layer.Offset.X = -(int)(center.X * TILE_SIZE) + Width / 2;
-                    layer.Offset.Y = -(int)(center.Y * TILE_SIZE) + Height / 2;
-                    layer.Offset.X = (int)(layer.Offset.X % FullMapSizeInPixels);
-                }
+                UpdateOffsets();
 
                 Invalidate();
 
@@ -1215,7 +1142,7 @@ namespace System.Windows.Forms
                 {
                     Console.WriteLine($"{Thread.CurrentThread.Name} processing...");
 
-                    var layer = _Layers.FirstOrDefault(lay => lay.TileServer.GetType().Name == tile.TileServer);
+                    var layer = Layers.FirstOrDefault(lay => lay.TileServer.GetType().Name == tile.TileServer);
 
                     try
                     {
@@ -1275,8 +1202,8 @@ namespace System.Windows.Forms
         /// <returns><see cref="PointF"/> object representing projection of the specified geographical coordinates on the map.</returns>
         private PointF Project(GeoPoint g)
         {
-            var p = _Layers.ElementAt(0).TileServer.Projection.WorldToTilePos(g, ZoomLevel);
-            return new PointF(p.X * TILE_SIZE + _Layers.ElementAt(0).Offset.X, p.Y * TILE_SIZE + _Layers.ElementAt(0).Offset.Y);
+            var p = Layers.ElementAt(0).TileServer.Projection.WorldToTilePos(g, ZoomLevel);
+            return new PointF(p.X * TILE_SIZE + Layers.ElementAt(0).Offset.X, p.Y * TILE_SIZE + Layers.ElementAt(0).Offset.Y);
         }
 
         /// <summary>
@@ -1289,7 +1216,7 @@ namespace System.Windows.Forms
             Interlocked.Exchange(ref _Cache, new ConcurrentBag<Tile>());
             Interlocked.Exchange(ref _RequestPool, new ConcurrentBag<Tile>());
 
-            foreach (var layer in _Layers)
+            foreach (var layer in Layers)
             {                
                 string cacheFolder = allTileServers ? CacheFolder : Path.Combine(CacheFolder, layer.TileServer.GetType().Name);
                 if (Directory.Exists(cacheFolder))

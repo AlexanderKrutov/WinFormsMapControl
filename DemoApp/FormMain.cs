@@ -76,7 +76,7 @@ namespace DemoApp
 
             string userAgent = "DemoApp for WinFormsMapControl 1.0 contact example@example.com";
 
-            mapControl.AddLayer(new Layer() { TileServer = new YandexSatelliteMapsTileServer(userAgent), ZIndex = 0, Opacity = 1f });
+            mapControl.Layers.Add(new Layer() { TileServer = new YandexSatelliteMapsTileServer(userAgent), ZIndex = 0, Opacity = 1f });
             //mapControl.AddLayer(new Layer() { TileServer = new YandexRoadsOverlayTileServer(userAgent), ZIndex = 1, Opacity = 1f });
 
             mapControl.CacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MapControl");
@@ -186,7 +186,7 @@ namespace DemoApp
         {
             var layer = mapControl.Layers.ElementAt(0);
             layer.TileServer = cmbTileServers.SelectedItem as ITileServer;
-            mapControl.ReplaceLayer(0, layer);
+            mapControl.Layers[0] = layer;
             ActiveControl = mapControl;
         }
 
@@ -197,20 +197,20 @@ namespace DemoApp
             {
                 if (cmbOverlay.SelectedItem is ITileServer)
                 {
-                    mapControl.AddLayer(new Layer() { TileServer = cmbOverlay.SelectedItem as ITileServer, ZIndex = 1, Opacity = 1 });
+                    mapControl.Layers.Add(new Layer() { TileServer = cmbOverlay.SelectedItem as ITileServer, ZIndex = 1, Opacity = 1 });
                 }
             }
             else if (mapControl.Layers.Count == 2)
             {
                 if (cmbOverlay.SelectedItem is string)
                 {
-                    mapControl.RemoveLayer(1);
+                    mapControl.Layers.RemoveAt(1);
                 }
                 else
                 {
                     var layer = mapControl.Layers.ElementAt(1);
                     layer.TileServer = cmbOverlay.SelectedItem as ITileServer;
-                    mapControl.ReplaceLayer(1, layer);
+                    mapControl.Layers[1] = layer;
                 }
             }
 
