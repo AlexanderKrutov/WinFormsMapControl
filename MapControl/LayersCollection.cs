@@ -18,34 +18,43 @@ namespace System.Windows.Forms
             get => _Layers[index];
             set {
 
+                LayersCollectionBeforeChange?.Invoke(this, EventArgs.Empty);
+
+
+
                 _Layers[index] = value;
-                LayersCollectionChanged?.Invoke(this, EventArgs.Empty);
+                LayersCollectionAfterChange?.Invoke(this, EventArgs.Empty);
             }
         }
 
-        public event LayersCollectionChangedDelegate LayersCollectionChanged;
+        public event LayersCollectionChangedDelegate LayersCollectionBeforeChange;
+        public event LayersCollectionChangedDelegate LayersCollectionAfterChange;
 
         public void Add(Layer layer)
         {
+            LayersCollectionBeforeChange?.Invoke(this, EventArgs.Empty);
             _Layers.Add(layer);
-            LayersCollectionChanged?.Invoke(this, EventArgs.Empty);
+            LayersCollectionAfterChange?.Invoke(this, EventArgs.Empty);
         }
 
         public bool Remove(Layer layer)
         {
             try
             {
+                LayersCollectionBeforeChange?.Invoke(this, EventArgs.Empty);
                 return _Layers.Remove(layer);
             }
             finally
             {
-                LayersCollectionChanged?.Invoke(this, EventArgs.Empty);
+                LayersCollectionAfterChange?.Invoke(this, EventArgs.Empty);
             }
         }
 
         public void RemoveAt(int index)
         {
+            LayersCollectionBeforeChange?.Invoke(this, EventArgs.Empty);
             _Layers.RemoveAt(index);
+            LayersCollectionAfterChange?.Invoke(this, EventArgs.Empty);
         }
 
         public IEnumerator<Layer> GetEnumerator() => _Layers.GetEnumerator();

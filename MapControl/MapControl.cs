@@ -181,6 +181,8 @@ namespace System.Windows.Forms
             foreach (var layer in Layers)
             {
                 var center = layer.TileServer.Projection.WorldToTilePos(c, ZoomLevel);
+                Debug.WriteLine($"Center = {c}");
+
                 layer.Offset.X = -(int)(center.X * TILE_SIZE) + Width / 2;
                 layer.Offset.Y = -(int)(center.Y * TILE_SIZE) + Height / 2;
                 layer.Offset.X = (int)(layer.Offset.X % FullMapSizeInPixels);
@@ -202,14 +204,14 @@ namespace System.Windows.Forms
             int min = Layers.Max(lay => lay.TileServer.MinZoomLevel);
             int max = Layers.Min(lay => lay.TileServer.MaxZoomLevel);
 
-            MaxZoomLevel = max;
-            MinZoomLevel = min;
+            _MaxZoomLevel = max;
+            _MinZoomLevel = min;
 
-            if (ZoomLevel > max)
-                ZoomLevel = max;
+            if (_ZoomLevel > max)
+                _ZoomLevel = max;
 
-            if (ZoomLevel < min)
-                ZoomLevel = min;
+            if (_ZoomLevel < min)
+                _ZoomLevel = min;
 
             // TODO: update layer's offets
 
@@ -230,21 +232,32 @@ namespace System.Windows.Forms
         {
             get
             {
-                float x = NormalizeTileNumber(-(float)(Layers.ElementAt(0).Offset.X - Width / 2) / TILE_SIZE);
-                float y = -(float)(Layers.ElementAt(0).Offset.Y - Height / 2) / TILE_SIZE;
-                return Layers.ElementAt(0).TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
+                if (Layers.Any())
+                {
+                    Layer layer = Layers.ElementAt(0);
+                    float x = NormalizeTileNumber(-(float)(layer.Offset.X - Width / 2) / TILE_SIZE);
+                    float y = -(float)(layer.Offset.Y - Height / 2) / TILE_SIZE;
+                    return layer.TileServer.Projection.TileToWorldPos(x, y, ZoomLevel);
+                }
+                else
+                {
+                    return GeoPoint.Empty;
+                }
             }
             set
             {
-                foreach (var layer in Layers)
+                if (Layers.Any())
                 {
-                    var center = layer.TileServer.Projection.WorldToTilePos(value, ZoomLevel);
-                    layer.Offset.X = -(int)(center.X * TILE_SIZE) + Width / 2;
-                    layer.Offset.Y = -(int)(center.Y * TILE_SIZE) + Height / 2;
-                    layer.Offset.X = (int)(layer.Offset.X % FullMapSizeInPixels);
+                    foreach (var layer in Layers)
+                    {
+                        var center = layer.TileServer.Projection.WorldToTilePos(value, ZoomLevel);
+                        layer.Offset.X = -(int)(center.X * TILE_SIZE) + Width / 2;
+                        layer.Offset.Y = -(int)(center.Y * TILE_SIZE) + Height / 2;
+                        layer.Offset.X = (int)(layer.Offset.X % FullMapSizeInPixels);
+                    }
+                    Invalidate();
+                    CenterChanged?.Invoke(this, EventArgs.Empty);
                 }
-                Invalidate();
-                CenterChanged?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -466,30 +479,20 @@ namespace System.Windows.Forms
                 _Workers[w].Start();
             }
 
-            //_RepaintWorker = new Thread(RepaintLoop);
-            //_RepaintWorker.IsBackground = true;
-            //_RepaintWorker.Start();
+            Layers.LayersCollectionBeforeChange += OnBeforeChangeLayersCollection;
+            Layers.LayersCollectionAfterChange += OnAfterChangeLayersCollection;
         }
 
-        //private void RepaintLoop()
-        //{
-        //    while (!IsDisposed)
-        //    {
-        //        lock (paintLocker)
-        //        {
-        //            Invalidate();
-        //        }
-        //        _RepaingWaitHandle.WaitOne();
-        //    }
-        //}
+        protected GeoPoint _CenterKeeper;
 
-        /// <summary>
-        /// Called on creating control.
-        /// </summary>
-        protected override void OnCreateControl()
+        protected void OnBeforeChangeLayersCollection(object sender, EventArgs eventArgs)
         {
-            base.OnCreateControl();
-            Center = new GeoPoint(0, 0);
+            _CenterKeeper = Center;
+        }
+
+        private void OnAfterChangeLayersCollection(object sender, EventArgs eventArgs)
+        {
+            Center = _CenterKeeper;
         }
 
         /// <summary>

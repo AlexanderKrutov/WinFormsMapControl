@@ -77,7 +77,6 @@ namespace DemoApp
             string userAgent = "DemoApp for WinFormsMapControl 1.0 contact example@example.com";
 
             mapControl.Layers.Add(new Layer() { TileServer = new YandexSatelliteMapsTileServer(userAgent), ZIndex = 0, Opacity = 1f });
-            //mapControl.AddLayer(new Layer() { TileServer = new YandexRoadsOverlayTileServer(userAgent), ZIndex = 1, Opacity = 1f });
 
             mapControl.CacheFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MapControl");
 
@@ -121,6 +120,9 @@ namespace DemoApp
             cmbOverlay.SelectedIndex = 0;
 
             cmbExample.SelectedIndex = 0;
+
+            mapControl.ZoomLevel = 12;
+            mapControl.Center = new GeoPoint(44.0f, 56.333f);
         }
 
         private ICollection<Marker> ReadCities()
@@ -184,20 +186,20 @@ namespace DemoApp
 
         private void cmbTileServers_SelectedIndexChanged(object sender, EventArgs e)
         {
-            var layer = mapControl.Layers.ElementAt(0);
-            layer.TileServer = cmbTileServers.SelectedItem as ITileServer;
-            mapControl.Layers[0] = layer;
+            var tileServer = cmbTileServers.SelectedItem as ITileServer;
+            mapControl.Layers[0] = new Layer() { Opacity = 1, TileServer = tileServer, ZIndex = 1 };
+            
             ActiveControl = mapControl;
         }
 
         private void cmbOverlay_SelectedIndexChanged(object sender, EventArgs e)
         {
-            
+            var tileServer = cmbOverlay.SelectedItem as ITileServer;
             if (mapControl.Layers.Count == 1)
             {
                 if (cmbOverlay.SelectedItem is ITileServer)
                 {
-                    mapControl.Layers.Add(new Layer() { TileServer = cmbOverlay.SelectedItem as ITileServer, ZIndex = 1, Opacity = 1 });
+                    mapControl.Layers.Add(new Layer() { TileServer = tileServer, ZIndex = 1, Opacity = 1 });
                 }
             }
             else if (mapControl.Layers.Count == 2)
@@ -208,9 +210,7 @@ namespace DemoApp
                 }
                 else
                 {
-                    var layer = mapControl.Layers.ElementAt(1);
-                    layer.TileServer = cmbOverlay.SelectedItem as ITileServer;
-                    mapControl.Layers[1] = layer;
+                    mapControl.Layers[1] = new Layer() { Opacity = 1, TileServer = tileServer, ZIndex = 1 };
                 }
             }
 

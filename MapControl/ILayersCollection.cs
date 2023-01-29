@@ -12,8 +12,11 @@ namespace System.Windows.Forms
         bool Remove(Layer layer);
         void RemoveAt(int index);
         Layer this[int index] { get; set; }
-        event LayersCollectionChangedDelegate LayersCollectionChanged;
+
+        event LayersCollectionChangedDelegate LayersCollectionBeforeChange;
+        event LayersCollectionChangedDelegate LayersCollectionAfterChange;
     }
 
     public delegate void LayersCollectionChangedDelegate(object sender, EventArgs eventArgs);
+
 }
