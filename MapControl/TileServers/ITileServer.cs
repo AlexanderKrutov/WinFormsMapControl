@@ -1,4 +1,6 @@
 ﻿using System.Drawing;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace System.Windows.Forms
 {
@@ -46,6 +48,6 @@ namespace System.Windows.Forms
         /// <remarks>
         /// See about tile indexing schema here: <see href="https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames" />
         /// </remarks>
-        Image GetTile(int x, int y, int z);
+        Task<Image> GetTile(int x, int y, int z, CancellationToken cancellationToken);
     }
 }

@@ -1,5 +1,7 @@
 ﻿using System.Drawing;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace System.Windows.Forms
 {
@@ -41,17 +43,20 @@ namespace System.Windows.Forms
         /// <param name="y">Y-index of the tile.</param>
         /// <param name="z">Zoom level.</param>
         /// <returns>Tile image.</returns>
-        public Image GetTile(int x, int y, int z)
+        public Task<Image> GetTile(int x, int y, int z, CancellationToken cancellationToken)
         {
-            Stream stream = Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream($"System.Windows.Forms.OfflineMaps._{z}._{x}.{(1 << z) - y - 1}.jpg");
-            if (stream != null)
+            return Task.Run(() =>
             {
-                return new Bitmap(stream);
-            }
-            else
-            {
-                throw new Exception("Tile image does not exist.");
-            }
+                Stream stream = Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream($"System.Windows.Forms.OfflineMaps._{z}._{x}.{(1 << z) - y - 1}.jpg");
+                if (stream != null)
+                {
+                    return (Image)new Bitmap(stream);
+                }
+                else
+                {
+                    throw new Exception("Tile image does not exist.");
+                }
+            });
         }
     }
 }

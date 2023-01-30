@@ -43,10 +43,14 @@ namespace System.Windows.Forms
         /// </summary>
         private ConcurrentBag<Tile> _RequestPool = new ConcurrentBag<Tile>();
 
+        private CancellationTokenSource _RequestCancelTokeSource = new CancellationTokenSource();
+
         /// <summary>
         /// Worker threads for processing tile requests to the server.
         /// </summary>
-        private Thread[] _Workers = new Thread[10];
+        private Thread[] _Workers = new Thread[1];
+
+        //private Thread _Worker = null;
 
         /// <summary>
         /// Event handle to stop/resume requests processing.
@@ -174,14 +178,11 @@ namespace System.Windows.Forms
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ILayersCollection Layers { get; } = new LayersCollection();
 
-        private void UpdateOffsets()
+        private void UpdateOffsets(GeoPoint c)
         {
-            var c = Center;
-
             foreach (var layer in Layers)
             {
                 var center = layer.TileServer.Projection.WorldToTilePos(c, ZoomLevel);
-                Debug.WriteLine($"Center = {c}");
 
                 layer.Offset.X = -(int)(center.X * TILE_SIZE) + Width / 2;
                 layer.Offset.Y = -(int)(center.Y * TILE_SIZE) + Height / 2;
@@ -193,6 +194,8 @@ namespace System.Windows.Forms
         {
             Interlocked.Exchange(ref _Cache, new ConcurrentBag<Tile>());
 
+
+
             // TODO: change attrubution text
             //if (_TileServer.AttributionText != null)
             //{
@@ -201,26 +204,21 @@ namespace System.Windows.Forms
             //    OnSizeChanged(new EventArgs());
             //}
 
-            int min = Layers.Max(lay => lay.TileServer.MinZoomLevel);
-            int max = Layers.Min(lay => lay.TileServer.MaxZoomLevel);
-
-            _MaxZoomLevel = max;
-            _MinZoomLevel = min;
-
-            if (_ZoomLevel > max)
-                _ZoomLevel = max;
+            int min = Layers.Any() ? Layers.Max(lay => lay.TileServer.MinZoomLevel) : _MinZoomLevel;
+            int max = Layers.Any() ? Layers.Min(lay => lay.TileServer.MaxZoomLevel) : _MaxZoomLevel;
 
             if (_ZoomLevel < min)
                 _ZoomLevel = min;
 
-            // TODO: update layer's offets
+            if (_ZoomLevel > max)
+                _ZoomLevel = max;
 
-            UpdateOffsets();
+
+            UpdateOffsets(_CenterKeeper);
+
+            
 
             Invalidate();
-            
-            // TODO: notify layers changed
-            //TileServerChanged?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>
@@ -258,6 +256,9 @@ namespace System.Windows.Forms
                     Invalidate();
                     CenterChanged?.Invoke(this, EventArgs.Empty);
                 }
+
+                _RequestCancelTokeSource.Cancel();
+                Interlocked.Exchange(ref _RequestCancelTokeSource, new CancellationTokenSource());
             }
         }
 
@@ -488,11 +489,14 @@ namespace System.Windows.Forms
         protected void OnBeforeChangeLayersCollection(object sender, EventArgs eventArgs)
         {
             _CenterKeeper = Center;
+
+
         }
 
         private void OnAfterChangeLayersCollection(object sender, EventArgs eventArgs)
         {
             Center = _CenterKeeper;
+            UpdateLayers();
         }
 
         /// <summary>
@@ -1033,10 +1037,10 @@ namespace System.Windows.Forms
         /// </summary>
         /// <param name="z">Zoom level to be set.</param>
         /// <param name="p">Central point to zoom in/out.</param>
-        private void SetZoomLevel(int z, Point p)
+        private void SetZoomLevel(int z, PointF p)
         {
-            int max = Layers.Any() ? Math.Min(MaxZoomLevel, Layers.Min(lay => lay.TileServer.MaxZoomLevel)) : MaxZoomLevel;
-            int min = Layers.Any() ? Math.Max(MinZoomLevel, Layers.Max(lay => lay.TileServer.MinZoomLevel)) : MinZoomLevel;
+            int min = Layers.Any() ? Layers.Max(lay => lay.TileServer.MinZoomLevel) : _MinZoomLevel;
+            int max = Layers.Any() ? Layers.Min(lay => lay.TileServer.MaxZoomLevel) : _MaxZoomLevel;
 
             if (z < min) z = min;
             if (z > max) z = max;
@@ -1048,12 +1052,15 @@ namespace System.Windows.Forms
 
                 foreach (var layer in Layers)
                 {
-                    layer.Offset.X = (int)((layer.Offset.X - p.X) * factor) + p.X;
-                    layer.Offset.Y = (int)((layer.Offset.Y - p.Y) * factor) + p.Y;
+                    layer.Offset.X = (int)(((layer.Offset.X - p.X) * factor) + p.X);
+                    layer.Offset.Y = (int)(((layer.Offset.Y - p.Y) * factor) + p.Y);
                     layer.Offset.X = (int)(layer.Offset.X % FullMapSizeInPixels);
                 }
 
-                UpdateOffsets();
+                UpdateOffsets(Center);
+
+                _RequestCancelTokeSource.Cancel();
+                Interlocked.Exchange(ref _RequestCancelTokeSource, new CancellationTokenSource());
 
                 Invalidate();
 
@@ -1136,7 +1143,7 @@ namespace System.Windows.Forms
         /// than stops execution until the pool gets a new image request.
         /// Breaks execution on disposing.
         /// </summary>
-        private void ProcessRequests()
+        private async void ProcessRequests()
         {
             while (!IsDisposed)
             {
@@ -1152,11 +1159,13 @@ namespace System.Windows.Forms
                         // ignore pooled items with different zoom level and another tile server
                         if (layer != null && tile.Z == ZoomLevel)
                         {
-                            tile.Image = layer.TileServer.GetTile(tile.X, tile.Y, tile.Z);
+                            tile.Image = await layer.TileServer.GetTile(tile.X, tile.Y, tile.Z, _RequestCancelTokeSource.Token);
                             tile.Used = true;
-
-
                         }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        tile.Image = null;
                     }
                     catch (Exception ex)
                     {
@@ -1172,8 +1181,6 @@ namespace System.Windows.Forms
                             try
                             {
                                 Directory.CreateDirectory(Path.GetDirectoryName(localPath));
-
-
                                 tile.Image.Save(localPath);
                                 Debug.WriteLine($"saved {localPath}");
                             }

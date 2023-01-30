@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace System.Windows.Forms
 {
@@ -71,25 +72,36 @@ namespace System.Windows.Forms
         /// <param name="y">Y-coordinate of the tile.</param>
         /// <param name="z">Zoom level</param>
         /// <returns></returns>
-        public Image GetTile(int x, int y, int z)
+        public Task<Image> GetTile(int x, int y, int z, CancellationToken cancellationToken)
         {
-            try
+            return Task.Run(async () =>
             {
-                Uri uri = GetTileUri(x, y, z);
-                var request = (HttpWebRequest)WebRequest.Create(uri);
-                request.UserAgent = UserAgent;
-                // TODO: make customizable
-                //request.Timeout = 5 * 1000;
-                using (var response = request.GetResponse())
-                using (Stream stream = response.GetResponseStream())
+                try
                 {
-                    return Image.FromStream(stream);
+                    Uri uri = GetTileUri(x, y, z);
+                    var request = (HttpWebRequest)WebRequest.Create(uri);
+                    request.UserAgent = UserAgent;
+                    // TODO: make customizable
+                    request.ServicePoint.ConnectionLimit = 10;
+                    request.ServerCertificateValidationCallback = new Net.Security.RemoteCertificateValidationCallback(AcceptAllCertificates);
+
+                    // TODO: make customizable
+                    //request.Timeout = 5 * 1000;
+                    using (var response = await request.GetResponseAsync(cancellationToken))
+                    using (Stream stream = response.GetResponseStream())
+                    {
+                        return Image.FromStream(stream);
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Unable to download tile.\n{ex.Message}");
-            }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Unable to download tile.\n{ex.Message}");
+                }
+            }, cancellationToken);
         }
 
         /// <summary>
@@ -97,8 +109,6 @@ namespace System.Windows.Forms
         /// </summary>
         protected WebTileServer()
         {
-            ServicePointManager.DefaultConnectionLimit = 10;
-            ServicePointManager.ServerCertificateValidationCallback = new Net.Security.RemoteCertificateValidationCallback(AcceptAllCertificates);
             ServicePointManager.SecurityProtocol = (SecurityProtocolType)12288 | SecurityProtocolType.Tls12;
         }
 
@@ -108,6 +118,35 @@ namespace System.Windows.Forms
         private bool AcceptAllCertificates(object sender, Security.Cryptography.X509Certificates.X509Certificate certification, Security.Cryptography.X509Certificates.X509Chain chain, System.Net.Security.SslPolicyErrors sslPolicyErrors)
         {
             return true;
+        }
+    }
+
+    public static class Extensions
+    {
+        public static async Task<HttpWebResponse> GetResponseAsync(this HttpWebRequest request, CancellationToken ct)
+        {
+            using (ct.Register(() => request.Abort(), useSynchronizationContext: false))
+            {
+                try
+                {
+                    var response = await request.GetResponseAsync();
+                    return (HttpWebResponse)response;
+                }
+                catch (WebException ex)
+                {
+                    // WebException is thrown when request.Abort() is called,
+                    // but there may be many other reasons,
+                    // propagate the WebException to the caller correctly
+                    if (ct.IsCancellationRequested)
+                    {
+                        // the WebException will be available as Exception.InnerException
+                        throw new OperationCanceledException(ex.Message, ex, ct);
+                    }
+
+                    // cancellation hasn't been requested, rethrow the original WebException
+                    throw;
+                }
+            }
         }
     }
 }
