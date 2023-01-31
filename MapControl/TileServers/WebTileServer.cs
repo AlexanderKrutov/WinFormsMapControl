@@ -81,12 +81,14 @@ namespace System.Windows.Forms
                     Uri uri = GetTileUri(x, y, z);
                     var request = (HttpWebRequest)WebRequest.Create(uri);
                     request.UserAgent = UserAgent;
+                    
                     // TODO: make customizable
                     request.ServicePoint.ConnectionLimit = 10;
                     request.ServerCertificateValidationCallback = new Net.Security.RemoteCertificateValidationCallback(AcceptAllCertificates);
 
                     // TODO: make customizable
                     //request.Timeout = 5 * 1000;
+
                     using (var response = await request.GetResponseAsync(cancellationToken))
                     using (Stream stream = response.GetResponseStream())
                     {

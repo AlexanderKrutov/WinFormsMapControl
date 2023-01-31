@@ -199,7 +199,13 @@ namespace DemoApp
             {
                 if (cmbOverlay.SelectedItem is ITileServer)
                 {
-                    mapControl.Layers.Add(new Layer() { TileServer = tileServer, ZIndex = 1, Opacity = 1 });
+                    mapControl.Layers.Add(new Layer() { 
+                        TileServer = tileServer, 
+                        ZIndex = 1, 
+                        Opacity = 1, 
+                        DrawThumbnail = false, 
+                        DrawScaled = false 
+                    });
                 }
             }
             else if (mapControl.Layers.Count == 2)
@@ -210,7 +216,13 @@ namespace DemoApp
                 }
                 else
                 {
-                    mapControl.Layers[1] = new Layer() { Opacity = 1, TileServer = tileServer, ZIndex = 1 };
+                    mapControl.Layers[1] = new Layer() { 
+                        Opacity = 1, 
+                        TileServer = tileServer, 
+                        ZIndex = 1, 
+                        DrawThumbnail = false, 
+                        DrawScaled = false 
+                    };
                 }
             }
 

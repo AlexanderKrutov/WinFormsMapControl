@@ -21,6 +21,8 @@
         /// </summary>
         public override IProjection Projection => WGS84MercatorProjection.Instance;
 
+        public override int MaxZoomLevel => 21;
+
         /// <summary>
         /// Creates new instance of <see cref="YandexMapsTileServer"/>.
         /// </summary>

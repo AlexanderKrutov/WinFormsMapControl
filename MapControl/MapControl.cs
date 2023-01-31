@@ -48,6 +48,9 @@ namespace System.Windows.Forms
         /// <summary>
         /// Worker threads for processing tile requests to the server.
         /// </summary>
+
+
+        // TODO: make customizable
         private Thread[] _Workers = new Thread[1];
 
         //private Thread _Worker = null;
@@ -476,7 +479,7 @@ namespace System.Windows.Forms
                 _Workers[w] = new Thread(new ThreadStart(ProcessRequests));
                 _Workers[w].Name = $"Request worker #{w + 1}";
                 _Workers[w].IsBackground = true;
-                _Workers[w].Priority = ThreadPriority.Highest;
+                _Workers[w].Priority = ThreadPriority.Lowest;
                 _Workers[w].Start();
             }
 
@@ -725,32 +728,34 @@ namespace System.Windows.Forms
                             // tile for current zoom and position found
                             if (tile != null)
                             {
+                                tile.Used = true;
                                 if (tile.Image != null)
-                                {
-                                    tile.Used = true;
+                                {                                    
                                     DrawTile(g, layer, x, y, tile.Image);
                                 }
-                                else
+                                else if (layer.DrawThumbnail)
                                 {
-                                    tile.Used = true;
                                     DrawThumbnail(g, layer, x, y, tile.ErrorMessage, true);
                                 }
                             }
                             // tile not found, do some magic
-                            else
+                            else if (layer.DrawScaled)
                             {
                                 // draw thumbnail first
-                                DrawThumbnail(g, layer, x, y, ThumbnailText, false);
+                                if (layer.DrawThumbnail)
+                                {                                    
+                                    DrawThumbnail(g, layer, x, y, ThumbnailText, false);
+                                }
 
-                                // try to find out tile with less zoom level, and draw scaled part of that tile
+                                // try to find out tile with lesser zoom level, and draw scaled part of this tile
 
                                 int z = 1;
                                 while (ZoomLevel - z >= 0)
                                 {
-                                    // fraction of a tile to be drawn (1/2, 1/4 and etc.)
+                                    // fraction of the tile to be drawn (1/2, 1/4 and etc.)
                                     int f = 1 << z;
 
-                                    //  try to get tile with less zoom level from cache
+                                    //  try to get a tile with lesser zoom level from cache
                                     tile = GetTile(layer, x_ / f, y / f, ZoomLevel - z, fromCacheOnly: true);
 
                                     // if tile found, draw part of it
@@ -761,7 +766,7 @@ namespace System.Windows.Forms
                                         break;
                                     }
 
-                                    // move up to less zoom level
+                                    // move up to lesser zoom level
                                     z++;
                                 }
                             }
@@ -774,10 +779,7 @@ namespace System.Windows.Forms
             _Cache.Where(c => !c.Used).ToList().ForEach(c => c.Image?.Dispose());
 
             // Update cache, leave only used images
-            //_Cache = new ConcurrentBag<Tile>(_Cache.Where(c => c.Used));
-
             Interlocked.Exchange(ref _Cache, new ConcurrentBag<Tile>(_Cache.Where(c => c.Used)));
-
         }
 
         /// <summary>
@@ -1150,8 +1152,6 @@ namespace System.Windows.Forms
                 // try to process all tile requests till pool is not empty
                 while (_RequestPool.TryTake(out Tile tile))
                 {
-                    Console.WriteLine($"{Thread.CurrentThread.Name} processing...");
-
                     var layer = Layers.FirstOrDefault(lay => lay.TileServer.GetType().Name == tile.TileServer);
 
                     try
@@ -1182,7 +1182,6 @@ namespace System.Windows.Forms
                             {
                                 Directory.CreateDirectory(Path.GetDirectoryName(localPath));
                                 tile.Image.Save(localPath);
-                                Debug.WriteLine($"saved {localPath}");
                             }
                             catch (Exception ex)
                             {
@@ -1197,7 +1196,6 @@ namespace System.Windows.Forms
                         }
 
                         Invalidate();
-                        //_RepaingWaitHandle.Set();
                     }
                 }
 

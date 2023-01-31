@@ -16,5 +16,9 @@ namespace System.Windows.Forms
         internal Point Offset = new Point();
 
         public float Opacity { get; set; } = 1;
+
+        public bool DrawThumbnail { get; set; } = true;
+
+        public bool DrawScaled { get; set; } = true;
     }
 }
