@@ -101,6 +101,19 @@ var style = new TrackStyle(new Pen(Color.Blue) { DashStyle = System.Drawing.Draw
 var track = new Track(style);
 ```
 
+Optionally, you can specify a separate pen used for drawing a direction indicator. A direction indicator is a simple triangle drawn in a solid color of the specified pen pointing into the direction of the track. The size of the pen is used to define the size of the direction indicator.
+```csharp
+// Define custom track style with direction marker pen
+var style = new TrackStyle(new Pen(Color.Blue, 2), new Pen(Color.Blue, 2));
+```
+
+You can specificy a minimum zoom level required to show direction indicators as follows:
+```csharp
+// Define custom track style with direction marker pen and minimum required zoom level
+var style = new TrackStyle(new Pen(Color.Blue, 2), new Pen(Color.Blue, 2), 4);
+```
+Default value for minimum zoom level is 12.
+
 ## Polygons
 Working with polygons is similar to deal with tracks.
 To create a new area object to the map, do something like:

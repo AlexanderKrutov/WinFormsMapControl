@@ -1142,6 +1142,42 @@ namespace System.Windows.Forms
                     {
                         Draw(gr, () => gr.DrawPolyline(track.Style.Pen, points));
                     }
+
+                    if (track.Style.DirectionIndicatorPen != null && ZoomLevel >= track.Style.DirectionIndicatorMinimumZoomLevel)
+                    {
+                        float directionIndicatorSize = track.Style.DirectionIndicatorPen.Width;
+                        for (int a = 0; a < points.Length - 1; a++)
+                        {
+                            PointF pointA = points[a];
+                            PointF pointB = points[a + 1];
+
+                            if (pointA.X != pointB.X || pointA.Y != pointB.Y)
+                            {
+                                PointF directionIndicatorCenter = new PointF(
+                                    (pointB.X + pointA.X) / 2.0f,
+                                    (pointB.Y + pointA.Y) / 2.0f
+                                );
+
+                                float directionIndicatorAngle = (float)(Math.Atan2(pointA.Y - pointB.Y, pointA.X - pointB.X) * 180.0 / Math.PI);// - 90.0f;
+
+                                Draw(gr, () =>
+                                {
+                                    gr.TranslateTransform(directionIndicatorCenter.X, directionIndicatorCenter.Y);
+                                    gr.RotateTransform(directionIndicatorAngle);
+                                    gr.TranslateTransform(-directionIndicatorCenter.X, -directionIndicatorCenter.Y);
+
+                                    gr.FillPolygon(new SolidBrush(track.Style.DirectionIndicatorPen.Color), new PointF[]
+                                    {
+                                        new PointF(directionIndicatorCenter.X, directionIndicatorCenter.Y + directionIndicatorSize),
+                                        new PointF(directionIndicatorCenter.X + directionIndicatorSize * 2.5f, directionIndicatorCenter.Y),
+                                        new PointF(directionIndicatorCenter.X, directionIndicatorCenter.Y - directionIndicatorSize)
+                                    });
+
+                                    gr.ResetTransform();
+                                });
+                            }
+                        }
+                    }
                 }
             } 
         }

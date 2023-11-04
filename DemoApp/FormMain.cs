@@ -57,10 +57,10 @@ namespace DemoApp
             var centralLine = new Track(new TrackStyle(new Pen(Color.Red) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dot }));
             centralLine.AddRange(ReadPointsFromResource("CentralLine.txt"));
 
-            var penumbraLimit = new Track(new TrackStyle(new Pen(Color.Orange, 2)));
+            var penumbraLimit = new Track(new TrackStyle(new Pen(Color.Orange, 2), new Pen(Color.Orange, 5), 4));
             penumbraLimit.AddRange(ReadPointsFromResource("PenumbraLimit.txt"));
 
-            var riseSetCurves = new Track(new TrackStyle(new Pen(Color.Orange, 2)));
+            var riseSetCurves = new Track(new TrackStyle(new Pen(Color.Orange, 2), new Pen(Color.Orange, 5), 4));
             riseSetCurves.AddRange(ReadPointsFromResource("RiseSetCurves.txt"));
 
             var shadowPath = new Polygon(new PolygonStyle(new SolidBrush(Color.FromArgb(100, Color.Black)), Pens.Black));
@@ -175,7 +175,7 @@ namespace DemoApp
 
             customTileServer.UserAgent = "WinFormsMapControl - DemoApp";
 
-            ZipTileServer zipTileServer = new ZipTileServer("default.zip");
+            // ZipTileServer zipTileServer = new ZipTileServer("default.zip");
 
             ITileServer[] tileServers = new ITileServer[]
             {               
@@ -185,8 +185,7 @@ namespace DemoApp
                 new BingMapsAerialTileServer(),
                 new BingMapsRoadsTileServer(),
                 new BingMapsHybridTileServer(),
-                customTileServer,
-                zipTileServer
+                customTileServer
             };
 
             cmbTileServers.Items.AddRange(tileServers);
