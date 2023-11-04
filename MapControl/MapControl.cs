@@ -1158,7 +1158,7 @@ namespace System.Windows.Forms
                                     (pointB.Y + pointA.Y) / 2.0f
                                 );
 
-                                float directionIndicatorAngle = (float)(Math.Atan2(pointA.Y - pointB.Y, pointA.X - pointB.X) * 180.0 / Math.PI);// - 90.0f;
+                                float directionIndicatorAngle = (float)(Math.Atan2(pointA.Y - pointB.Y, pointA.X - pointB.X) * 180.0 / Math.PI) - 180.0f;
 
                                 Draw(gr, () =>
                                 {
